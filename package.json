@@ -1,0 +1,24 @@
+{
+  "name": "rbot",
+  "version": "0.0.1",
+  "description": "bot made with mineflayer which can do task",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/rom1504/rbot.git"
+  },
+  "keywords": [
+    "mineflayer",
+    "minecraft",
+    "bot"
+  ],
+  "author": {
+    "name": "Romain Beaumont"
+  },
+  "license": "BSD",
+  "dependencies": {
+	"mineflayer": "~0.0.12",
+    "mineflayer-navigate": "~0.0.2",
+    "vec3": "~0.1.2"
+  }
+}
