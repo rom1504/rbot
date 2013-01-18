@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 #rbot
 A bot based on mineflayer which can execute task with dependancies
 
@@ -16,9 +15,3 @@ A bot based on mineflayer which can execute task with dependancies
  
 ## Usage
 	node index.js host port name password
-=======
-rbot
-====
-
-bot made with mineflayer which can do task
->>>>>>> bca6aa64cbb9f6507d4790ad3e935b016b214e18
