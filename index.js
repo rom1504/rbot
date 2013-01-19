@@ -61,21 +61,15 @@ function isEmpty(pos)
 	return b!=null && b.type===0;
 }
 
-function digAchieved(x,y,z)
+function digAchieved(s)
 {
-	if(typeof(x)=='string') x=parseFloat(x);
-	if(typeof(y)=='string') y=parseFloat(y);
-	if(typeof(z)=='string') z=parseFloat(z);
-	var pos=(new vec3(x,y,z)).floored();
+	var pos=(stringToPosition(s)).floored();
 	return isEmpty(pos);
 }
 
-function dig(x,y,z)
+function dig(s)
 {
-	if(typeof(x)=='string') x=parseFloat(x);
-	if(typeof(y)=='string') y=parseFloat(y);
-	if(typeof(z)=='string') z=parseFloat(z);
-	var pos=(new vec3(x,y,z)).floored();
+	var pos=(stringToPosition(s)).floored();
 	if(isEmpty(pos))
 	{
 		console.log("it is empty !");
@@ -116,12 +110,9 @@ function unique(name)
 	return name+numbers[name];
 }
 var goalPosition=new vec3(0,0,0);
-function moveAchieved(x,y,z)
+function moveAchieved(s)
 {
-	if(typeof(x)=='string') x=parseFloat(x);
-	if(typeof(y)=='string') y=parseFloat(y);
-	if(typeof(z)=='string') z=parseFloat(z);
-	var goalPosition=new vec3(x,y,z);
+	var goalPosition=stringToPosition(s);
 // 	console.log(!isFree(goalPosition));
 // 	console.log(goalPosition+" "+bot.entity.position);
 // 	console.log(goalPosition.distanceTo(bot.entity.position));
@@ -130,12 +121,9 @@ function moveAchieved(x,y,z)
 }
 
 
-function move(x,y,z)
+function move(s)
 {
-	if(typeof(x)=='string') x=parseFloat(x);
-	if(typeof(y)=='string') y=parseFloat(y);
-	if(typeof(z)=='string') z=parseFloat(z);
-	var goalPosition=new vec3(x,y,z);
+	var goalPosition=stringToPosition(s);
 	
 	bot.lookAt(goalPosition);
 	bot.setControlState('forward', true);
@@ -301,6 +289,17 @@ function list(stateNameList)
 	return e;
 }
 
+function stringToPosition(s)
+{
+	var c=s.split(",");
+	return new vec3(parseFloat(c[0]),parseFloat(c[1]),parseFloat(c[2]));
+}
+
+function positionToString(p)
+{
+	return p.x+","+p.y+","+p.z;
+}
+
 // (-?[0-9]+(?:\\.[0-9]+)?),(-?[0-9]+(?:\\.[0-9]+)?),(-?[0-9]+(?:\\.[0-9]+)?)
 //remplacer par taches (ou cible ?) ?
 states=
@@ -315,6 +314,7 @@ states=
 		"move position":{action:{f:move,c:moveAchieved}},
 		"pos (.+)":{action:{f:pos,c:posAchieved}},
 		"look for mob (.+)":{action:{f:lookForMob,c:lookForMobAchieved}},
+// 		"move to position":{action:{f:moveTo,c:moveToAchieved}},
 // 		"attendre ([0-9]+)":{action:{f:attendre,c:conditionAttendre}}
 // 		"avancer":{action:{f:avancer,c:conditionAvancer}},
 // 		"dig forward2 position":{action:{f:avancer,c:moveAchieved},deps:["dig "]} // pour faire ça il va falloir faire comme l'alias paramétrable : fonction de génération des états
@@ -323,7 +323,11 @@ states=
 
 generated_states=
 {
-	"dig forward position":function (x,y,z) {x=parseFloat(x);y=parseFloat(y);z=parseFloat(z);return {action:{f:move,c:moveAchieved,p:[x,y,z]},deps:["dig "+x+","+(y+1)+","+z,"dig "+x+","+y+","+z]};}
+	"dig forward position":function (s) 
+	{
+		p=stringToPosition(s);
+		return {action:{f:move,c:moveAchieved,p:[s]},deps:["dig "+positionToString(p.offset(0,1,0)),"dig "+s]};
+	}
 };
 
 // ou passer à du pur string ?
@@ -344,12 +348,17 @@ alias=
 parameterized_alias=
 {
 // 	"dig forward position":function (x,y,z) {x=parseFloat(x);y=parseFloat(y);z=parseFloat(z);return "dig "+x+","+(y+1)+","+z+" then dig "+x+","+y+","+z+" then move "+x+","+y+","+z;}
-	"rposition":function (x,y,z,input) {if(input.indexOf("repeat")>-1 || input.indexOf("then")>-1) {return "r"+x+","+y+","+z};x=parseFloat(x);y=parseFloat(y);z=parseFloat(z);return (bot.entity.position.x+x)+","+(bot.entity.position.y+y)+","+(bot.entity.position.z+z)}
+	"rposition":function (s,input) 
+	{
+		p=stringToPosition(s);
+		if(input.indexOf("repeat")>-1 || input.indexOf("then")>-1) return "r"+s;
+		return positionToString(bot.entity.position.plus(p));
+	}
 }
 
 regex=
 {
-	"position":"(-?[0-9]+(?:\\.[0-9]+)?),(-?[0-9]+(?:\\.[0-9]+)?),(-?[0-9]+(?:\\.[0-9]+)?)"
+	"position":"(-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?)"
 }
 
 //possibilité (possiblement) de remplacer une fois au lancement seulement
@@ -592,25 +601,6 @@ bot.on('chat', function(username, message) {
 	}
 	else if (message === 'pos') {
 	bot.chat("I am at " + bot.entity.position + ", you are at " + bot.players[username].entity.position);
-	} else if (message === 'spawn') {
-	bot.chat("spawn is at " + bot.spawnPoint);
-	} else if (message === 'quit') {
-	bot.quit(username + "told me to");
-	} else if (message === 'set') {
-	bot.setSettings({viewDistance: 'normal'});
-	} else if (message === 'block') {
-	block = bot.blockAt(bot.players[username].entity.position.offset(0, -1, 0));
-	bot.chat("block under you is " + block.displayName + " in the " + block.biome.name + " biome id"+block.type);
-	}else if (message === 'blockup') {
-	block = bot.blockAt(bot.players[username].entity.position.offset(0, +2, 0));
-	bot.chat("block on you is " + block.displayName + " in the " + block.biome.name + " biome id"+block.type);
-	} else if (message === 'blocksdown') {
-	pos = bot.game.players[username].entity.position.clone();
-	setInterval(function() {
-		var block = bot.blockAt(pos);
-		console.log("pos " + pos + ": " + block.displayName + ", " + block.biome.name);
-		pos.translate(0, -1, 0);
-	}, 500);
 	}
 });
 
@@ -626,13 +616,6 @@ bot.on('playerJoined', function(player) {
 bot.on('playerLeft', function(player) {
   console.log("bye " + player.username);
 });
-bot.on('rain', function() {
-  if (bot.isRaining) {
-    bot.chat("it started raining");
-  } else {
-    bot.chat("it stopped raining.");
-  }
-});
 bot.on('kicked', function(reason) {
   console.log("I got kicked for", reason, "lol");
 });
@@ -641,67 +624,3 @@ bot.on('kicked', function(reason) {
 bot.on('nonSpokenChat', function(message) {
   console.log("non spoken chat", message);
 });
-bot.on('spawnReset', function(message) {
-  console.log("oh noez!! my bed is broken.");
-});
-// var map = {};
-// bot.on('entitySwingArm', function(entity) {
-//   map[entity.id] = map[entity.id] || 0;
-//   map[entity.id] += 1;
-//   console.log(entity.username + ", you've swung your arm " + map[entity.id] + "times.");
-// });
-// bot.on('entityHurt', function(entity) {
-//   if (entity.type === 'mob') {
-// //     console.log("Haha! The " + entity.mobType + " got hurt position "+entity.position);
-//   } else if (entity.type === 'player') {
-//     console.log("aww, poor " + entity.username + " got hurt. maybe you shouldn't have a ping of " + bot.players[entity.username].ping);
-//   }
-// });
-// bot.on('entityWake', function(entity) {
-//   bot.chat("top of the morning, " + entity.username);
-// });
-// bot.on('entitySleep', function(entity) {
-//   bot.chat("good night, " + entity.username);
-// });
-// bot.on('entityEat', function(entity) {
-//   console.log(entity.username + ": OM NOM NOM NOMONOM. that's what you sound like.");
-// });
-// bot.on('entityCrouch', function(entity) {
-//   bot.chat(entity.username + ": you so sneaky.");
-// });
-// bot.on('entityUncrouch', function(entity) {
-//   bot.chat(entity.username + ": welcome back from the land of hunchbacks.");
-// });
-// bot.on('entityEquipmentChange', function(entity) {
-//   console.log("entityEquipmentChange", entity)
-// });
-// bot.on('entitySpawn', function(entity) {
-//   if (entity.type === 'mob') {
-//     bot.chat("look out - a " + entity.mobType + " spawned at " + entity.position);
-//   } else if (entity.type === 'player') {
-//     bot.chat("look who decided to show up: " + entity.username);
-//   } else if (entity.type === 'object') {
-//     bot.chat("there's a " + entity.objectType + " at " + entity.position);
-//   }
-// });
-// bot.on('playerCollect', function(collector, collected) {
-//   if (collector.type === 'player' && collected.type === 'object') {
-//     bot.chat("I'm so jealous. " + collector.username + " collected " + collected.objectType);
-//   }
-// });
-// bot.on('entityDetach', function(entity, vehicle) {
-//   if (entity.type === 'player' && vehicle.type === 'object') {
-//     bot.chat("lame - " + entity.username + " stopped riding the " + vehicle.objectType);
-//   }
-// });
-// bot.on('entityAttach', function(entity, vehicle) {
-//   if (entity.type === 'player' && vehicle.type === 'object') {
-//     bot.chat("sweet - " + entity.username  + " is riding that " + vehicle.objectType);
-//   }
-// });
-// bot.on('entityEffect', function(entity, effect) {
-//   console.log("entityEffect", entity, effect);
-// });
-// bot.on('entityEffectEnd', function(entity, effect) {
-//   console.log("entityEffectEnd", entity, effect);
-// });
