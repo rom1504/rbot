@@ -15,6 +15,8 @@ A bot based on mineflayer which can execute task with dependancies
  
 ## Usage
 	node index.js host port name password
+	
+## Documentation
 	Commands :
 	* dig r0,0,1
 	* move r0,0,1
