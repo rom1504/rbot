@@ -16,12 +16,7 @@ bot.on('login', function() {
   console.log("settings", bot.settings);
 });
 
-// function estVideRelatif(dp)
-// {
-// 	return estVide(new vec3(bot.entity.position.x+dp.x,bot.entity.position.y+dp.y,bot.entity.position.z+dp.z));
-// }
-
-function surveiller()
+function monitor()
 {
 	for(dx=-1;dx<=1;dx++)
 	{
@@ -31,7 +26,7 @@ function surveiller()
 			{
 				var dp=new vec3(dx,dy,dz);
 				var p=bot.entity.position.plus(dp).floored();
-				if(estVide(p)) bot.emit("pos_"+p+"_vide");
+				if(isEmpty(p)) bot.emit("pos_"+p+"_empty");
 			}
 		}
 	}
@@ -39,7 +34,7 @@ function surveiller()
 
 function slowLoop()
 {
-	surveiller();
+	monitor();
 }
 
 bot.on('spawn', function() {
@@ -56,40 +51,35 @@ bot.on('death', function() {
 
 // bot.on('chunkUpdate',function()
 // {
-// 	surveiller();
+// 	monitor();
 // });
 
-function estVide(pos)
+function isEmpty(pos)
 {
 // 	console.log(pos);
 	var b=bot.blockAt(pos);
 	return b!=null && b.type===0;
 }
 
-function posArrondi()
-{
-	return new vec3(Math.floor(bot.entity.position.x), Math.floor(bot.entity.position.y), Math.floor(bot.entity.position.z));
-}
-
-function conditionCreuse(x,y,z)
+function digAchieved(x,y,z)
 {
 	if(typeof(x)=='string') x=parseFloat(x);
 	if(typeof(y)=='string') y=parseFloat(y);
 	if(typeof(z)=='string') z=parseFloat(z);
 	var pos=(new vec3(x,y,z)).floored();
-	return estVide(pos);
+	return isEmpty(pos);
 }
 
-function creuse(x,y,z)
+function dig(x,y,z)
 {
 	if(typeof(x)=='string') x=parseFloat(x);
 	if(typeof(y)=='string') y=parseFloat(y);
 	if(typeof(z)=='string') z=parseFloat(z);
 	var pos=(new vec3(x,y,z)).floored();
-	if(estVide(pos))
+	if(isEmpty(pos))
 	{
-		console.log("c'est vide !");
-		return "pos_"+pos+"_vide";
+		console.log("it is empty !");
+		return "pos_"+pos+"_empty";
 	}
 	var rpos=pos.minus(bot.entity.position);
 	var face=-1;
@@ -101,9 +91,9 @@ function creuse(x,y,z)
 	else if(rpos.y<0) {face=1;}
 	bot.client.write(0x0e, {status: 0,x:pos.x,y:pos.y,z:pos.z,face:face});
 	bot.client.write(0x0e, {status: 2,x:pos.x,y:pos.y,z:pos.z,face:face});
-	console.log("Je creuse la position "+pos);
-	var e=unique("finCreuse");
-	bot.on("pos_"+pos+"_vide",function(){setTimeout(function(){bot.emit(e);},500);});// car une roche met un certain temps à tomber (500 bon temps ? : réduisible ?)
+	console.log("I dig position "+pos);
+	var e=unique("endDig");
+	bot.on("pos_"+pos+"_empty",function(){setTimeout(function(){bot.emit(e);},500);});// because a block can take some time to fall (maybe 500ms can be reduced)
 	return e;
 }
 
@@ -118,41 +108,41 @@ function norm(v)
 	return Math.sqrt(scalarProduct(v,v));
 }
 
-numeros={};
-function unique(nom)
+numbers={};
+function unique(name)
 {
-	if(numeros[nom]==undefined) numeros[nom]=0;
-	numeros[nom]++;
-	return nom+numeros[nom];
+	if(numbers[name]==undefined) numbers[name]=0;
+	numbers[name]++;
+	return name+numbers[name];
 }
-var positionObjectif=new vec3(0,0,0);
-function conditionDeplacer(x,y,z)
+var goalPosition=new vec3(0,0,0);
+function moveAchieved(x,y,z)
 {
 	if(typeof(x)=='string') x=parseFloat(x);
 	if(typeof(y)=='string') y=parseFloat(y);
 	if(typeof(z)=='string') z=parseFloat(z);
-	var positionObjectif=new vec3(x,y,z);
-// 	console.log(!estLibre(positionObjectif));
-	console.log(positionObjectif+" "+bot.entity.position);
-	console.log(positionObjectif.distanceTo(bot.entity.position));
-	console.log(positionObjectif.distanceTo(bot.entity.position)<0.1);
-	return positionObjectif.distanceTo(bot.entity.position)<0.1 || !estLibre(positionObjectif);
+	var goalPosition=new vec3(x,y,z);
+// 	console.log(!isFree(goalPosition));
+// 	console.log(goalPosition+" "+bot.entity.position);
+// 	console.log(goalPosition.distanceTo(bot.entity.position));
+// 	console.log(goalPosition.distanceTo(bot.entity.position)<0.1);
+	return goalPosition.distanceTo(bot.entity.position)<0.1 || !isFree(goalPosition);
 }
 
 
-function deplacer(x,y,z)
+function move(x,y,z)
 {
 	if(typeof(x)=='string') x=parseFloat(x);
 	if(typeof(y)=='string') y=parseFloat(y);
 	if(typeof(z)=='string') z=parseFloat(z);
-	var positionObjectif=new vec3(x,y,z);
+	var goalPosition=new vec3(x,y,z);
 	
-	bot.lookAt(positionObjectif);
+	bot.lookAt(goalPosition);
 	bot.setControlState('forward', true);
-	var eA=unique("deplace");
+	var eA=unique("move");
 	var arrive=setInterval(function()
 	{
-		if(/*scalarProduct(positionObjectif.minus(bot.entity.position),d)<0 || */positionObjectif.distanceTo(bot.entity.position)<0.1 || !estLibre(positionObjectif)/*(norm(bot.entity.velocity)<0.01)*/) // modifier comme conditionDeplacer peut etre
+		if(/*scalarProduct(goalPosition.minus(bot.entity.position),d)<0 || */goalPosition.distanceTo(bot.entity.position)<0.1 || !isFree(goalPosition)/*(norm(bot.entity.velocity)<0.01)*/)
 		{
 			clearInterval(arrive);
 			bot.setControlState('forward', false);
@@ -165,9 +155,9 @@ function deplacer(x,y,z)
 directions=[new vec3(0,0,1),new vec3(0,0,-1),new vec3(1,0,0),new vec3(-1,0,0)];
 direction=directions[0];
 
-function estLibre(pos)
+function isFree(pos)
 {
-	return estVide(pos) && estVide(pos.offset(0,1,0));
+	return isEmpty(pos) && isEmpty(pos.offset(0,1,0));
 }
 
 // function chercherDirection()
@@ -176,7 +166,7 @@ function estLibre(pos)
 // 	while(1)
 // 	{
 // 		i=Math.floor(Math.random()*4);
-// 		if(estLibre(i)) {return i;}
+// 		if(isFree(i)) {return i;}
 // 	}
 // 	return directions[i];
 // }
@@ -188,80 +178,80 @@ function estLibre(pos)
 // 
 // function avancer()
 // {
-// 	if(!estLibre(direction))
+// 	if(!isFree(direction))
 // 	{
 // 		direction=chercherDirection();
 // 	}
-// 	e=deplacer(direction.x,direction.y,direction.z);
+// 	e=move(direction.x,direction.y,direction.z);
 // 	return e;
 // }
 
-function repeter(nomEtat)
+function repeat(stateName)
 {
-	atteindre(nomEtat);
-// 	console.log("ogogofof"+nomEtat);
-	bot.on(nomEtat,repetition=function(){atteindre(nomEtat);});
-	repetitionEnCours=true;
-	return "repeter";
+	achieve(stateName);
+// 	console.log("ogogofof"+stateName);
+	bot.on(stateName,repetition=function(){achieve(stateName);});
+	repeating=true;
+	return "repeat";
 }
 
-function conditionRepeter(nomEtat)
+function repeatAchieved(stateName)
 {
 	return null;
 }
 
-function arreterRepeter(nomEtat)
+function stopRepeat(stateName)
 {
-	bot.removeListener(nomEtat,repetition); // modifier pour permettre plusieurs répétition simultannée ?
-	setTimeout(function(){repetitionEnCours=false;bot.emit("arreter repeter");bot.emit("repeter");},200);
-	return "arreter repeter";
+	bot.removeListener(stateName,repetition); // modify to allow several simultaneous repetitions ?
+	setTimeout(function(){repeating=false;bot.emit("stop repeat");bot.emit("repeat");},200);
+	return "stop repeat";
 }
 
-function conditionArreterRepeter(nomEtat)
+function stopRepeatAchieved(stateName)
 {
 	return null;
 }
 
 // function marcheEscalierColimacon() // non : utiliser des états paramétrés
 // {
-// 	creuse(new vec3(0,1,1));
-// 	creuse(new vec3(0,1,0));
-// 	creuse(new vec3(0,2,0));
-// 	creuse(new vec3(0,2,1));
+// 	dig(new vec3(0,1,1));
+// 	dig(new vec3(0,1,0));
+// 	dig(new vec3(0,2,0));
+// 	dig(new vec3(0,2,1));
 // }
 
-function conditionPos(personne)
+function posAchieved(player)
 {
 	return null;
 }
 
-function pos(personne)
+function pos(player)
 {
-	if(bot.players[personne].entity!=undefined) bot.chat(personne+" est en "+bot.players[personne].entity.position);
-	else bot.chat(personne+" est trop loin.");
+	if(bot.players[player].entity!=undefined) bot.chat(player+" is in "+bot.players[player].entity.position);
+	else bot.chat(player+" is too far.");
 	setTimeout(function(){bot.emit("pos");},100);
 	return "pos";
 }
 
-function conditionChercherMob(nomMob)
+function lookForMobAchieved(nameMob)
 {
 	return null;
 }
 
-function chercherMob(nomMob)
+function lookForMob(nameMob)
 {
-	setTimeout(function(){bot.emit("chercher mob");},100);
+	setTimeout(function(){bot.emit("look for mob");},100);
 	for(i in bot.entities)
 	{
 		entity=bot.entities[i];
-		if(entity.type === 'mob' && entity.mobType ===nomMob)
+		if(entity.type === 'mob' && entity.mobType ===nameMob)
 		{
-				bot.chat("Il y a un "+nomMob+" en "+entity.position);
-				return "chercher mob";
+				bot.chat("There is a "+nameMob+" in "+entity.position);
+				return "look for mob";
 		}
 	}
-	bot.chat("Je ne trouve pas de "+nomMob+".");
-	return "chercher mob";
+	bot.chat("I can't find any "+nameMob+".");
+	return "look for mob";
 }
 /*
 function conditionAttendre(temps)
@@ -272,40 +262,40 @@ function conditionAttendre(temps)
 function attendre(temps)
 {
 	var temps=parseInt(temps);
-	var f=unique("fin");
+	var f=unique("end");
 	setTimeout(function(f){function(){bot.emit(f);}}(f),temps);
 	return f;
 }*/
 
-function atteindreDansListe(listeNomsEtats,i)
+function achieveInList(stateNameList,i)
 {
-	return function(){atteindre(listeNomsEtats[i])};
+	return function(){achieve(stateNameList[i])};
 }
 
-function listeAux(eIni,listeNomsEtats)
+function listAux(eIni,stateNameList)
 {
 	var e=eIni;
-// 	console.log(listeNomsEtats);
-	for(var i in listeNomsEtats)
+// 	console.log(stateNameList);
+	for(var i in stateNameList)
 	{
-// 		console.log(e+"-> atteindre "+listeNomsEtats[i]);
-		bot.once(e,atteindreDansListe(listeNomsEtats,i));
-		e=listeNomsEtats[i];
+// 		console.log(e+"-> achieve "+stateNameList[i]);
+		bot.once(e,achieveInList(stateNameList,i));
+		e=stateNameList[i];
 	}
 // 	console.log(e);
 	return e;
 }
 
-function conditionListe(listeNomsEtats)
+function listAchieved(stateNameList)
 {
 	return null;
 }
 
-function liste(listeNomsEtats)
+function list(stateNameList)
 {
-	var eIni=unique("demarrerListe");
- 	var e=listeAux(eIni,listeNomsEtats.split(" puis "));
-// 	var l=listeNomsEtats.split(" puis ");
+	var eIni=unique("startList");
+ 	var e=listAux(eIni,stateNameList.split(" then "));
+// 	var l=stateNameList.split(" then ");
 // 	console.log("j'émet "+eIni);
 	bot.emit(eIni);
 	return e;
@@ -313,48 +303,48 @@ function liste(listeNomsEtats)
 
 // (-?[0-9]+(?:\\.[0-9]+)?),(-?[0-9]+(?:\\.[0-9]+)?),(-?[0-9]+(?:\\.[0-9]+)?)
 //remplacer par taches (ou cible ?) ?
-etats=
+states=
 {
-		// va y avoir un pb ici : pas de fin liste et repeter...
+		// va y avoir un pb ici : pas de end list et repeat...
 		// les conditions sont des post condition, pas pré
 		// pré condition réalisé grace aux dépendances
-		"repeter (.+)":{action:{f:repeter,c:conditionRepeter}},//priorité avec puis
-		"arreter repeter (.+)":{action:{f:arreterRepeter,c:conditionArreterRepeter}},
-		"(.+ puis .+)":{action:{f:liste,c:conditionListe}},
-		"creuse position":{action:{f:creuse,c:conditionCreuse}},
-		"deplace position":{action:{f:deplacer,c:conditionDeplacer}},
-		"pos (.+)":{action:{f:pos,c:conditionPos}},
-		"chercher mob (.+)":{action:{f:chercherMob,c:conditionChercherMob}},
+		"repeat (.+)":{action:{f:repeat,c:repeatAchieved}},//priorité avec then
+		"stop repeat (.+)":{action:{f:stopRepeat,c:stopRepeatAchieved}},
+		"(.+ then .+)":{action:{f:list,c:listAchieved}},
+		"dig position":{action:{f:dig,c:digAchieved}},
+		"move position":{action:{f:move,c:moveAchieved}},
+		"pos (.+)":{action:{f:pos,c:posAchieved}},
+		"look for mob (.+)":{action:{f:lookForMob,c:lookForMobAchieved}},
 // 		"attendre ([0-9]+)":{action:{f:attendre,c:conditionAttendre}}
 // 		"avancer":{action:{f:avancer,c:conditionAvancer}},
-// 		"creusehba2 position":{action:{f:avancer,c:conditionDeplacer},deps:["creuse "]} // pour faire ça il va falloir faire comme l'alias paramétrable : fonction de génération des états
+// 		"dig forward2 position":{action:{f:avancer,c:moveAchieved},deps:["dig "]} // pour faire ça il va falloir faire comme l'alias paramétrable : fonction de génération des états
 // 		"monter une marche d'escalier en colimacon":{action:{f:marcheEscalierColimacon,p:[]},deps:[]}
 };
 
-etats_generes=
+generated_states=
 {
-	"creusehba position":function (x,y,z) {x=parseFloat(x);y=parseFloat(y);z=parseFloat(z);return {action:{f:deplacer,c:conditionDeplacer,p:[x,y,z]},deps:["creuse "+x+","+(y+1)+","+z,"creuse "+x+","+y+","+z]};}
+	"dig forward position":function (x,y,z) {x=parseFloat(x);y=parseFloat(y);z=parseFloat(z);return {action:{f:move,c:moveAchieved,p:[x,y,z]},deps:["dig "+x+","+(y+1)+","+z,"dig "+x+","+y+","+z]};}
 };
 
 // ou passer à du pur string ?
-// etats_parametre
+// states_parametre
 
 
 //alias paramétrable ?
 alias=
 {
-	"x+":"deplace r1,0,0",
-	"x-":"deplace r-1,0,0",
-	"y+":"deplace r0,1,0",
-	"y-":"deplace r0,-1,0",
-	"z+":"deplace r0,0,1",
-	"z-":"deplace r0,0,-1",
+	"x+":"move r1,0,0",
+	"x-":"move r-1,0,0",
+	"y+":"move r0,1,0",
+	"y-":"move r0,-1,0",
+	"z+":"move r0,0,1",
+	"z-":"move r0,0,-1",
 }
 
-alias_parametrable=
+parameterized_alias=
 {
-// 	"creusehba position":function (x,y,z) {x=parseFloat(x);y=parseFloat(y);z=parseFloat(z);return "creuse "+x+","+(y+1)+","+z+" puis creuse "+x+","+y+","+z+" puis deplace "+x+","+y+","+z;}
-	"rposition":function (x,y,z,input) {if(input.indexOf("repeter")>-1 || input.indexOf("puis")>-1) {return "r"+x+","+y+","+z};x=parseFloat(x);y=parseFloat(y);z=parseFloat(z);return (bot.entity.position.x+x)+","+(bot.entity.position.y+y)+","+(bot.entity.position.z+z)}
+// 	"dig forward position":function (x,y,z) {x=parseFloat(x);y=parseFloat(y);z=parseFloat(z);return "dig "+x+","+(y+1)+","+z+" then dig "+x+","+y+","+z+" then move "+x+","+y+","+z;}
+	"rposition":function (x,y,z,input) {if(input.indexOf("repeat")>-1 || input.indexOf("then")>-1) {return "r"+x+","+y+","+z};x=parseFloat(x);y=parseFloat(y);z=parseFloat(z);return (bot.entity.position.x+x)+","+(bot.entity.position.y+y)+","+(bot.entity.position.z+z)}
 }
 
 regex=
@@ -363,198 +353,198 @@ regex=
 }
 
 //possibilité (possiblement) de remplacer une fois au lancement seulement
-function remplacerRegex(texte)
+function replaceRegex(text)
 {
 	for(var i in regex)
 	{
-		texte=texte.replace(i,regex[i]);
+		text=text.replace(i,regex[i]);
 	}
-	return texte;
+	return text;
 }
 
-netats_generes={};
-for(i in etats_generes)
+ngenerated_states={};
+for(i in generated_states)
 {
-	netats_generes[remplacerRegex(i)]=etats_generes[i];
+	ngenerated_states[replaceRegex(i)]=generated_states[i];
 }
-etats_generes=netats_generes;
+generated_states=ngenerated_states;
 
-netats={};
-for(i in etats)
+nstates={};
+for(i in states)
 {
-	netats[remplacerRegex(i)]=etats[i];
+	nstates[replaceRegex(i)]=states[i];
 }
-etats=netats;
+states=nstates;
 
-nalias_parametrable={};
-for(i in alias_parametrable)
+nparameterized_alias={};
+for(i in parameterized_alias)
 {
-	nalias_parametrable[remplacerRegex(i)]=alias_parametrable[i];
+	nparameterized_alias[replaceRegex(i)]=parameterized_alias[i];
 }
-alias_parametrable=nalias_parametrable;
+parameterized_alias=nparameterized_alias;
 
-function signalerFinEtat(nomEtat)
+function reportEndOfState(stateName)
 {
 	return function()
 	{
-		console.log("J'ai atteint l'état "+nomEtat);
-		bot.emit(nomEtat);
+		console.log("I achieved state "+stateName);
+		bot.emit(stateName);
 	};
 }
 
 // à faire plus tard si vraiment nécessaire/utile
-// conditionsASurveiller={};
+// conditionsToMonitor={};
 // 
-// function surveiller()
+// function monitor()
 // {
-// 	for(i in conditionsASurveiller)
+// 	for(i in conditionsToMonitor)
 // 	{
-// 		if(conditionsASurveiller[i]())
+// 		if(conditionsToMonitor[i]())
 // 		{
 // 			emit(i);
 // 		}
 // 	}
 // }
 
-function atteint(etat)
+function achieved(state)
 {
-	return etat.action.c.apply(this,etat.action.p);
+	return state.action.c.apply(this,state.action.p);
 }
 
-function appliquerAction(etat,nomEtat)
+function applyAction(state,stateName)
 {
 		return function()
 		{
 			var b;
-			if((b=atteint(etat))!=null && b)
+			if((b=achieved(state))!=null && b)
 			{
- 					console.log("fin:"+nomEtat);
-					(signalerFinEtat(nomEtat))();
+//  					console.log("end:"+stateName);
+					(reportEndOfState(stateName))();
 			}
 			else
 			{
- 				console.log("action:"+nomEtat);
-				var actione=etat.action.f.apply(this,etat.action.p);
-				bot.once(actione,atteint(etat)===null ? signalerFinEtat(nomEtat) : appliquerAction(etat,nomEtat));
+//  				console.log("action:"+stateName);
+				var actione=state.action.f.apply(this,state.action.p);
+				bot.once(actione,achieved(state)===null ? reportEndOfState(stateName) : applyAction(state,stateName));
 			}
 			// comportement différent mais peut etre interessant :
-// 			var actione=etat.action.f.apply(this,etat.action.p);
-// 			bot.once(actione,signalerFinEtat(nomEtat));
+// 			var actione=state.action.f.apply(this,state.action.p);
+// 			bot.once(actione,reportEndOfState(stateName));
 		}
 }
 
-function nomToEtat(nomEtat)
+function nameToState(stateName)
 {
-	nomEtat=remplacerAlias(nomEtat);
+	stateName=replaceAlias(stateName);
 	var v;
-	var etat;
-	for(rnomEtat in etats)
+	var state;
+	for(rstateName in states)
 	{
-		if((v=(new RegExp("^"+rnomEtat+"$")).exec(nomEtat))!=null)
+		if((v=(new RegExp("^"+rstateName+"$")).exec(stateName))!=null)
 		{
 // 			v.push(v.input);
 			v.shift();
-			etat=ce.clone(etats[rnomEtat]);
-			etat.action.p=etat.action.p != undefined ? etat.action.p.concat(v) : v
+			state=ce.clone(states[rstateName]);
+			state.action.p=state.action.p != undefined ? state.action.p.concat(v) : v
 			break;
 		}
 	}
-	for(rnomEtat in etats_generes)
+	for(rstateName in generated_states)
 	{
-		if((v=(new RegExp("^"+rnomEtat+"$")).exec(nomEtat))!=null)
+		if((v=(new RegExp("^"+rstateName+"$")).exec(stateName))!=null)
 		{
 // 			v.push(v.input);
 			v.shift();
-			etat=etats_generes[rnomEtat].apply(this,v);
-			etat.action.p=etat.action.p != undefined ? etat.action.p.concat(v) : v // pb : clone : modification de l'objet dans etats ?
+			state=generated_states[rstateName].apply(this,v);
+			state.action.p=state.action.p != undefined ? state.action.p.concat(v) : v
 			break;
 		}
 	}
-	return etat;
+	return state;
 }
 
-function atteindre(nomEtat)
+function achieve(stateName)
 {
-	var etat=nomToEtat(nomEtat);
-// 	nomEtat=remplacerAlias(nomEtat);//utile ?
-	console.log("Je vais atteindre l'état "+nomEtat);
-	var eIni=unique("demarrerAtteindre");
-	var eFin=unique("finAtteindre");
-	var listeNomsEtats=etat.deps!=undefined ? etat.deps : [];
-	var letats=[];
-	for(var i in listeNomsEtats)
+	var state=nameToState(stateName);
+// 	stateName=replaceAlias(stateName);//utile ?
+	console.log("I'm going to achieve state "+stateName);
+	var eIni=unique("demarrerAchieve");
+	var eEnd=unique("endAchieve");
+	var stateNameList=state.deps!=undefined ? state.deps : [];
+	var lstates=[];
+	for(var i in stateNameList)
 	{
-		letats[i]=nomToEtat(listeNomsEtats[i]);// est refait plusieurs fois, il vaudrait sans doute mieux le faire une fois pour toute qq part (peut etre meme que ca change le comportement dans certains cas)
+		lstates[i]=nameToState(stateNameList[i]);// est refait plusieurs fois, il vaudrait sans doute mieux le faire une fois pour toute qq part (peut etre meme que ca change le comportement dans certains cas)
 	}
- 	atteindreDependances(eIni,listeNomsEtats,letats,eFin);
-	bot.once(eFin,appliquerAction(etat,nomEtat));
+ 	achieveDependencies(eIni,stateNameList,lstates,eEnd);
+	bot.once(eEnd,applyAction(state,stateName));
 // 	console.log("j'émet "+eIni);
 	bot.emit(eIni);
 	
 }
 
-function atteindreDansAtteindreDependances(listeNomsEtats,i)
+function achieveInAchieveDependencies(stateNameList,i)
 {
-	return function(){atteindre(listeNomsEtats[i])};
+	return function(){achieve(stateNameList[i])};
 }
 
-function atteindreDependances(eIni,listeNomsEtats,letats,eFin)
+function achieveDependencies(eIni,stateNameList,lstates,eEnd)
 {
 	var e=eIni;
 	var b;
-// 	console.log(listeNomsEtats);
-	var continuer=false;
-	for(var i in listeNomsEtats)
+// 	console.log(stateNameList);
+	var toContinue=false;
+	for(var i in stateNameList)
 	{
-		b=atteint(letats[i]);
+		b=achieved(lstates[i]);
 		if(b===null || !b)
 		{
-	// 		console.log(e+"-> atteindre "+listeNomsEtats[i]);
-			bot.once(e,atteindreDansAtteindreDependances(listeNomsEtats,i));
-			e=listeNomsEtats[i];
-			if(b===null) letats[i].c=function() {return true;};// va pas marche car letats non transmis : le transmettre... // pb
-			continuer=true;
+	// 		console.log(e+"-> achieve "+stateNameList[i]);
+			bot.once(e,achieveInAchieveDependencies(stateNameList,i));
+			e=stateNameList[i];
+			if(b===null) lstates[i].c=function() {return true;};// pb ?
+			toContinue=true;
 		}
 	}
-	if(continuer)
+	if(toContinue)
 	{
-		bot.once(e,function(eIni,listeNomsEtats,letats,eFin) {return function(){var s=unique("atteindreDependance");atteindreDependances(s,listeNomsEtats,letats,eFin);bot.emit(s);};} (eIni,listeNomsEtats,letats,eFin));
+		bot.once(e,function(eIni,stateNameList,lstates,eEnd) {return function(){var s=unique("achieveDependencies");achieveDependencies(s,stateNameList,lstates,eEnd);bot.emit(s);};} (eIni,stateNameList,lstates,eEnd));
 	}
 	else
 	{
-		bot.once(e,(function(eFin){return function() {bot.emit(eFin);};})(eFin));
+		bot.once(e,(function(eEnd){return function() {bot.emit(eEnd);};})(eEnd));
 	}
 // 	console.log(e);
 }
 
 //reecriture (systeme suppose confluent et fortement terminal)
-function remplacerAlias(message)
+function replaceAlias(message)
 {
-	var modifie=1;
-	while(modifie)
+	var changed=1;
+	while(changed)
 	{
-		modifie=0;
+		changed=0;
 		for(var alia in alias)
 		{
 			var newM=message.replace(alia,alias[alia]);
 			if(newM!=message)
 			{
 				message=newM;
-				modifie=1;
+				changed=1;
 			}
 		}
 		var v;
-		for(var aliap in alias_parametrable)
+		for(var aliap in parameterized_alias)
 		{
 			if((v=(new RegExp(aliap)).exec(message))!=null)
 			{
 				v.push(v.input);
-				var aRemplacer=v.shift();
-				newM=message.replace(aRemplacer,alias_parametrable[aliap].apply(this,v));
+				var toReplace=v.shift();
+				newM=message.replace(toReplace,parameterized_alias[aliap].apply(this,v));
 				if(newM!=message)
 				{
 					message=newM;
-					modifie=1;
+					changed=1;
 				}
 			}
 		}
@@ -564,20 +554,20 @@ function remplacerAlias(message)
 
 
 bot.on('chat', function(username, message) {
-	message=remplacerAlias(message);
-	for(nomEtat in etats)
+	message=replaceAlias(message);
+	for(stateName in states)
 	{
-		if((new RegExp("^"+nomEtat+"$")).test(message))
+		if((new RegExp("^"+stateName+"$")).test(message))
 		{
-			atteindre(message);
+			achieve(message);
 			return;
 		}		
 	}
-	for(nomEtat in etats_generes)
+	for(stateName in generated_states)
 	{
-		if((new RegExp("^"+nomEtat+"$")).test(message))
+		if((new RegExp("^"+stateName+"$")).test(message))
 		{
-			atteindre(message);
+			achieve(message);
 			return;
 		}		
 	}
@@ -588,8 +578,8 @@ bot.on('chat', function(username, message) {
 bot.navigate.on('pathFound', function (path) {
   bot.chat("found path. I can get there in " + path.length + " moves.");
 });
-bot.navigate.on('cannotFind', function () {
-  bot.chat("unable to find path");
+bot.navigate.on('cannotEndd', function () {
+  bot.chat("unable to endd path");
 });
 
 	
