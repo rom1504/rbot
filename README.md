@@ -15,18 +15,16 @@ A bot based on mineflayer which can execute task with dependancies
  
 ## Usage
 	node index.js host port name password
-	
-## Documentation
-	Commands :
-	* dig r0,0,1
-	* move r0,0,1
-	* x+ x- z+ z-
-	* dig forward r0,0,1 : dig the two block in front of you then move, works if there is gravel that fall
-	* repeat <action> for example :
-		** repeat dig forward r0,0,1
-	* <action1> then <action2> : do first action then do the second one, for example :
-		** x+ then z+
-	* look for mob <mob>
-	* stop repeat <action>
-	* pos <player> : say the position of the other player if he is not too far away
-	* come : make the bot come to you
+ Commands :
+ * dig r0,0,1
+ * move r0,0,1
+ * x+ x- z+ z-
+ * dig forward r0,0,1 : dig the two block in front of you then move, works if there is gravel that fall
+ * repeat <action> for example :
+  ** repeat dig forward r0,0,1
+ * <action1> then <action2> : do first action then do the second one, for example :
+  ** x+ then z+
+ * look for mob <mob>
+ * stop repeat <action>
+ * pos <player> : say the position of the other player if he is not too far away
+ * come : make the bot come to you
