@@ -11,7 +11,6 @@ A bot based on mineflayer which can execute task with dependancies
  * Doing more complicated things (building a spiral staircase for example)
  * Integrate other mineflayer functionnality (inventory for example)
  * Improve/simplify the code
- * Translate code from french to english
  
 ## Usage
 	node index.js host port name password

@@ -16,47 +16,19 @@ bot.on('login', function() {
   console.log("settings", bot.settings);
 });
 
-function monitor()
-{
-	for(dx=-1;dx<=1;dx++)
-	{
-		for(dy=-1;dy<=2;dy++)
-		{
-			for(dz=-1;dz<=1;dz++)
-			{
-				var dp=new vec3(dx,dy,dz);
-				var p=bot.entity.position.plus(dp).floored();
-				if(isEmpty(p)) bot.emit("pos_"+p+"_empty");
-			}
-		}
-	}
-}
 
-function slowLoop()
-{
-	monitor();
-}
+bot.on('blockUpdate',function(pos){if(isEmpty(pos)){ bot.emit("pos_"+pos+"_empty");}});
 
 bot.on('spawn', function() {
-//   bot.chat("I have spawned");
   console.log("game", bot.game);
-//   maj=setInterval(fastLoop, 50);
-  maj2=setInterval(slowLoop, 500);
 });
 bot.on('death', function() {
   bot.chat("I died x.x");
-//   clearInterval(maj);
-  clearInterval(maj2);
 });
 
-// bot.on('chunkUpdate',function()
-// {
-// 	monitor();
-// });
 
 function isEmpty(pos)
 {
-// 	console.log(pos);
 	var b=bot.blockAt(pos);
 	return b!=null && b.type===0;
 }
@@ -70,11 +42,6 @@ function digAchieved(s)
 function dig(s)
 {
 	var pos=(stringToPosition(s)).floored();
-	if(isEmpty(pos))
-	{
-		console.log("it is empty !");
-		return "pos_"+pos+"_empty";
-	}
 	var rpos=pos.minus(bot.entity.position);
 	var face=-1;
 	if(rpos.x>0) {face=4;}
@@ -113,10 +80,6 @@ var goalPosition=new vec3(0,0,0);
 function moveAchieved(s)
 {
 	var goalPosition=stringToPosition(s);
-// 	console.log(!isFree(goalPosition));
-// 	console.log(goalPosition+" "+bot.entity.position);
-// 	console.log(goalPosition.distanceTo(bot.entity.position));
-// 	console.log(goalPosition.distanceTo(bot.entity.position)<0.1);
 	return goalPosition.distanceTo(bot.entity.position)<0.1 || !isFree(goalPosition);
 }
 
@@ -132,11 +95,11 @@ function move(s)
 	{
 		if(/*scalarProduct(goalPosition.minus(bot.entity.position),d)<0 || */goalPosition.distanceTo(bot.entity.position)<0.1 || !isFree(goalPosition)/*(norm(bot.entity.velocity)<0.01)*/)
 		{
-			clearInterval(arrive);
 			bot.setControlState('forward', false);
 			bot.emit(eA);
 		}
 	},50);
+	bot.once(eA,function(){clearInterval(arrive);});
 	return eA;
 }
 
@@ -177,7 +140,6 @@ function isFree(pos)
 function repeat(stateName)
 {
 	achieve(stateName);
-// 	console.log("ogogofof"+stateName);
 	bot.on(stateName,repetition=function(){achieve(stateName);});
 	repeating=true;
 	return "repeat";
@@ -263,14 +225,11 @@ function achieveInList(stateNameList,i)
 function listAux(eIni,stateNameList)
 {
 	var e=eIni;
-// 	console.log(stateNameList);
 	for(var i in stateNameList)
 	{
-// 		console.log(e+"-> achieve "+stateNameList[i]);
 		bot.once(e,achieveInList(stateNameList,i));
 		e=stateNameList[i];
 	}
-// 	console.log(e);
 	return e;
 }
 
@@ -283,8 +242,6 @@ function list(stateNameList)
 {
 	var eIni=unique("startList");
  	var e=listAux(eIni,stateNameList.split(" then "));
-// 	var l=stateNameList.split(" then ");
-// 	console.log("j'émet "+eIni);
 	bot.emit(eIni);
 	return e;
 }
@@ -427,12 +384,10 @@ function applyAction(state,stateName)
 			var b;
 			if((b=achieved(state))!=null && b)
 			{
-//  					console.log("end:"+stateName);
 					(reportEndOfState(stateName))();
 			}
 			else
 			{
-//  				console.log("action:"+stateName);
 				var actione=state.action.f.apply(this,state.action.p);
 				bot.once(actione,achieved(state)===null ? reportEndOfState(stateName) : applyAction(state,stateName));
 			}
@@ -483,11 +438,10 @@ function achieve(stateName)
 	var lstates=[];
 	for(var i in stateNameList)
 	{
-		lstates[i]=nameToState(stateNameList[i]);// est refait plusieurs fois, il vaudrait sans doute mieux le faire une fois pour toute qq part (peut etre meme que ca change le comportement dans certains cas)
+		lstates[i]=nameToState(stateNameList[i]);
 	}
  	achieveDependencies(eIni,stateNameList,lstates,eEnd);
 	bot.once(eEnd,applyAction(state,stateName));
-// 	console.log("j'émet "+eIni);
 	bot.emit(eIni);
 	
 }
@@ -501,17 +455,15 @@ function achieveDependencies(eIni,stateNameList,lstates,eEnd)
 {
 	var e=eIni;
 	var b;
-// 	console.log(stateNameList);
 	var toContinue=false;
 	for(var i in stateNameList)
 	{
 		b=achieved(lstates[i]);
 		if(b===null || !b)
 		{
-	// 		console.log(e+"-> achieve "+stateNameList[i]);
 			bot.once(e,achieveInAchieveDependencies(stateNameList,i));
 			e=stateNameList[i];
-			if(b===null) lstates[i].c=function() {return true;};// pb ?
+			if(b===null) lstates[i].c=function() {return true;};
 			toContinue=true;
 		}
 	}
@@ -523,7 +475,6 @@ function achieveDependencies(eIni,stateNameList,lstates,eEnd)
 	{
 		bot.once(e,(function(eEnd){return function() {bot.emit(eEnd);};})(eEnd));
 	}
-// 	console.log(e);
 }
 
 //reecriture (systeme suppose confluent et fortement terminal)
