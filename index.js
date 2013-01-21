@@ -33,6 +33,12 @@ function isEmpty(pos)
 	return b!=null && b.type===0;
 }
 
+function canFall(pos)
+{
+	var b=bot.blockAt(pos);
+	return b!=null && b.type===13;
+}
+
 function digAchieved(s)
 {
 	var pos=(stringToPosition(s)).floored();
@@ -54,7 +60,12 @@ function dig(s)
 	bot.client.write(0x0e, {status: 2,x:pos.x,y:pos.y,z:pos.z,face:face});
 	console.log("I dig position "+pos);
 	var e=unique("endDig");
-	bot.on("pos_"+pos+"_empty",function(){setTimeout(function(){bot.emit(e);},500);});// because a block can take some time to fall (maybe 500ms can be reduced)
+	bot.on("pos_"+pos+"_empty",function()
+	{
+		if(canFall(pos.offset(0,1,0))) setTimeout(function(){bot.emit(e);},2000);
+		else bot.emit(e);
+	}
+	);// because a block can take some time to fall (maybe 500ms can be reduced) : maybe to do only if the block above can fall (test it)
 	return e;
 }
 
@@ -76,7 +87,7 @@ function unique(name)
 	numbers[name]++;
 	return name+numbers[name];
 }
-var goalPosition=new vec3(0,0,0);
+
 function moveAchieved(s)
 {
 	var goalPosition=stringToPosition(s);
@@ -101,6 +112,31 @@ function move(s)
 	},50);
 	bot.once(eA,function(){clearInterval(arrive);});
 	return eA;
+}
+
+function moveToAchieved(s)
+{
+// 	return moveAchieved(s);
+	return null;
+}
+
+function moveTo(s)
+{
+	var goalPosition=stringToPosition(s);
+	bot.navigate.to(goalPosition);
+	return "arrived";
+}
+
+function stopMoveToAchieved(s)
+{
+	return null;
+}
+bot.navigate.on("arrived",function(){bot.emit("arrived");});
+bot.navigate.on("stop",function(){bot.emit("stop");});
+function stopMoveTo()
+{
+	bot.navigate.stop();
+	return "stop";
 }
 
 directions=[new vec3(0,0,1),new vec3(0,0,-1),new vec3(1,0,0),new vec3(-1,0,0)];
@@ -271,7 +307,8 @@ states=
 		"move position":{action:{f:move,c:moveAchieved}},
 		"pos (.+)":{action:{f:pos,c:posAchieved}},
 		"look for mob (.+)":{action:{f:lookForMob,c:lookForMobAchieved}},
-// 		"move to position":{action:{f:moveTo,c:moveToAchieved}},
+		"move to position":{action:{f:moveTo,c:moveToAchieved}},
+		"stop move to":{action:{f:stopMoveTo,c:stopMoveToAchieved}},
 // 		"attendre ([0-9]+)":{action:{f:attendre,c:conditionAttendre}}
 // 		"avancer":{action:{f:avancer,c:conditionAvancer}},
 // 		"dig forward2 position":{action:{f:avancer,c:moveAchieved},deps:["dig "]} // pour faire ça il va falloir faire comme l'alias paramétrable : fonction de génération des états
@@ -305,6 +342,11 @@ alias=
 parameterized_alias=
 {
 // 	"dig forward position":function (x,y,z) {x=parseFloat(x);y=parseFloat(y);z=parseFloat(z);return "dig "+x+","+(y+1)+","+z+" then dig "+x+","+y+","+z+" then move "+x+","+y+","+z;}
+	"position":function(s,input,username)
+	{
+		if(s==="me") return positionToString(bot.players[username].entity.position);
+		else return s;
+	},
 	"rposition":function (s,input) 
 	{
 		p=stringToPosition(s);
@@ -315,7 +357,7 @@ parameterized_alias=
 
 regex=
 {
-	"position":"(-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?)"
+	"position":"(-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?|me)"
 }
 
 //possibilité (possiblement) de remplacer une fois au lancement seulement
@@ -397,9 +439,9 @@ function applyAction(state,stateName)
 		}
 }
 
-function nameToState(stateName)
+function nameToState(stateName,username)
 {
-	stateName=replaceAlias(stateName);
+	stateName=replaceAlias(stateName,username);
 	var v;
 	var state;
 	for(rstateName in states)
@@ -427,9 +469,9 @@ function nameToState(stateName)
 	return state;
 }
 
-function achieve(stateName)
+function achieve(stateName,username)
 {
-	var state=nameToState(stateName);
+	var state=nameToState(stateName,username);
 // 	stateName=replaceAlias(stateName);//utile ?
 	console.log("I'm going to achieve state "+stateName);
 	var eIni=unique("demarrerAchieve");
@@ -440,18 +482,18 @@ function achieve(stateName)
 	{
 		lstates[i]=nameToState(stateNameList[i]);
 	}
- 	achieveDependencies(eIni,stateNameList,lstates,eEnd);
+ 	achieveDependencies(eIni,stateNameList,lstates,eEnd,username);
 	bot.once(eEnd,applyAction(state,stateName));
 	bot.emit(eIni);
 	
 }
 
-function achieveInAchieveDependencies(stateNameList,i)
+function achieveInAchieveDependencies(stateNameList,i,username)
 {
-	return function(){achieve(stateNameList[i])};
+	return function(){achieve(stateNameList[i],username)};
 }
 
-function achieveDependencies(eIni,stateNameList,lstates,eEnd)
+function achieveDependencies(eIni,stateNameList,lstates,eEnd,username)
 {
 	var e=eIni;
 	var b;
@@ -461,7 +503,7 @@ function achieveDependencies(eIni,stateNameList,lstates,eEnd)
 		b=achieved(lstates[i]);
 		if(b===null || !b)
 		{
-			bot.once(e,achieveInAchieveDependencies(stateNameList,i));
+			bot.once(e,achieveInAchieveDependencies(stateNameList,i,username));
 			e=stateNameList[i];
 			if(b===null) lstates[i].c=function() {return true;};
 			toContinue=true;
@@ -469,7 +511,7 @@ function achieveDependencies(eIni,stateNameList,lstates,eEnd)
 	}
 	if(toContinue)
 	{
-		bot.once(e,function(eIni,stateNameList,lstates,eEnd) {return function(){var s=unique("achieveDependencies");achieveDependencies(s,stateNameList,lstates,eEnd);bot.emit(s);};} (eIni,stateNameList,lstates,eEnd));
+		bot.once(e,function(eIni,stateNameList,lstates,eEnd) {return function(){var s=unique("achieveDependencies");achieveDependencies(s,stateNameList,lstates,eEnd,username);bot.emit(s);};} (eIni,stateNameList,lstates,eEnd));
 	}
 	else
 	{
@@ -478,7 +520,7 @@ function achieveDependencies(eIni,stateNameList,lstates,eEnd)
 }
 
 //reecriture (systeme suppose confluent et fortement terminal)
-function replaceAlias(message)
+function replaceAlias(message,username)
 {
 	var changed=1;
 	while(changed)
@@ -491,6 +533,7 @@ function replaceAlias(message)
 			{
 				message=newM;
 				changed=1;
+				continue; // sure ?
 			}
 		}
 		var v;
@@ -499,12 +542,14 @@ function replaceAlias(message)
 			if((v=(new RegExp(aliap)).exec(message))!=null)
 			{
 				v.push(v.input);
+				v.push(username);
 				var toReplace=v.shift();
 				newM=message.replace(toReplace,parameterized_alias[aliap].apply(this,v));
 				if(newM!=message)
 				{
 					message=newM;
 					changed=1;
+					continue;
 				}
 			}
 		}
@@ -514,7 +559,8 @@ function replaceAlias(message)
 
 
 bot.on('chat', function(username, message) {
-	message=replaceAlias(message);
+	message=replaceAlias(message,username);
+// 	console.log(message);
 	for(stateName in states)
 	{
 		if((new RegExp("^"+stateName+"$")).test(message))
@@ -535,34 +581,19 @@ bot.on('chat', function(username, message) {
 
 
 
-bot.navigate.on('pathFound', function (path) {
-  bot.chat("found path. I can get there in " + path.length + " moves.");
-});
+// bot.navigate.on('pathFound', function (path) {
+//   bot.chat("found path. I can get there in " + path.length + " moves.");
+// });
 bot.navigate.on('cannotEndd', function () {
   bot.chat("unable to endd path");
 });
-
-	
-bot.on('chat', function(username, message) {
-	var target = bot.players[username].entity;
-	if (message === 'come') {
-		bot.navigate.to(target.position);
-	} else if (message === 'stop') {
-		bot.navigate.stop();
-	}
-	else if (message === 'pos') {
-	bot.chat("I am at " + bot.entity.position + ", you are at " + bot.players[username].entity.position);
-	}
-});
-
-
 
 bot.on('health', function() {
   console.log("I have " + bot.health + " health and " + bot.food + " food");
 });
 
 bot.on('playerJoined', function(player) {
-  console.log("hello, " + player.username + "! welcome to the server.");
+  console.log("hello, " + player.username + "! welmove to the server.");
 });
 bot.on('playerLeft', function(player) {
   console.log("bye " + player.username);
