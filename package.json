@@ -1,6 +1,6 @@
 {
   "name": "rbot",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "bot made with mineflayer which can do task",
   "main": "index.js",
   "repository": {
@@ -17,7 +17,7 @@
   },
   "license": "BSD",
   "dependencies": {
-	"mineflayer": "~0.0.12",
+	"mineflayer": "~0.0.13",
     "mineflayer-navigate": "~0.0.2",
     "vec3": "~0.1.2",
     "cloneextend":"~0.0.3"
