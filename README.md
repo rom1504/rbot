@@ -1,6 +1,8 @@
 #rbot
 A bot based on mineflayer which can execute task with dependancies
 
+[Youtube Demo of repeat spiral down](www.youtube.com/watch?v=UM1ZV5200S0)
+
 ## Features
  * basic mecanism to handle task and dependancies
  * a few task : dig, move, repeat, sequence
