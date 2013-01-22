@@ -65,7 +65,7 @@ function dig(s)
 		if(canFall(pos.offset(0,1,0))) setTimeout(function(){bot.emit(e);},2000);
 		else bot.emit(e);
 	}
-	);// because a block can take some time to fall (maybe 500ms can be reduced) : maybe to do only if the block above can fall (test it)
+	);// because a block can take some time to fall (maybe 2000ms can be reduced)
 	return e;
 }
 
@@ -91,7 +91,8 @@ function unique(name)
 function moveAchieved(s)
 {
 	var goalPosition=stringToPosition(s);
-	return goalPosition.distanceTo(bot.entity.position)<0.1 || !isFree(goalPosition);
+// 	console.log(goalPosition.distanceTo(bot.entity.position));
+	return goalPosition.distanceTo(bot.entity.position)<0.3 || !isFree(goalPosition);
 }
 
 
@@ -104,7 +105,7 @@ function move(s)
 	var eA=unique("move");
 	var arrive=setInterval(function()
 	{
-		if(/*scalarProduct(goalPosition.minus(bot.entity.position),d)<0 || */goalPosition.distanceTo(bot.entity.position)<0.1 || !isFree(goalPosition)/*(norm(bot.entity.velocity)<0.01)*/)
+		if(/*scalarProduct(goalPosition.minus(bot.entity.position),d)<0 || */goalPosition.distanceTo(bot.entity.position)<0.3 || !isFree(goalPosition)/*(norm(bot.entity.velocity)<0.01)*/)
 		{
 			bot.setControlState('forward', false);
 			bot.emit(eA);
@@ -116,22 +117,23 @@ function move(s)
 
 function moveToAchieved(s)
 {
-// 	return moveAchieved(s);
-	return null;
+	var goalPosition=stringToPosition(s);
+	return goalPosition.distanceTo(bot.entity.position)<1 || !isFree(goalPosition);
 }
 
 function moveTo(s)
 {
 	var goalPosition=stringToPosition(s);
 	bot.navigate.to(goalPosition);
-	return "arrived";
+	var e=unique("arrived");
+	bot.navigate.once("arrived",(function(e,goalPosition) {return function(){if(goalPosition.distanceTo(bot.entity.position)<1 || !isFree(goalPosition)) bot.emit(e);}})(e,goalPosition));
+	return e;
 }
 
 function stopMoveToAchieved(s)
 {
 	return null;
 }
-bot.navigate.on("arrived",function(){bot.emit("arrived");});
 bot.navigate.on("stop",function(){bot.emit("stop");});
 function stopMoveTo()
 {
@@ -172,12 +174,21 @@ function isFree(pos)
 // 	e=move(direction.x,direction.y,direction.z);
 // 	return e;
 // }
-
-function repeat(stateName)
+var repeating=false;
+function repeatAux(stateName,username)
 {
-	achieve(stateName);
-	bot.on(stateName,repetition=function(){achieve(stateName);});
+	if(repeating)
+	{
+		var eventStateName=unique(stateName);
+		achieve(stateName,username,eventStateName);
+ 		bot.once(eventStateName,function(){repeatAux(stateName,username);});
+	}
+}
+
+function repeat(stateName,username)
+{
 	repeating=true;
+	repeatAux(stateName,username);
 	return "repeat";
 }
 
@@ -188,8 +199,8 @@ function repeatAchieved(stateName)
 
 function stopRepeat(stateName)
 {
-	bot.removeListener(stateName,repetition); // modify to allow several simultaneous repetitions ?
-	setTimeout(function(){repeating=false;bot.emit("stop repeat");bot.emit("repeat");},200);
+	repeating=false;
+	setTimeout(function(){bot.emit("stop repeat");bot.emit("repeat");},200);
 	return "stop repeat";
 }
 
@@ -253,18 +264,21 @@ function attendre(temps)
 	return f;
 }*/
 
-function achieveInList(stateNameList,i)
+function achieveInList(stateNameList,i,username,eventStateName)
 {
-	return function(){achieve(stateNameList[i])};
+	return function(){achieve(stateNameList[i],username,eventStateName)};
 }
 
-function listAux(eIni,stateNameList)
+function listAux(eIni,stateNameList,username)
 {
 	var e=eIni;
+	var b;
+	var eventStateName;
 	for(var i in stateNameList)
 	{
-		bot.once(e,achieveInList(stateNameList,i));
-		e=stateNameList[i];
+		eventStateName=unique(stateNameList[i]);
+		bot.once(e,achieveInList(stateNameList,i,username,eventStateName));
+		e=eventStateName;
 	}
 	return e;
 }
@@ -274,10 +288,10 @@ function listAchieved(stateNameList)
 	return null;
 }
 
-function list(stateNameList)
+function list(stateNameList,username)
 {
 	var eIni=unique("startList");
- 	var e=listAux(eIni,stateNameList.split(" then "));
+ 	var e=listAux(eIni,stateNameList.split(" then "),username);
 	bot.emit(eIni);
 	return e;
 }
@@ -308,11 +322,12 @@ states=
 		"pos (.+)":{action:{f:pos,c:posAchieved}},
 		"look for mob (.+)":{action:{f:lookForMob,c:lookForMobAchieved}},
 		"move to position":{action:{f:moveTo,c:moveToAchieved}},
-		"stop move to":{action:{f:stopMoveTo,c:stopMoveToAchieved}},
+		"stop move to position":{action:{f:stopMoveTo,c:stopMoveToAchieved}},
 // 		"attendre ([0-9]+)":{action:{f:attendre,c:conditionAttendre}}
 // 		"avancer":{action:{f:avancer,c:conditionAvancer}},
-// 		"dig forward2 position":{action:{f:avancer,c:moveAchieved},deps:["dig "]} // pour faire ça il va falloir faire comme l'alias paramétrable : fonction de génération des états
-// 		"monter une marche d'escalier en colimacon":{action:{f:marcheEscalierColimacon,p:[]},deps:[]}
+// 		"dig forward2 position":{action:{f:avancer,c:moveAchieved},deps:["dig "]} // pour faire ça il va falloir faire comme l'alias paramétrable : fonction de génération des états// 	
+		
+//  		"do one spiral stairway step":{action:{f:dig,p:["r0,1,1"],c:digAchieved},deps:["dig r0,1,0","dig r0,2,0","dig r0,2,1"]}
 };
 
 generated_states=
@@ -337,6 +352,8 @@ alias=
 	"y-":"move r0,-1,0",
 	"z+":"move r0,0,1",
 	"z-":"move r0,0,-1",
+	"spiral up":"dig r0,2,0 then dig r0,1,1 then dig r0,2,1 then move to r0,1,1 then dig r0,2,0 then dig r-1,1,0 then dig r-1,2,0 then move to r-1,1,0 then dig r0,2,0 then dig r0,1,-1 then dig r0,2,-1 then move to r0,1,-1 then dig r0,2,0 then dig r1,1,0 then dig r1,2,0 then move to r1,1,0",
+	"spiral down":"dig r1,1,0 then dig r1,0,0 then dig r1,-1,0 then move to r1,-1,0 then dig r0,0,1 then dig r0,1,1 then dig r0,-1,1 then move to r0,-1,1 then dig r-1,1,0 then dig r-1,0,0 then dig r-1,-1,0 then move to r-1,-1,0 then dig r0,1,-1 then dig r0,0,-1 then dig r0,-1,-1 then move to r0,-1,-1"
 }
 
 parameterized_alias=
@@ -391,12 +408,12 @@ for(i in parameterized_alias)
 }
 parameterized_alias=nparameterized_alias;
 
-function reportEndOfState(stateName)
+function reportEndOfState(stateName,eventStateName)
 {
 	return function()
 	{
 		console.log("I achieved state "+stateName);
-		bot.emit(stateName);
+		bot.emit(eventStateName);
 	};
 }
 
@@ -419,19 +436,19 @@ function achieved(state)
 	return state.action.c.apply(this,state.action.p);
 }
 
-function applyAction(state,stateName)
+function applyAction(state,stateName,eventStateName)
 {
 		return function()
 		{
 			var b;
 			if((b=achieved(state))!=null && b)
 			{
-					(reportEndOfState(stateName))();
+					(reportEndOfState(stateName,eventStateName))();
 			}
 			else
 			{
 				var actione=state.action.f.apply(this,state.action.p);
-				bot.once(actione,achieved(state)===null ? reportEndOfState(stateName) : applyAction(state,stateName));
+				bot.once(actione,achieved(state)===null ? reportEndOfState(stateName,eventStateName) : applyAction(state,stateName,eventStateName));
 			}
 			// comportement différent mais peut etre interessant :
 // 			var actione=state.action.f.apply(this,state.action.p);
@@ -449,6 +466,7 @@ function nameToState(stateName,username)
 		if((v=(new RegExp("^"+rstateName+"$")).exec(stateName))!=null)
 		{
 // 			v.push(v.input);
+			v.push(username);
 			v.shift();
 			state=ce.clone(states[rstateName]);
 			state.action.p=state.action.p != undefined ? state.action.p.concat(v) : v
@@ -460,6 +478,7 @@ function nameToState(stateName,username)
 		if((v=(new RegExp("^"+rstateName+"$")).exec(stateName))!=null)
 		{
 // 			v.push(v.input);
+			v.push(username);
 			v.shift();
 			state=generated_states[rstateName].apply(this,v);
 			state.action.p=state.action.p != undefined ? state.action.p.concat(v) : v
@@ -469,10 +488,10 @@ function nameToState(stateName,username)
 	return state;
 }
 
-function achieve(stateName,username)
+function achieve(stateName,username,eventStateName)
 {
 	var state=nameToState(stateName,username);
-// 	stateName=replaceAlias(stateName);//utile ?
+//  	stateName=replaceAlias(stateName,username);//utile ? // bien ?
 	console.log("I'm going to achieve state "+stateName);
 	var eIni=unique("demarrerAchieve");
 	var eEnd=unique("endAchieve");
@@ -480,17 +499,16 @@ function achieve(stateName,username)
 	var lstates=[];
 	for(var i in stateNameList)
 	{
-		lstates[i]=nameToState(stateNameList[i]);
+		lstates[i]=nameToState(stateNameList[i],username);
 	}
  	achieveDependencies(eIni,stateNameList,lstates,eEnd,username);
-	bot.once(eEnd,applyAction(state,stateName));
+	bot.once(eEnd,applyAction(state,stateName,eventStateName));
 	bot.emit(eIni);
-	
 }
 
-function achieveInAchieveDependencies(stateNameList,i,username)
+function achieveInAchieveDependencies(stateNameList,i,username,eventStateName)
 {
-	return function(){achieve(stateNameList[i],username)};
+	return function(){achieve(stateNameList[i],username,eventStateName)};
 }
 
 function achieveDependencies(eIni,stateNameList,lstates,eEnd,username)
@@ -498,13 +516,15 @@ function achieveDependencies(eIni,stateNameList,lstates,eEnd,username)
 	var e=eIni;
 	var b;
 	var toContinue=false;
+	var eventStateName;
 	for(var i in stateNameList)
 	{
-		b=achieved(lstates[i]);
+		b=achieved(lstates[i]);// on suppose ici que les dépendances ne modifie pas l'état : les paramètres font références à l'état initial
 		if(b===null || !b)
 		{
-			bot.once(e,achieveInAchieveDependencies(stateNameList,i,username));
-			e=stateNameList[i];
+			eventStateName=unique(stateNameList[i]);
+			bot.once(e,achieveInAchieveDependencies(stateNameList,i,username,eventStateName));// unique eventStateName
+			e=eventStateName;
 			if(b===null) lstates[i].c=function() {return true;};
 			toContinue=true;
 		}
@@ -565,7 +585,7 @@ bot.on('chat', function(username, message) {
 	{
 		if((new RegExp("^"+stateName+"$")).test(message))
 		{
-			achieve(message);
+			achieve(message,username,unique(message));
 			return;
 		}		
 	}
@@ -573,7 +593,7 @@ bot.on('chat', function(username, message) {
 	{
 		if((new RegExp("^"+stateName+"$")).test(message))
 		{
-			achieve(message);
+			achieve(message,username,unique(message));
 			return;
 		}		
 	}
