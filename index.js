@@ -30,7 +30,7 @@ bot.on('death', function() {
 function isEmpty(pos)
 {
 	var b=bot.blockAt(pos);
-	return b!=null && b.type===0;
+	return b!=null && b.boundingBox==="empty";
 }
 
 function canFall(pos)
@@ -94,6 +94,13 @@ function moveAchieved(s)
 // 	console.log(goalPosition.distanceTo(bot.entity.position));
 	return goalPosition.distanceTo(bot.entity.position)<0.3 || !isFree(goalPosition);
 }
+
+// // to continue
+// function build(s)
+// {
+// 	var blockPosition=pos;
+// 	bot.placeBlock
+// }
 
 
 function move(s)
@@ -661,8 +668,8 @@ function replaceAlias(message,username)
 	return message;
 }
 
-
-bot.on('chat', function(username, message) {
+function processMessage(username, message)
+{
 	message=replaceAlias(message,username);
 // 	console.log(message);
 	for(stateName in states)
@@ -681,7 +688,10 @@ bot.on('chat', function(username, message) {
 			return;
 		}		
 	}
-});
+}
+
+
+bot.on('chat',processMessage);
 
 
 

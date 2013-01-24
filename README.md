@@ -23,17 +23,17 @@ A bot based on mineflayer which can execute task with dependancies
  * move r0,0,1
  * x+ x- z+ z-
  * dig forward r0,0,1 : dig the two block in front of you then move, works if there is gravel that fall
- * repeat <action> for example :
+ * repeat &lsaquo;action&rsaquo; for example :
   * repeat dig forward r0,0,1
- * <action1> then <action2> : do first action then do the second one, for example :
+ * &lsaquo;action1&rsaquo; then &lsaquo;action2&rsaquo; : do first action then do the second one, for example :
   * x+ then z+
- * look for mob <mob>
- * stop repeat <action>
- * pos <player> : say the position of the other player if he is not too far away
+ * look for mob &lsaquo;mob&rsaquo;
+ * stop repeat &lsaquo;action&rsaquo;
+ * pos &lsaquo;player&rsaquo; : say the position of the other player if he is not too far away
  * move to me : make the bot come to you
  * move to position : use mineflayer-navigate to get to the position
  * spiral up : build an ascending spiral staircase
  * spiral down : build a descending spiral staircase
- * equip <position> <item> : equip item at position (for example hand)
- * toss <item>
+ * equip &lsaquo;position&rsaquo; &lsaquo;item&rsaquo; : equip item at position (for example hand)
+ * toss &lsaquo;item&rsaquo;
  * list : list all items of the bot
