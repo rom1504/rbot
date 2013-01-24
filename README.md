@@ -8,6 +8,7 @@ A bot based on mineflayer which can execute task with dependancies
  * a few task : dig, move, repeat, sequence
  * integration of mineflayer-navigate which can make the bot go to any position not too far away
  * building a spiral staircase
+ * inventory management : equip,toss,list
  
 ### Roadmap
 
@@ -33,3 +34,6 @@ A bot based on mineflayer which can execute task with dependancies
  * move to position : use mineflayer-navigate to get to the position
  * spiral up : build an ascending spiral staircase
  * spiral down : build a descending spiral staircase
+ * equip <position> <item> : equip item at position (for example hand)
+ * toss <item>
+ * list : list all items of the bot

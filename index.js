@@ -250,6 +250,87 @@ function lookForMob(nameMob)
 	bot.chat("I can't find any "+nameMob+".");
 	return "look for mob";
 }
+
+function equip(destination,itemName)
+{
+	var item = itemByName(itemName);
+	if (item)
+	{
+		bot.equip(item.type, destination, function(err) 
+		{
+			if (err)
+			{
+				console.log("unable to equip " + item.name);
+				console.log(err.stack);
+			}
+			else console.log("equipped " + item.name);
+		});
+	}
+	else console.log("I have no " + name);
+	setTimeout(function(){bot.emit("equipped");},100);
+	return "equipped";
+}
+
+function equipAchieved()
+{
+	return null;
+}
+
+function toss(itemName)
+{
+	var item = itemByName(itemName);
+	if (item)
+	{
+		bot.tossStack(item, function(err) {
+			if (err)
+			{
+				console.log("unable to toss " + item.name);
+				console.log(err.stack);
+			} 
+			else console.log("tossed " + item.name);			  
+		});
+	}
+	else console.log("I have no " + name);
+	setTimeout(function(){bot.emit("tossed");},100);
+	return "tossed";
+}
+
+function tossAchieved()
+{
+	return null;
+}
+
+function listInventory()
+{
+	var id, count, item;
+	var output = "";
+	for (id in bot.inventory.count)
+	{
+		count = bot.inventory.count[id];
+		item = mineflayer.items[id] || mineflayer.blocks[id];
+		if (count) output += item.name + ": " + count + ", ";
+	}
+	bot.chat(output);
+	setTimeout(function(){bot.emit("listed");},100);
+	return "listed";
+}
+
+function listInventoryAchieved()
+{
+	return null;
+}
+
+function itemByName(name)
+{
+	var item, i;
+	for (i = 0; i < bot.inventory.slots.length; ++i)
+	{
+		item = bot.inventory.slots[i];
+		if (item && item.name === name) return item;
+	}
+	return null;
+}
+
 /*
 function conditionAttendre(temps)
 {
@@ -323,6 +404,9 @@ states=
 		"look for mob (.+)":{action:{f:lookForMob,c:lookForMobAchieved}},
 		"move to position":{action:{f:moveTo,c:moveToAchieved}},
 		"stop move to position":{action:{f:stopMoveTo,c:stopMoveToAchieved}},
+		"list":{action:{f:listInventory,c:listInventoryAchieved}},
+		"toss (.+)":{action:{f:toss,c:tossAchieved}},
+		"equip (.+?) (.+?)":{action:{f:equip,c:equipAchieved}},
 // 		"attendre ([0-9]+)":{action:{f:attendre,c:conditionAttendre}}
 // 		"avancer":{action:{f:avancer,c:conditionAvancer}},
 // 		"dig forward2 position":{action:{f:avancer,c:moveAchieved},deps:["dig "]} // pour faire ça il va falloir faire comme l'alias paramétrable : fonction de génération des états// 	
