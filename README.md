@@ -39,7 +39,7 @@ Commands :
  * equip &lsaquo;emplacement&rsaquo; &lsaquo;item&rsaquo; : equip item at emplacement (for example hand)
  * toss &lsaquo;item&rsaquo;
  * list : list all items of the bot
- 
+
 Parameters :
  * &lsaquo;position&rsaquo; can be :
   * rx,y,z : relative position
