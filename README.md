@@ -45,11 +45,10 @@ Parameters :
   * rx,y,z : relative position
   * x,y,z : absolute position
   * me
-  * nearest mob <mob>
+  * nearest mob &lsaquo;mob&rsaquo;
   * nearest mob : any nearest mob
  * &lsaquo;mob&rsaquo; can be :
   * spider
   * enderman
   * creeper
   * ...
- &lsaquo;mob&rsaquo;
