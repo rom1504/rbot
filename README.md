@@ -19,7 +19,7 @@ A bot based on mineflayer which can execute task with dependancies
 ## Usage
 	node index.js host port name password
 
- Commands :
+Commands :
  * dig &lsaquo;position&rsaquo;
  * move &lsaquo;position&rsaquo;
  * x+ x- z+ z-
@@ -40,7 +40,7 @@ A bot based on mineflayer which can execute task with dependancies
  * toss &lsaquo;item&rsaquo;
  * list : list all items of the bot
  
- Parameters :
+Parameters :
  * &lsaquo;position&rsaquo; can be :
   * rx,y,z : relative position
   * x,y,z : absolute position
