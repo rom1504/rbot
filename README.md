@@ -18,22 +18,37 @@ A bot based on mineflayer which can execute task with dependancies
  
 ## Usage
 	node index.js host port name password
+
  Commands :
- * dig r0,0,1
- * move r0,0,1
+ * dig &lsaquo;position&rsaquo;
+ * move &lsaquo;position&rsaquo;
  * x+ x- z+ z-
- * dig forward r0,0,1 : dig the two block in front of you then move, works if there is gravel that fall
+ * dig forward &lsaquo;position&rsaquo; : dig the two block in front of the bot then move, works if there is gravel that fall
  * repeat &lsaquo;action&rsaquo; for example :
-  * repeat dig forward r0,0,1
+  * repeat dig forward &lsaquo;position&rsaquo;
  * &lsaquo;action1&rsaquo; then &lsaquo;action2&rsaquo; : do first action then do the second one, for example :
   * x+ then z+
  * look for mob &lsaquo;mob&rsaquo;
+ * look for mob
  * stop repeat &lsaquo;action&rsaquo;
  * pos &lsaquo;player&rsaquo; : say the position of the other player if he is not too far away
  * move to me : make the bot come to you
  * move to position : use mineflayer-navigate to get to the position
  * spiral up : build an ascending spiral staircase
  * spiral down : build a descending spiral staircase
- * equip &lsaquo;position&rsaquo; &lsaquo;item&rsaquo; : equip item at position (for example hand)
+ * equip &lsaquo;emplacement&rsaquo; &lsaquo;item&rsaquo; : equip item at emplacement (for example hand)
  * toss &lsaquo;item&rsaquo;
  * list : list all items of the bot
+ Parameters :
+ * &lsaquo;position&rsaquo; can be :
+  * rx,y,z : relative position
+  * x,y,z : absolute position
+  * me
+  * nearest mob <mob>
+  * nearest mob : any nearest mob
+ * &lsaquo;mob&rsaquo; can be :
+  * spider
+  * enderman
+  * creeper
+  * ...
+ &lsaquo;mob&rsaquo;

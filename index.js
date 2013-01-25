@@ -237,25 +237,52 @@ function pos(player)
 	return "pos";
 }
 
-function lookForMobAchieved(nameMob)
+function lookForNearestMobAchieved(nameMob)
 {
 	return null;
 }
 
-function lookForMob(nameMob)
+function nearestEntity(entities)
 {
-	setTimeout(function(){bot.emit("look for mob");},100);
-	for(i in bot.entities)
+	var r=entities.reduce(function(acc,entity)
 	{
-		entity=bot.entities[i];
-		if(entity.type === 'mob' && entity.mobType ===nameMob)
+		var d=entity.position.distanceTo(bot.entity.position);
+		if(d<acc[1])
 		{
-				bot.chat("There is a "+nameMob+" in "+entity.position);
-				return "look for mob";
+			acc[0]=entity;
+			acc[1]=d;
 		}
+		return acc;
+	},[null,1000000]);
+	return r[0];
+}
+
+function emitAndReturn(event)
+{
+	setTimeout(function(){bot.emit(event);},100);
+	return event;
+}
+
+function nearestMob(nameMob)
+{
+	var a=[];
+	for(i in bot.entities) a.push(bot.entities[i]);
+	var mobs=a.filter(function(entity) {return entity.type === 'mob' && (nameMob==="*" || entity.mobType ===nameMob);});
+	return nearestEntity(mobs);
+}
+
+function lookForNearestMob(nameMob)
+{
+	var mob=nearestMob(nameMob);
+	if(mob===null)
+	{
+		bot.chat("I can't find any "+(nameMob==="*" ? "mob" : nameMob)+".");
 	}
-	bot.chat("I can't find any "+nameMob+".");
-	return "look for mob";
+	else
+	{
+		nameMob=mob.mobType;
+		bot.chat("Nearest "+nameMob+" is in "+mob.position+" , it is at a distance of "+Math.round(mob.position.distanceTo(bot.entity.position))+" from my position");
+	}
 }
 
 function equip(destination,itemName)
@@ -273,7 +300,7 @@ function equip(destination,itemName)
 			else console.log("equipped " + item.name);
 		});
 	}
-	else console.log("I have no " + name);
+	else console.log("I have no " + itemName);
 	setTimeout(function(){bot.emit("equipped");},100);
 	return "equipped";
 }
@@ -297,7 +324,7 @@ function toss(itemName)
 			else console.log("tossed " + item.name);			  
 		});
 	}
-	else console.log("I have no " + name);
+	else console.log("I have no " + itemName);
 	setTimeout(function(){bot.emit("tossed");},100);
 	return "tossed";
 }
@@ -408,7 +435,8 @@ states=
 		"dig position":{action:{f:dig,c:digAchieved}},
 		"move position":{action:{f:move,c:moveAchieved}},
 		"pos (.+)":{action:{f:pos,c:posAchieved}},
-		"look for mob (.+)":{action:{f:lookForMob,c:lookForMobAchieved}},
+		"look for mob (.+)":{action:{f:lookForNearestMob,c:lookForNearestMobAchieved}},
+		"look for mob":{action:{f:lookForNearestMob,c:lookForNearestMobAchieved,p:["*"]}},
 		"move to position":{action:{f:moveTo,c:moveToAchieved}},
 		"stop move to position":{action:{f:stopMoveTo,c:stopMoveToAchieved}},
 		"list":{action:{f:listInventory,c:listInventoryAchieved}},
@@ -452,20 +480,26 @@ parameterized_alias=
 // 	"dig forward position":function (x,y,z) {x=parseFloat(x);y=parseFloat(y);z=parseFloat(z);return "dig "+x+","+(y+1)+","+z+" then dig "+x+","+y+","+z+" then move "+x+","+y+","+z;}
 	"position":function(s,input,username)
 	{
+// 		console.log(s);
+// 		console.log(input);
+// 		console.log(username);
 		if(s==="me") return positionToString(bot.players[username].entity.position);
-		else return s;
+		var v;
+		if((v=new RegExp("^nearest mob (.+)$").exec(s))!=null) {var mob=nearestMob(v[1]); if(mob!=null) return positionToString(mob.position);}
+		if((v=new RegExp("^nearest mob$").exec(s))!=null) {var mob=nearestMob("*"); if(mob!=null) return positionToString(mob.position);}
+		return s;
 	},
 	"rposition":function (s,input) 
 	{
 		p=stringToPosition(s);
-		if(input.indexOf("repeat")>-1 || input.indexOf("then")>-1) return "r"+s;
+		if(input.indexOf("repeat")>-1 || input.indexOf("then")>-1) return "r"+s;// deps ?
 		return positionToString(bot.entity.position.plus(p));
 	}
 }
 
 regex=
 {
-	"position":"(-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?|me)"
+	"position":"(-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?|me|nearest mob .+|nearest mob)"
 }
 
 //possibilité (possiblement) de remplacer une fois au lancement seulement
@@ -556,9 +590,9 @@ function nameToState(stateName,username)
 	{
 		if((v=(new RegExp("^"+rstateName+"$")).exec(stateName))!=null)
 		{
+			v.shift();
 // 			v.push(v.input);
 			v.push(username);
-			v.shift();
 			state=ce.clone(states[rstateName]);
 			state.action.p=state.action.p != undefined ? state.action.p.concat(v) : v
 			break;
@@ -568,9 +602,9 @@ function nameToState(stateName,username)
 	{
 		if((v=(new RegExp("^"+rstateName+"$")).exec(stateName))!=null)
 		{
+			v.shift();
 // 			v.push(v.input);
 			v.push(username);
-			v.shift();
 			state=generated_states[rstateName].apply(this,v);
 			state.action.p=state.action.p != undefined ? state.action.p.concat(v) : v
 			break;
@@ -652,9 +686,10 @@ function replaceAlias(message,username)
 		{
 			if((v=(new RegExp(aliap)).exec(message))!=null)
 			{
+				var toReplace=v.shift();
 				v.push(v.input);
 				v.push(username);
-				var toReplace=v.shift();
+// 				console.log(v);
 				newM=message.replace(toReplace,parameterized_alias[aliap].apply(this,v));
 				if(newM!=message)
 				{
