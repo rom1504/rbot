@@ -185,36 +185,36 @@ function isFree(pos)
 // 	return e;
 // }
 var repeating=false;
-function repeatAux(stateName,username)
+function repeatAux(taskName,username)
 {
 	if(repeating)
 	{
-		var eventStateName=unique(stateName);
-		achieve(stateName,username,eventStateName);
- 		bot.once(eventStateName,function(){repeatAux(stateName,username);});
+		var eventTaskName=unique(taskName);
+		achieve(taskName,username,eventTaskName);
+ 		bot.once(eventTaskName,function(){repeatAux(taskName,username);});
 	}
 }
 
-function repeat(stateName,username)
+function repeat(taskName,username)
 {
 	repeating=true;
-	repeatAux(stateName,username);
+	repeatAux(taskName,username);
 	return "repeat";
 }
 
-function repeatAchieved(stateName)
+function repeatAchieved(taskName)
 {
 	return null;
 }
 
-function stopRepeat(stateName)
+function stopRepeat(taskName)
 {
 	repeating=false;
 	setTimeout(function(){bot.emit("stop repeat");bot.emit("repeat");},200);
 	return "stop repeat";
 }
 
-function stopRepeatAchieved(stateName)
+function stopRepeatAchieved(taskName)
 {
 	return null;
 }
@@ -382,34 +382,34 @@ function attendre(temps)
 	return f;
 }*/
 
-function achieveInList(stateNameList,i,username,eventStateName)
+function achieveInList(taskNameList,i,username,eventTaskName)
 {
-	return function(){achieve(stateNameList[i],username,eventStateName)};
+	return function(){achieve(taskNameList[i],username,eventTaskName)};
 }
 
-function listAux(eIni,stateNameList,username)
+function listAux(eIni,taskNameList,username)
 {
 	var e=eIni;
 	var b;
-	var eventStateName;
-	for(var i in stateNameList)
+	var eventTaskName;
+	for(var i in taskNameList)
 	{
-		eventStateName=unique(stateNameList[i]);
-		bot.once(e,achieveInList(stateNameList,i,username,eventStateName));
-		e=eventStateName;
+		eventTaskName=unique(taskNameList[i]);
+		bot.once(e,achieveInList(taskNameList,i,username,eventTaskName));
+		e=eventTaskName;
 	}
 	return e;
 }
 
-function listAchieved(stateNameList)
+function listAchieved(taskNameList)
 {
 	return null;
 }
 
-function list(stateNameList,username)
+function list(taskNameList,username)
 {
 	var eIni=unique("startList");
- 	var e=listAux(eIni,stateNameList.split(" then "),username);
+ 	var e=listAux(eIni,taskNameList.split(" then "),username);
 	bot.emit(eIni);
 	return e;
 }
@@ -427,7 +427,7 @@ function positionToString(p)
 
 // (-?[0-9]+(?:\\.[0-9]+)?),(-?[0-9]+(?:\\.[0-9]+)?),(-?[0-9]+(?:\\.[0-9]+)?)
 //remplacer par taches (ou cible ?) ?
-states=
+tasks=
 {
 		// va y avoir un pb ici : pas de end list et repeat...
 		// les conditions sont des post condition, pas pré
@@ -452,7 +452,7 @@ states=
 //  		"do one spiral stairway step":{action:{f:dig,p:["r0,1,1"],c:digAchieved},deps:["dig r0,1,0","dig r0,2,0","dig r0,2,1"]}
 };
 
-generated_states=
+generated_tasks=
 {
 	"dig forward position":function (s) 
 	{
@@ -462,7 +462,7 @@ generated_states=
 };
 
 // ou passer à du pur string ?
-// states_parametre
+// tasks_parametre
 
 
 //alias paramétrable ?
@@ -515,19 +515,19 @@ function replaceRegex(text)
 	return text;
 }
 
-ngenerated_states={};
-for(i in generated_states)
+ngenerated_tasks={};
+for(i in generated_tasks)
 {
-	ngenerated_states[replaceRegex(i)]=generated_states[i];
+	ngenerated_tasks[replaceRegex(i)]=generated_tasks[i];
 }
-generated_states=ngenerated_states;
+generated_tasks=ngenerated_tasks;
 
-nstates={};
-for(i in states)
+ntasks={};
+for(i in tasks)
 {
-	nstates[replaceRegex(i)]=states[i];
+	ntasks[replaceRegex(i)]=tasks[i];
 }
-states=nstates;
+tasks=ntasks;
 
 nparameterized_alias={};
 for(i in parameterized_alias)
@@ -536,12 +536,12 @@ for(i in parameterized_alias)
 }
 parameterized_alias=nparameterized_alias;
 
-function reportEndOfState(stateName,eventStateName)
+function reportEndOfTask(taskName,eventTaskName)
 {
 	return function()
 	{
-		console.log("I achieved state "+stateName);
-		bot.emit(eventStateName);
+		console.log("I achieved task "+taskName);
+		bot.emit(eventTaskName);
 	};
 }
 
@@ -559,107 +559,107 @@ function reportEndOfState(stateName,eventStateName)
 // 	}
 // }
 
-function achieved(state)
+function achieved(task)
 {
-	return state.action.c.apply(this,state.action.p);
+	return task.action.c.apply(this,task.action.p);
 }
 
-function applyAction(state,stateName,eventStateName)
+function applyAction(task,taskName,eventTaskName)
 {
 		return function()
 		{
 			var b;
-			if((b=achieved(state))!=null && b)
+			if((b=achieved(task))!=null && b)
 			{
-					(reportEndOfState(stateName,eventStateName))();
+					(reportEndOfTask(taskName,eventTaskName))();
 			}
 			else
 			{
-				var actione=state.action.f.apply(this,state.action.p);
-				bot.once(actione,achieved(state)===null ? reportEndOfState(stateName,eventStateName) : applyAction(state,stateName,eventStateName));
+				var actione=task.action.f.apply(this,task.action.p);
+				bot.once(actione,achieved(task)===null ? reportEndOfTask(taskName,eventTaskName) : applyAction(task,taskName,eventTaskName));
 			}
 			// comportement différent mais peut etre interessant :
-// 			var actione=state.action.f.apply(this,state.action.p);
-// 			bot.once(actione,reportEndOfState(stateName));
+// 			var actione=task.action.f.apply(this,task.action.p);
+// 			bot.once(actione,reportEndOfTask(taskName));
 		}
 }
 
-function nameToState(stateName,username)
+function nameToTask(taskName,username)
 {
-	stateName=replaceAlias(stateName,username);
+	taskName=replaceAlias(taskName,username);
 	var v;
-	var state;
-	for(rstateName in states)
+	var task;
+	for(rtaskName in tasks)
 	{
-		if((v=(new RegExp("^"+rstateName+"$")).exec(stateName))!=null)
+		if((v=(new RegExp("^"+rtaskName+"$")).exec(taskName))!=null)
 		{
 			v.shift();
 // 			v.push(v.input);
 			v.push(username);
-			state=ce.clone(states[rstateName]);
-			state.action.p=state.action.p != undefined ? state.action.p.concat(v) : v
+			task=ce.clone(tasks[rtaskName]);
+			task.action.p=task.action.p != undefined ? task.action.p.concat(v) : v
 			break;
 		}
 	}
-	for(rstateName in generated_states)
+	for(rtaskName in generated_tasks)
 	{
-		if((v=(new RegExp("^"+rstateName+"$")).exec(stateName))!=null)
+		if((v=(new RegExp("^"+rtaskName+"$")).exec(taskName))!=null)
 		{
 			v.shift();
 // 			v.push(v.input);
 			v.push(username);
-			state=generated_states[rstateName].apply(this,v);
-			state.action.p=state.action.p != undefined ? state.action.p.concat(v) : v
+			task=generated_tasks[rtaskName].apply(this,v);
+			task.action.p=task.action.p != undefined ? task.action.p.concat(v) : v
 			break;
 		}
 	}
-	return state;
+	return task;
 }
 
-function achieve(stateName,username,eventStateName)
+function achieve(taskName,username,eventTaskName)
 {
-	var state=nameToState(stateName,username);
-//  	stateName=replaceAlias(stateName,username);//utile ? // bien ?
-	console.log("I'm going to achieve state "+stateName);
+	var task=nameToTask(taskName,username);
+//  	taskName=replaceAlias(taskName,username);//utile ? // bien ?
+	console.log("I'm going to achieve task "+taskName);
 	var eIni=unique("demarrerAchieve");
 	var eEnd=unique("endAchieve");
-	var stateNameList=state.deps!=undefined ? state.deps : [];
-	var lstates=[];
-	for(var i in stateNameList)
+	var taskNameList=task.deps!=undefined ? task.deps : [];
+	var ltasks=[];
+	for(var i in taskNameList)
 	{
-		lstates[i]=nameToState(stateNameList[i],username);
+		ltasks[i]=nameToTask(taskNameList[i],username);
 	}
- 	achieveDependencies(eIni,stateNameList,lstates,eEnd,username);
-	bot.once(eEnd,applyAction(state,stateName,eventStateName));
+ 	achieveDependencies(eIni,taskNameList,ltasks,eEnd,username);
+	bot.once(eEnd,applyAction(task,taskName,eventTaskName));
 	bot.emit(eIni);
 }
 
-function achieveInAchieveDependencies(stateNameList,i,username,eventStateName)
+function achieveInAchieveDependencies(taskNameList,i,username,eventTaskName)
 {
-	return function(){achieve(stateNameList[i],username,eventStateName)};
+	return function(){achieve(taskNameList[i],username,eventTaskName)};
 }
 
-function achieveDependencies(eIni,stateNameList,lstates,eEnd,username)
+function achieveDependencies(eIni,taskNameList,ltasks,eEnd,username)
 {
 	var e=eIni;
 	var b;
 	var toContinue=false;
-	var eventStateName;
-	for(var i in stateNameList)
+	var eventTaskName;
+	for(var i in taskNameList)
 	{
-		b=achieved(lstates[i]);// on suppose ici que les dépendances ne modifie pas l'état : les paramètres font références à l'état initial
+		b=achieved(ltasks[i]);// on suppose ici que les dépendances ne modifie pas l'état : les paramètres font références à l'état initial
 		if(b===null || !b)
 		{
-			eventStateName=unique(stateNameList[i]);
-			bot.once(e,achieveInAchieveDependencies(stateNameList,i,username,eventStateName));// unique eventStateName
-			e=eventStateName;
-			if(b===null) lstates[i].c=function() {return true;};
+			eventTaskName=unique(taskNameList[i]);
+			bot.once(e,achieveInAchieveDependencies(taskNameList,i,username,eventTaskName));// unique eventTaskName
+			e=eventTaskName;
+			if(b===null) ltasks[i].c=function() {return true;};
 			toContinue=true;
 		}
 	}
 	if(toContinue)
 	{
-		bot.once(e,function(eIni,stateNameList,lstates,eEnd) {return function(){var s=unique("achieveDependencies");achieveDependencies(s,stateNameList,lstates,eEnd,username);bot.emit(s);};} (eIni,stateNameList,lstates,eEnd));
+		bot.once(e,function(eIni,taskNameList,ltasks,eEnd) {return function(){var s=unique("achieveDependencies");achieveDependencies(s,taskNameList,ltasks,eEnd,username);bot.emit(s);};} (eIni,taskNameList,ltasks,eEnd));
 	}
 	else
 	{
@@ -710,17 +710,17 @@ function processMessage(username, message)
 {
 	message=replaceAlias(message,username);
 // 	console.log(message);
-	for(stateName in states)
+	for(taskName in tasks)
 	{
-		if((new RegExp("^"+stateName+"$")).test(message))
+		if((new RegExp("^"+taskName+"$")).test(message))
 		{
 			achieve(message,username,unique(message));
 			return;
 		}		
 	}
-	for(stateName in generated_states)
+	for(taskName in generated_tasks)
 	{
-		if((new RegExp("^"+stateName+"$")).test(message))
+		if((new RegExp("^"+taskName+"$")).test(message))
 		{
 			achieve(message,username,unique(message));
 			return;
