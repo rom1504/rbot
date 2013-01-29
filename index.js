@@ -16,8 +16,12 @@ bot.on('login', function() {
   console.log("settings", bot.settings);
 });
 
+function isBlockEmpty(b)
+{
+	return b!==null && b.boundingBox==="empty";
+}
 
-bot.on('blockUpdate',function(pos){if(isEmpty(pos)){ bot.emit("pos_"+pos+"_empty");}});
+bot.on('blockUpdate',function(oldBlock,newBlock){if(isBlockEmpty(newBlock)){ bot.emit("pos_"+(newBlock.position)+"_empty");}});
 
 bot.on('spawn', function() {
   console.log("game", bot.game);
@@ -29,14 +33,13 @@ bot.on('death', function() {
 
 function isEmpty(pos)
 {
-	var b=bot.blockAt(pos);
-	return b!=null && b.boundingBox==="empty";
+	return isBlockEmpty(bot.blockAt(pos));
 }
 
 function canFall(pos)
 {
 	var b=bot.blockAt(pos);
-	return b!=null && b.type===13;
+	return b!=null && (b.type===13 || b.type===12);
 }
 
 function digAchieved(s)
@@ -60,11 +63,11 @@ function dig(s)
 	bot.client.write(0x0e, {status: 2,x:pos.x,y:pos.y,z:pos.z,face:face});
 	console.log("I dig position "+pos);
 	var e=unique("endDig");
-	bot.on("pos_"+pos+"_empty",function()
+	bot.on("pos_"+pos+"_empty",(function (pos,e) {return function()
 	{
 		if(canFall(pos.offset(0,1,0))) setTimeout(function(){bot.emit(e);},2000);
 		else bot.emit(e);
-	}
+	};})(pos,e)
 	);// because a block can take some time to fall (maybe 2000ms can be reduced)
 	return e;
 }
@@ -336,15 +339,15 @@ function tossAchieved()
 
 function listInventory()
 {
-	var id, count, item;
 	var output = "";
-	for (id in bot.inventory.count)
-	{
-		count = bot.inventory.count[id];
-		item = mineflayer.items[id] || mineflayer.blocks[id];
-		if (count) output += item.name + ": " + count + ", ";
+	bot.inventory.items().forEach(function(item) {
+		output += item.name + ": " + item.count + ", ";
+	});
+	if (output) {
+		bot.chat(output);
+	} else {
+		bot.chat("empty inventory");
 	}
-	bot.chat(output);
 	setTimeout(function(){bot.emit("listed");},100);
 	return "listed";
 }
