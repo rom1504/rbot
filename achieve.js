@@ -6,7 +6,6 @@ function init(_regex,_generated_tasks,_tasks,_parameterized_alias,_alias,_unique
 	bot=_bot;
 	vec3=_vec3;
 	unique=_unique;
-	//possibilité (possiblement) de remplacer une fois au lancement seulement
 	function replaceRegex(text)
 	{
 		for(var i in _regex)
@@ -39,12 +38,12 @@ function init(_regex,_generated_tasks,_tasks,_parameterized_alias,_alias,_unique
 	alias=_alias;
 }
 
-function reportEndOfTask(taskName,eventTaskName)
+function reportEndOfTask(taskName,done)
 {
 	return function()
 	{
 		console.log("I achieved task "+taskName);
-		bot.emit(eventTaskName);
+		done();
 	};
 }
 
@@ -67,20 +66,14 @@ function achieved(task)
 	return task.action.c.apply(this,task.action.p);
 }
 
-function applyAction(task,taskName,eventTaskName)
+function applyAction(task,taskName,done)
 {
 		return function()
 		{
 			var b;
-			if((b=achieved(task))!=null && b)
-			{
-					(reportEndOfTask(taskName,eventTaskName))();
-			}
-			else
-			{
-				var actione=task.action.f.apply(this,task.action.p);
-				bot.once(actione,achieved(task)===null ? reportEndOfTask(taskName,eventTaskName) : applyAction(task,taskName,eventTaskName));
-			}
+			
+			if((b=achieved(task))!=null && b) (reportEndOfTask(taskName,done))();
+			else task.action.f.apply(this,task.action.p.concat([achieved(task)===null ? reportEndOfTask(taskName,done) : applyAction(task,taskName,done)]));
 			// comportement différent mais peut etre interessant :
 // 			var actione=task.action.f.apply(this,task.action.p);
 // 			bot.once(actione,reportEndOfTask(taskName));
@@ -97,7 +90,6 @@ function nameToTask(taskName,username)
 		if((v=(new RegExp("^"+rtaskName+"$")).exec(taskName))!=null)
 		{
 			v.shift();
-// 			v.push(v.input);
 			v.push(username);
 			task=ce.clone(tasks[rtaskName]);
 			task.action.p=task.action.p != undefined ? task.action.p.concat(v) : v
@@ -109,7 +101,6 @@ function nameToTask(taskName,username)
 		if((v=(new RegExp("^"+rtaskName+"$")).exec(taskName))!=null)
 		{
 			v.shift();
-// 			v.push(v.input);
 			v.push(username);
 			task=generated_tasks[rtaskName].apply(this,v);
 			task.action.p=task.action.p != undefined ? task.action.p.concat(v) : v
@@ -119,55 +110,49 @@ function nameToTask(taskName,username)
 	return task;
 }
 
-function achieve(taskName,username,eventTaskName)
+function achieve(taskName,username,done)
 {
 	var task=nameToTask(taskName,username);
 //  	taskName=replaceAlias(taskName,username);//utile ? // bien ?
 	console.log("I'm going to achieve task "+taskName);
-	var eIni=unique("demarrerAchieve");
-	var eEnd=unique("endAchieve");
 	var taskNameList=task.deps!=undefined ? task.deps : [];
 	var ltasks=[];
 	for(var i in taskNameList)
 	{
 		ltasks[i]=nameToTask(taskNameList[i],username);
 	}
-	achieveDependencies(eIni,taskNameList,ltasks,eEnd,username);
-	bot.once(eEnd,applyAction(task,taskName,eventTaskName));
-	bot.emit(eIni);
+	achieveDependencies(taskNameList,ltasks,username,applyAction(task,taskName,done));
 }
 
-function achieveInAchieveDependencies(taskNameList,i,username,eventTaskName)
+function achieveDependenciesAux(taskNameList,ltasks,i,toContinue,username,done)
 {
-	return function(){achieve(taskNameList[i],username,eventTaskName)};
-}
-
-function achieveDependencies(eIni,taskNameList,ltasks,eEnd,username)
-{
-	var e=eIni;
-	var b;
-	var toContinue=false;
-	var eventTaskName;
-	for(var i in taskNameList)
+	if(i<taskNameList.length)
 	{
-		b=achieved(ltasks[i]);// on suppose ici que les dépendances ne modifie pas l'état : les paramètres font références à l'état initial
+		var b;
+		b=achieved(ltasks[i]);
 		if(b===null || !b)
 		{
-			eventTaskName=unique(taskNameList[i]);
-			bot.once(e,achieveInAchieveDependencies(taskNameList,i,username,eventTaskName));// unique eventTaskName
-			e=eventTaskName;
-			if(b===null) ltasks[i].c=function() {return true;};
 			toContinue=true;
+			if(b===null) ltasks[i].c=function() {return true;};
+			achieve(taskNameList[i],username,(function()
+			{
+				return function(){achieveDependenciesAux(taskNameList,ltasks,i+1,toContinue,username,done)}
+			})(taskNameList,ltasks,i,username,done));
+			
 		}
-	}
-	if(toContinue)
-	{
-		bot.once(e,function(eIni,taskNameList,ltasks,eEnd) {return function(){var s=unique("achieveDependencies");achieveDependencies(s,taskNameList,ltasks,eEnd,username);bot.emit(s);};} (eIni,taskNameList,ltasks,eEnd));
+		else achieveDependenciesAux(taskNameList,ltasks,i+1,toContinue,username,done);
 	}
 	else
-	{
-		bot.once(e,(function(eEnd){return function() {bot.emit(eEnd);};})(eEnd));
+	{		
+		if(toContinue) achieveDependencies(taskNameList,ltasks,username,done);
+		else done();
 	}
+}
+
+
+function achieveDependencies(taskNameList,ltasks,username,done) // on suppose ici que les dépendances ne modifie pas l'état : les paramètres font références à l'état initial
+{
+	achieveDependenciesAux(taskNameList,ltasks,0,false,username,done);
 }
 
 //reecriture (systeme suppose confluent et fortement terminal)
@@ -217,7 +202,7 @@ function processMessage(username, message)
 	{
 		if((new RegExp("^"+taskName+"$")).test(message))
 		{
-			achieve(message,username,unique(message));
+			achieve(message,username,function(){});
 			return;
 		}		
 	}
@@ -225,7 +210,7 @@ function processMessage(username, message)
 	{
 		if((new RegExp("^"+taskName+"$")).test(message))
 		{
-			achieve(message,username,unique(message));
+			achieve(message,username,function(){});
 			return;
 		}		
 	}

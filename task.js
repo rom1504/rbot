@@ -33,7 +33,7 @@ function digAchieved(s)
 	return isEmpty(pos);
 }
 
-function dig(s)
+function dig(s,u,done)
 {
 	var pos=(stringToPosition(s)).floored();
 	var rpos=pos.minus(bot.entity.position);
@@ -47,14 +47,12 @@ function dig(s)
 	bot.client.write(0x0e, {status: 0,x:pos.x,y:pos.y,z:pos.z,face:face});
 	bot.client.write(0x0e, {status: 2,x:pos.x,y:pos.y,z:pos.z,face:face});
 	console.log("I dig position "+pos);
-	var e=unique("endDig");
-	bot.on("pos_"+pos+"_empty",(function (pos,e) {return function()
+	bot.once("pos_"+pos+"_empty",(function (pos,done) {return function()
 	{
-		if(canFall(pos.offset(0,1,0))) setTimeout(function(){bot.emit(e);},2000);
-		else bot.emit(e);
-	};})(pos,e)
+		if(canFall(pos.offset(0,1,0))) setTimeout(function(){done();},2000);
+		else done();
+	};})(pos,done)
 	);// because a block can take some time to fall (maybe 2000ms can be reduced)
-	return e;
 }
 
 
@@ -91,23 +89,21 @@ function moveAchieved(s)
 // }
 
 
-function move(s)
+function move(s,u,done)
 {
 	var goalPosition=stringToPosition(s);
 	
-	bot.lookAt(goalPosition);
+	bot.lookAt(goalPosition.offset(0,bot.entity.height,0));
 	bot.setControlState('forward', true);
-	var eA=unique("move");
-	var arrive=setInterval(function()
+	var arrive=setInterval((function(goalPosition,done){return function()
 	{
 		if(/*scalarProduct(goalPosition.minus(bot.entity.position),d)<0 || */goalPosition.distanceTo(bot.entity.position)<0.3 || !isFree(goalPosition)/*(norm(bot.entity.velocity)<0.01)*/)
 		{
 			bot.setControlState('forward', false);
-			bot.emit(eA);
+			clearInterval(arrive);
+			done();
 		}
-	},50);
-	bot.once(eA,function(){clearInterval(arrive);});
-	return eA;
+	}})(goalPosition,done),50);
 }
 
 function moveToAchieved(s)
@@ -116,23 +112,26 @@ function moveToAchieved(s)
 	return goalPosition.distanceTo(bot.entity.position)<1 || !isFree(goalPosition);
 }
 
-function moveTo(s)
+function moveTo(s,u,done)
 {
 	var goalPosition=stringToPosition(s);
 	bot.navigate.to(goalPosition);
-	var e=unique("arrived");
-	bot.navigate.once("arrived",(function(e,goalPosition) {return function(){if(goalPosition.distanceTo(bot.entity.position)<1 || !isFree(goalPosition)) bot.emit(e);}})(e,goalPosition));
-	return e;
+	bot.navigate.once("arrived",(function(goalPosition,done) {
+		return function()
+		{
+			if(goalPosition.distanceTo(bot.entity.position)<1 || !isFree(goalPosition)) done();// to change ?
+		}
+	})(goalPosition,done));
 }
 
 function stopMoveToAchieved(s)
 {
 	return null;
 }
-function stopMoveTo()
+function stopMoveTo(u,done)
 {
 	bot.navigate.stop();
-	return "stop";
+	done();
 }
 
 
@@ -166,22 +165,17 @@ function isFree(pos)
 // 	e=move(direction.x,direction.y,direction.z);
 // 	return e;
 // }
-var repeating=false;
-function repeatAux(taskName,username)
+var repeating=false; // in init() rather
+function repeatAux(taskName,username,done)
 {
-	if(repeating)
-	{
-		var eventTaskName=unique(taskName);
-		achieve(taskName,username,eventTaskName);
-		bot.once(eventTaskName,function(){repeatAux(taskName,username);});
-	}
+	if(repeating) achieve(taskName,username,(function(taskName,username,done){return function() {repeatAux(taskName,username,done);}})(taskName,username,done));
+	else done();
 }
 
-function repeat(taskName,username)
+function repeat(taskName,username,done)
 {
 	repeating=true;
-	repeatAux(taskName,username);
-	return "repeat";
+	repeatAux(taskName,username,done);
 }
 
 function repeatAchieved(taskName)
@@ -189,11 +183,10 @@ function repeatAchieved(taskName)
 	return null;
 }
 
-function stopRepeat(taskName)
+function stopRepeat(taskName,u,done)
 {
 	repeating=false;
-	setTimeout(function(){bot.emit("stop repeat");bot.emit("repeat");},200);
-	return "stop repeat";
+	done();
 }
 
 function stopRepeatAchieved(taskName)
@@ -201,25 +194,17 @@ function stopRepeatAchieved(taskName)
 	return null;
 }
 
-// function marcheEscalierColimacon() // non : utiliser des états paramétrés
-// {
-// 	dig(new vec3(0,1,1));
-// 	dig(new vec3(0,1,0));
-// 	dig(new vec3(0,2,0));
-// 	dig(new vec3(0,2,1));
-// }
 
 function posAchieved(player)
 {
 	return null;
 }
 
-function pos(player)
+function pos(player,u,done)
 {
 	if(bot.players[player].entity!=undefined) bot.chat(player+" is in "+bot.players[player].entity.position);
 	else bot.chat(player+" is too far.");
-	setTimeout(function(){bot.emit("pos");},100);
-	return "pos";
+	done();
 }
 
 function lookForNearestMobAchieved(nameMob)
@@ -242,12 +227,6 @@ function nearestEntity(entities)
 	return r[0];
 }
 
-function emitAndReturn(event)
-{
-	setTimeout(function(){bot.emit(event);},100);
-	return event;
-}
-
 function nearestMob(nameMob)
 {
 	var a=[];
@@ -256,7 +235,7 @@ function nearestMob(nameMob)
 	return nearestEntity(mobs);
 }
 
-function lookForNearestMob(nameMob)
+function lookForNearestMob(nameMob,u,done)
 {
 	var mob=nearestMob(nameMob);
 	if(mob===null)
@@ -268,14 +247,15 @@ function lookForNearestMob(nameMob)
 		nameMob=mob.mobType;
 		bot.chat("Nearest "+nameMob+" is in "+mob.position+" , it is at a distance of "+Math.round(mob.position.distanceTo(bot.entity.position))+" from my position");
 	}
+	done();
 }
 
-function equip(destination,itemName)
+function equip(destination,itemName,u,done)
 {
 	var item = itemByName(itemName);
 	if (item)
 	{
-		bot.equip(item.type, destination, function(err) 
+		bot.equip(item, destination, function(err) 
 		{
 			if (err)
 			{
@@ -286,8 +266,7 @@ function equip(destination,itemName)
 		});
 	}
 	else console.log("I have no " + itemName);
-	setTimeout(function(){bot.emit("equipped");},100);
-	return "equipped";
+	done();
 }
 
 function equipAchieved()
@@ -295,7 +274,7 @@ function equipAchieved()
 	return null;
 }
 
-function toss(itemName)
+function toss(itemName,u,done)
 {
 	var item = itemByName(itemName);
 	if (item)
@@ -310,8 +289,7 @@ function toss(itemName)
 		});
 	}
 	else console.log("I have no " + itemName);
-	setTimeout(function(){bot.emit("tossed");},100);
-	return "tossed";
+	done();
 }
 
 function tossAchieved()
@@ -319,7 +297,7 @@ function tossAchieved()
 	return null;
 }
 
-function listInventory()
+function listInventory(u,done)
 {
 	var output = "";
 	bot.inventory.items().forEach(function(item) {
@@ -330,8 +308,7 @@ function listInventory()
 	} else {
 		bot.chat("empty inventory");
 	}
-	setTimeout(function(){bot.emit("listed");},100);
-	return "listed";
+	done();
 }
 
 function listInventoryAchieved()
@@ -364,23 +341,13 @@ function attendre(temps)
 	return f;
 }*/
 
-function achieveInList(taskNameList,i,username,eventTaskName)
-{
-	return function(){achieve(taskNameList[i],username,eventTaskName)};
-}
 
-function listAux(eIni,taskNameList,username)
+function listAux(taskNameList,i,username,done)
 {
-	var e=eIni;
-	var b;
-	var eventTaskName;
-	for(var i in taskNameList)
-	{
-		eventTaskName=unique(taskNameList[i]);
-		bot.once(e,achieveInList(taskNameList,i,username,eventTaskName));
-		e=eventTaskName;
-	}
-	return e;
+	if(i<taskNameList.length) achieve(taskNameList[i],username,(function(taskNameList,i,username,done) {
+		return function() {listAux(taskNameList,i+1,username,done)};
+	})(taskNameList,i,username,done));
+	else done();
 }
 
 function listAchieved(taskNameList)
@@ -388,12 +355,9 @@ function listAchieved(taskNameList)
 	return null;
 }
 
-function list(taskNameList,username)
+function list(taskNameList,username,done)
 {
-	var eIni=unique("startList");
-	var e=listAux(eIni,taskNameList.split(" then "),username);
-	bot.emit(eIni);
-	return e;
+	listAux(taskNameList.split(" then "),0,username,done);
 }
 
 function stringToPosition(s)
@@ -429,9 +393,6 @@ tasks=
 		"equip (.+?) (.+?)":{action:{f:equip,c:equipAchieved}},
 // 		"attendre ([0-9]+)":{action:{f:attendre,c:conditionAttendre}}
 // 		"avancer":{action:{f:avancer,c:conditionAvancer}},
-// 		"dig forward2 position":{action:{f:avancer,c:moveAchieved},deps:["dig "]} // pour faire ça il va falloir faire comme l'alias paramétrable : fonction de génération des états// 	
-		
-//  		"do one spiral stairway step":{action:{f:dig,p:["r0,1,1"],c:digAchieved},deps:["dig r0,1,0","dig r0,2,0","dig r0,2,1"]}
 };
 
 generated_tasks=
@@ -439,15 +400,12 @@ generated_tasks=
 	"dig forward position":function (s) 
 	{
 		p=stringToPosition(s);
-		return {action:{f:move,c:moveAchieved,p:[s]},deps:["dig "+positionToString(p.offset(0,1,0)),"dig "+s]};
+		return {action:{f:move,c:moveAchieved},deps:["dig "+positionToString(p.offset(0,1,0)),"dig "+s]};
 	}
 };
 
 // ou passer à du pur string ?
-// tasks_parametre
 
-
-//alias paramétrable ?
 alias=
 {
 	"x+":"move r1,0,0",
@@ -462,12 +420,8 @@ alias=
 
 parameterized_alias=
 {
-// 	"dig forward position":function (x,y,z) {x=parseFloat(x);y=parseFloat(y);z=parseFloat(z);return "dig "+x+","+(y+1)+","+z+" then dig "+x+","+y+","+z+" then move "+x+","+y+","+z;}
 	"position":function(s,input,username)
 	{
-// 		console.log(s);
-// 		console.log(input);
-// 		console.log(username);
 		if(s==="me") return positionToString(bot.players[username].entity.position);
 		var v;
 		if((v=new RegExp("^nearest mob (.+)$").exec(s))!=null) {var mob=nearestMob(v[1]); if(mob!=null) return positionToString(mob.position);}

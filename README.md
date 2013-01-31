@@ -32,8 +32,7 @@ Commands :
  * look for mob
  * stop repeat &lsaquo;action&rsaquo;
  * pos &lsaquo;player&rsaquo; : say the position of the other player if he is not too far away
- * move to me : make the bot come to you
- * move to position : use mineflayer-navigate to get to the position
+ * move to &lsaquo;position&rsaquo; : use mineflayer-navigate to get to &lsaquo;position&rsaquo;
  * spiral up : build an ascending spiral staircase
  * spiral down : build a descending spiral staircase
  * equip &lsaquo;emplacement&rsaquo; &lsaquo;item&rsaquo; : equip item at emplacement (for example hand)
