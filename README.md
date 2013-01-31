@@ -13,7 +13,7 @@ A bot based on mineflayer which can execute task with dependancies
 ### Roadmap
 
  * Doing more complicated things : getting any block, crafting things, getting anywhere by digging
- * Integrate other mineflayer functionnality : inventory, building
+ * Integrate other mineflayer functionnality : building, crafting
  * Improve/simplify the code
  
 ## Usage

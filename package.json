@@ -2,7 +2,7 @@
   "name": "rbot",
   "version": "0.0.2",
   "description": "bot made with mineflayer which can do task",
-  "main": "index.js",
+  "main": "rbot.js",
   "repository": {
     "type": "git",
     "url": "git://github.com/rom1504/rbot.git"
@@ -17,9 +17,8 @@
   },
   "license": "BSD",
   "dependencies": {
-	"mineflayer": "~0.0.18",
-    "mineflayer-navigate": "~0.0.2",
-    "vec3": "~0.1.2",
+	"mineflayer": "~0.0.19",
+    "mineflayer-navigate": "~0.0.4",
     "cloneextend":"~0.0.3"
   }
 }

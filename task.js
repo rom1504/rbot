@@ -1,40 +1,25 @@
-var mineflayer = require('mineflayer');
-var navigatePlugin = require('mineflayer-navigate')(mineflayer);
-var ce = require('cloneextend');
-var vec3 = mineflayer.vec3;
-var bot = mineflayer.createBot({
-	username: process.argv[4],
-	verbose: true,
-	port:parseInt(process.argv[3]),
-	host:process.argv[2]});
+function init(_bot,_vec3,_achieve)
+{
+	bot=_bot;
+	vec3=_vec3;
+	achieve=_achieve;
+	bot.on('blockUpdate',function(oldBlock,newBlock){if(isBlockEmpty(newBlock)){ bot.emit("pos_"+(newBlock.position)+"_empty");}});
+	bot.navigate.on("stop",function(){bot.emit("stop");});
+	directions=[new vec3(0,0,1),new vec3(0,0,-1),new vec3(1,0,0),new vec3(-1,0,0)];
+	direction=directions[0];
+}
 
-navigatePlugin(bot);
+function isEmpty(pos)
+{
+	return isBlockEmpty(bot.blockAt(pos));
+}
 
-bot.on('login', function() {
-  console.log("I logged in.");
-  bot.chat("/login "+process.argv[5]);
-  console.log("settings", bot.settings);
-});
 
 function isBlockEmpty(b)
 {
 	return b!==null && b.boundingBox==="empty";
 }
 
-bot.on('blockUpdate',function(oldBlock,newBlock){if(isBlockEmpty(newBlock)){ bot.emit("pos_"+(newBlock.position)+"_empty");}});
-
-bot.on('spawn', function() {
-  console.log("game", bot.game);
-});
-bot.on('death', function() {
-  bot.chat("I died x.x");
-});
-
-
-function isEmpty(pos)
-{
-	return isBlockEmpty(bot.blockAt(pos));
-}
 
 function canFall(pos)
 {
@@ -144,15 +129,12 @@ function stopMoveToAchieved(s)
 {
 	return null;
 }
-bot.navigate.on("stop",function(){bot.emit("stop");});
 function stopMoveTo()
 {
 	bot.navigate.stop();
 	return "stop";
 }
 
-directions=[new vec3(0,0,1),new vec3(0,0,-1),new vec3(1,0,0),new vec3(-1,0,0)];
-direction=directions[0];
 
 function isFree(pos)
 {
@@ -191,7 +173,7 @@ function repeatAux(taskName,username)
 	{
 		var eventTaskName=unique(taskName);
 		achieve(taskName,username,eventTaskName);
- 		bot.once(eventTaskName,function(){repeatAux(taskName,username);});
+		bot.once(eventTaskName,function(){repeatAux(taskName,username);});
 	}
 }
 
@@ -409,7 +391,7 @@ function listAchieved(taskNameList)
 function list(taskNameList,username)
 {
 	var eIni=unique("startList");
- 	var e=listAux(eIni,taskNameList.split(" then "),username);
+	var e=listAux(eIni,taskNameList.split(" then "),username);
 	bot.emit(eIni);
 	return e;
 }
@@ -505,256 +487,10 @@ regex=
 	"position":"(-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?|me|nearest mob .+|nearest mob)"
 }
 
-//possibilité (possiblement) de remplacer une fois au lancement seulement
-function replaceRegex(text)
-{
-	for(var i in regex)
-	{
-		text=text.replace(i,regex[i]);
-	}
-	return text;
-}
-
-ngenerated_tasks={};
-for(i in generated_tasks)
-{
-	ngenerated_tasks[replaceRegex(i)]=generated_tasks[i];
-}
-generated_tasks=ngenerated_tasks;
-
-ntasks={};
-for(i in tasks)
-{
-	ntasks[replaceRegex(i)]=tasks[i];
-}
-tasks=ntasks;
-
-nparameterized_alias={};
-for(i in parameterized_alias)
-{
-	nparameterized_alias[replaceRegex(i)]=parameterized_alias[i];
-}
-parameterized_alias=nparameterized_alias;
-
-function reportEndOfTask(taskName,eventTaskName)
-{
-	return function()
-	{
-		console.log("I achieved task "+taskName);
-		bot.emit(eventTaskName);
-	};
-}
-
-// à faire plus tard si vraiment nécessaire/utile
-// conditionsToMonitor={};
-// 
-// function monitor()
-// {
-// 	for(i in conditionsToMonitor)
-// 	{
-// 		if(conditionsToMonitor[i]())
-// 		{
-// 			emit(i);
-// 		}
-// 	}
-// }
-
-function achieved(task)
-{
-	return task.action.c.apply(this,task.action.p);
-}
-
-function applyAction(task,taskName,eventTaskName)
-{
-		return function()
-		{
-			var b;
-			if((b=achieved(task))!=null && b)
-			{
-					(reportEndOfTask(taskName,eventTaskName))();
-			}
-			else
-			{
-				var actione=task.action.f.apply(this,task.action.p);
-				bot.once(actione,achieved(task)===null ? reportEndOfTask(taskName,eventTaskName) : applyAction(task,taskName,eventTaskName));
-			}
-			// comportement différent mais peut etre interessant :
-// 			var actione=task.action.f.apply(this,task.action.p);
-// 			bot.once(actione,reportEndOfTask(taskName));
-		}
-}
-
-function nameToTask(taskName,username)
-{
-	taskName=replaceAlias(taskName,username);
-	var v;
-	var task;
-	for(rtaskName in tasks)
-	{
-		if((v=(new RegExp("^"+rtaskName+"$")).exec(taskName))!=null)
-		{
-			v.shift();
-// 			v.push(v.input);
-			v.push(username);
-			task=ce.clone(tasks[rtaskName]);
-			task.action.p=task.action.p != undefined ? task.action.p.concat(v) : v
-			break;
-		}
-	}
-	for(rtaskName in generated_tasks)
-	{
-		if((v=(new RegExp("^"+rtaskName+"$")).exec(taskName))!=null)
-		{
-			v.shift();
-// 			v.push(v.input);
-			v.push(username);
-			task=generated_tasks[rtaskName].apply(this,v);
-			task.action.p=task.action.p != undefined ? task.action.p.concat(v) : v
-			break;
-		}
-	}
-	return task;
-}
-
-function achieve(taskName,username,eventTaskName)
-{
-	var task=nameToTask(taskName,username);
-//  	taskName=replaceAlias(taskName,username);//utile ? // bien ?
-	console.log("I'm going to achieve task "+taskName);
-	var eIni=unique("demarrerAchieve");
-	var eEnd=unique("endAchieve");
-	var taskNameList=task.deps!=undefined ? task.deps : [];
-	var ltasks=[];
-	for(var i in taskNameList)
-	{
-		ltasks[i]=nameToTask(taskNameList[i],username);
-	}
- 	achieveDependencies(eIni,taskNameList,ltasks,eEnd,username);
-	bot.once(eEnd,applyAction(task,taskName,eventTaskName));
-	bot.emit(eIni);
-}
-
-function achieveInAchieveDependencies(taskNameList,i,username,eventTaskName)
-{
-	return function(){achieve(taskNameList[i],username,eventTaskName)};
-}
-
-function achieveDependencies(eIni,taskNameList,ltasks,eEnd,username)
-{
-	var e=eIni;
-	var b;
-	var toContinue=false;
-	var eventTaskName;
-	for(var i in taskNameList)
-	{
-		b=achieved(ltasks[i]);// on suppose ici que les dépendances ne modifie pas l'état : les paramètres font références à l'état initial
-		if(b===null || !b)
-		{
-			eventTaskName=unique(taskNameList[i]);
-			bot.once(e,achieveInAchieveDependencies(taskNameList,i,username,eventTaskName));// unique eventTaskName
-			e=eventTaskName;
-			if(b===null) ltasks[i].c=function() {return true;};
-			toContinue=true;
-		}
-	}
-	if(toContinue)
-	{
-		bot.once(e,function(eIni,taskNameList,ltasks,eEnd) {return function(){var s=unique("achieveDependencies");achieveDependencies(s,taskNameList,ltasks,eEnd,username);bot.emit(s);};} (eIni,taskNameList,ltasks,eEnd));
-	}
-	else
-	{
-		bot.once(e,(function(eEnd){return function() {bot.emit(eEnd);};})(eEnd));
-	}
-}
-
-//reecriture (systeme suppose confluent et fortement terminal)
-function replaceAlias(message,username)
-{
-	var changed=1;
-	while(changed)
-	{
-		changed=0;
-		for(var alia in alias)
-		{
-			var newM=message.replace(alia,alias[alia]);
-			if(newM!=message)
-			{
-				message=newM;
-				changed=1;
-				continue; // sure ?
-			}
-		}
-		var v;
-		for(var aliap in parameterized_alias)
-		{
-			if((v=(new RegExp(aliap)).exec(message))!=null)
-			{
-				var toReplace=v.shift();
-				v.push(v.input);
-				v.push(username);
-// 				console.log(v);
-				newM=message.replace(toReplace,parameterized_alias[aliap].apply(this,v));
-				if(newM!=message)
-				{
-					message=newM;
-					changed=1;
-					continue;
-				}
-			}
-		}
-	}
-	return message;
-}
-
-function processMessage(username, message)
-{
-	message=replaceAlias(message,username);
-// 	console.log(message);
-	for(taskName in tasks)
-	{
-		if((new RegExp("^"+taskName+"$")).test(message))
-		{
-			achieve(message,username,unique(message));
-			return;
-		}		
-	}
-	for(taskName in generated_tasks)
-	{
-		if((new RegExp("^"+taskName+"$")).test(message))
-		{
-			achieve(message,username,unique(message));
-			return;
-		}		
-	}
-}
-
-
-bot.on('chat',processMessage);
-
-
-
-// bot.navigate.on('pathFound', function (path) {
-//   bot.chat("found path. I can get there in " + path.length + " moves.");
-// });
-bot.navigate.on('cannotEndd', function () {
-  bot.chat("unable to endd path");
-});
-
-bot.on('health', function() {
-  console.log("I have " + bot.health + " health and " + bot.food + " food");
-});
-
-bot.on('playerJoined', function(player) {
-  console.log("hello, " + player.username + "! welmove to the server.");
-});
-bot.on('playerLeft', function(player) {
-  console.log("bye " + player.username);
-});
-bot.on('kicked', function(reason) {
-  console.log("I got kicked for", reason, "lol");
-});
-
-
-bot.on('nonSpokenChat', function(message) {
-  console.log("non spoken chat", message);
-});
+exports.tasks=tasks;
+exports.generated_tasks=generated_tasks;
+exports.alias=alias;
+exports.parameterized_alias=parameterized_alias;
+exports.regex=regex;
+exports.unique=unique;
+exports.init=init;
