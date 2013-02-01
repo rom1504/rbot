@@ -45,7 +45,7 @@ function canFall(pos)
 
 function dig(s,u,done)
 {
-	var pos=(stringToPosition(s,u)).floored();
+	var pos=(stringToPosition(s)).floored();
 	if(isEmpty(pos))
 	{
 		done();
@@ -92,7 +92,7 @@ function norm(v)
 
 function move(s,u,done)
 {
-	var goalPosition=stringToPosition(s,u);
+	var goalPosition=stringToPosition(s);
 	
 	bot.lookAt(goalPosition.offset(0,bot.entity.height,0));
 	bot.setControlState('forward', true);
@@ -110,7 +110,7 @@ function move(s,u,done)
 
 function moveTo(s,u,done)
 {
-	var goalPosition=stringToPosition(s,u);
+	var goalPosition=stringToPosition(s);
 	bot.navigate.to(goalPosition);
 	bot.navigate.once("arrived",done);
 }
@@ -204,20 +204,30 @@ function nearestMob(nameMob)
 	return nearestEntity(mobs);
 }
 
+// je ne sais pas, demander...
+// function nearestBlock(nameBlock)
+// {
+// 	var a=[];
+// 	for(i in bot.entities) a.push(bot.entities[i]);
+// 	var mobs=a.filter(function(entity) {return entity.type === 'mob' && (nameMob==="*" || entity.mobType ===nameMob);});
+// 	return nearestEntity(mobs);
+// }
+
 function lookForNearestMob(nameMob,u,done)
 {
 	var mob=nearestMob(nameMob);
-	if(mob===null)
-	{
-		bot.chat("I can't find any "+(nameMob==="*" ? "mob" : nameMob)+".");
-	}
-	else
-	{
-		nameMob=mob.mobType;
-		bot.chat("Nearest "+nameMob+" is in "+mob.position+" , it is at a distance of "+Math.round(mob.position.distanceTo(bot.entity.position))+" from my position");
-	}
+	if(mob===null)bot.chat("I can't find any "+(nameMob==="*" ? "mob" : nameMob)+".");
+	else bot.chat("Nearest "+mob.mobType+" is in "+mob.position+" , it is at a distance of "+Math.round(mob.position.distanceTo(bot.entity.position))+" from my position");
 	done();
 }
+
+// function lookForNearestBlock(nameBlock,u,done)
+// {
+// 	var block=nearestBlock(nameBlock);
+// 	if(block===null)bot.chat("I can't find any "+(nameBlock==="*" ? "block" : nameBlock)+".");
+// 	else bot.chat("Nearest "+block.name+" is in "+block.position+" , it is at a distance of "+Math.round(block.position.distanceTo(bot.entity.position))+" from my position");
+// 	done();
+// }
 
 function equip(destination,itemName,u,done)
 {
@@ -258,7 +268,7 @@ function toss(itemName,u,done)
 
 function attack(s,u,done)
 {
-	var ent=stringToEntity(s,u);
+	var ent=stringToEntity(s);
 	bot.attack(ent);
 	setTimeout(done,500);
 }
@@ -310,18 +320,18 @@ function list(taskNameList,username,done)
 	achieveList(taskNameList.split(" then "),username,done);
 }
 
-function stringToEntity(s,u)
+function stringToEntity(s)
 {
-	if(s==="me") return bot.players[u].entity;
 	var v;
+	if((v=new RegExp("^player (.+)$").exec(s))!=null) return bot.players[v[1]].entity;
 	if((v=new RegExp("^nearest mob (.+)$").exec(s))!=null) {var mob=nearestMob(v[1]); if(mob!=null) return mob}
 	if((v=new RegExp("^nearest mob$").exec(s))!=null) {var mob=nearestMob("*"); if(mob!=null) return mob}
 	return null;
 }
 
-function stringToPosition(s,u)
+function stringToPosition(s)
 {
-	var ent=stringToEntity(s,u);
+	var ent=stringToEntity(s);
 	if(ent!=null) return ent.position;
 	var c=s.split(",");
 	return new vec3(parseFloat(c[0]),parseFloat(c[1]),parseFloat(c[2]));
@@ -346,6 +356,7 @@ tasks=
 		"move to (.+)":{action:{f:moveTo}},
 		"move (.+)":{action:{f:move}},
 		"pos (.+)":{action:{f:pos}},
+// 		"look for block (.+)":{action:{lookForNearestBlock}},
 		"look for mob (.+)":{action:{f:lookForNearestMob}},
 		"look for mob":{action:{f:lookForNearestMob,p:["*"]}},
 		"stop move to (.+)":{action:{f:stopMoveTo}},
@@ -360,7 +371,7 @@ generated_tasks=
 {
 	"dig forward (.+)":function (s,u) 
 	{
-		var p=stringToPosition(s,u);
+		var p=stringToPosition(s);
 		return {action:{f:move},deps:["dig "+positionToString(p.offset(0,1,0)),"dig "+s]};
 	},
 	"attack (.+)":function (s,u)
@@ -387,9 +398,13 @@ parameterized_alias=
 {
 	"r(-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?)":function (s,u,input) 
 	{
-		p=stringToPosition(s,u);
+		p=stringToPosition(s);
 		if(input.indexOf("repeat")>-1 || input.indexOf("then")>-1) return "r"+s;// deps ?
 		return positionToString(bot.entity.position.plus(p));
+	},
+	" me":function(u)
+	{
+		return " player "+u;
 	}
 }
 

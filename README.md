@@ -45,9 +45,7 @@ Parameters :
  * &lsaquo;position&rsaquo; can be :
   * rx,y,z : relative position
   * x,y,z : absolute position
-  * me
-  * nearest mob &lsaquo;mob&rsaquo;
-  * nearest mob : any nearest mob
+  * &lsaquo;entity&rsaquo;
  * &lsaquo;mob&rsaquo; can be :
   * spider
   * enderman
@@ -57,3 +55,4 @@ Parameters :
   * nearest mob &lsaquo;mob&rsaquo;
   * nearest mob : any nearest mob
   * me
+  * player &lsaquo;playerName&rsaquo;
