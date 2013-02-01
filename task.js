@@ -20,6 +20,7 @@ function init(_bot,_vec3,_achieve,_achieveList)
 		}
 	});
 	bot.navigate.on("stop",function(){bot.emit("stop");});
+	bot.navigate.on("cannotFind",function(){bot.emit("stop");});
 	directions=[new vec3(0,0,1),new vec3(0,0,-1),new vec3(1,0,0),new vec3(-1,0,0)];
 	direction=directions[0];
 	repeating=false; // in init() rather
@@ -111,8 +112,12 @@ function move(s,u,done)
 function moveTo(s,u,done)
 {
 	var goalPosition=stringToPosition(s);
-	bot.navigate.to(goalPosition);
-	bot.navigate.once("arrived",done);
+	if(goalPosition.distanceTo(bot.entity.position)>=1)
+	{
+		bot.navigate.to(goalPosition);
+		bot.once("stop",done);
+	}
+	else done();
 }
 
 function stopMoveTo(u,done)
@@ -342,6 +347,12 @@ function positionToString(p)
 	return p.x+","+p.y+","+p.z;
 }
 
+function say(s,u,done)
+{
+	bot.chat(s);
+	done();
+}
+
 // (-?[0-9]+(?:\\.[0-9]+)?),(-?[0-9]+(?:\\.[0-9]+)?),(-?[0-9]+(?:\\.[0-9]+)?)
 //remplacer par taches (ou cible ?) ?
 tasks=
@@ -363,6 +374,7 @@ tasks=
 		"list":{action:{f:listInventory}},
 		"toss (.+)":{action:{f:toss}},
 		"equip (.+?) (.+?)":{action:{f:equip}},
+		"say (.+)":{action:{f:say}}
 // 		"attendre ([0-9]+)":{action:{f:attendre,c:conditionAttendre}}
 // 		"avancer":{action:{f:avancer,c:conditionAvancer}},
 };

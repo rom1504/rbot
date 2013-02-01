@@ -40,6 +40,7 @@ Commands :
  * toss &lsaquo;item&rsaquo;
  * list : list all items of the bot
  * attack &lsaquo;entity&rsaquo;
+ * say &lsaquo;message&rsaquo;
 
 Parameters :
  * &lsaquo;position&rsaquo; can be :
