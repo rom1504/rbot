@@ -1,6 +1,6 @@
 {
   "name": "rbot",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "bot made with mineflayer which can do task",
   "main": "rbot.js",
   "repository": {
