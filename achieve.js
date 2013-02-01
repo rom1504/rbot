@@ -1,11 +1,10 @@
 var ce = require('cloneextend');
 
 
-function init(_regex,_generated_tasks,_tasks,_parameterized_alias,_alias,_unique,_bot,_vec3) // ou passer simplement task...
+function init(_regex,_generated_tasks,_tasks,_parameterized_alias,_alias,_bot,_vec3) // ou passer simplement task...
 {
 	bot=_bot;
 	vec3=_vec3;
-	unique=_unique;
 	function replaceRegex(text)
 	{
 		for(var i in _regex)
@@ -61,19 +60,12 @@ function reportEndOfTask(taskName,done)
 // 	}
 // }
 
-function achieved(task)
-{
-	return task.action.c.apply(this,task.action.p);
-}
-
 function applyAction(task,taskName,done)
 {
 		return function()
 		{
 			var b;
-			
-			if((b=achieved(task))!=null && b) (reportEndOfTask(taskName,done))();
-			else task.action.f.apply(this,task.action.p.concat([achieved(task)===null ? reportEndOfTask(taskName,done) : applyAction(task,taskName,done)]));
+			task.action.f.apply(this,task.action.p.concat([function(success){if(success!=null && !success) {applyAction(task,taskName,done)()} else {reportEndOfTask(taskName,done)()}}]));
 			// comportement différent mais peut etre interessant :
 // 			var actione=task.action.f.apply(this,task.action.p);
 // 			bot.once(actione,reportEndOfTask(taskName));
@@ -115,44 +107,20 @@ function achieve(taskName,username,done)
 	var task=nameToTask(taskName,username);
 //  	taskName=replaceAlias(taskName,username);//utile ? // bien ?
 	console.log("I'm going to achieve task "+taskName);
-	var taskNameList=task.deps!=undefined ? task.deps : [];
-	var ltasks=[];
-	for(var i in taskNameList)
-	{
-		ltasks[i]=nameToTask(taskNameList[i],username);
-	}
-	achieveDependencies(taskNameList,ltasks,username,applyAction(task,taskName,done));
+	achieveList(task.deps!=undefined ? task.deps : [],username,applyAction(task,taskName,done));
 }
 
-function achieveDependenciesAux(taskNameList,ltasks,i,toContinue,username,done)
+function listAux(taskNameList,i,username,done)
 {
-	if(i<taskNameList.length)
-	{
-		var b;
-		b=achieved(ltasks[i]);
-		if(b===null || !b)
-		{
-			toContinue=true;
-			if(b===null) ltasks[i].c=function() {return true;};
-			achieve(taskNameList[i],username,(function()
-			{
-				return function(){achieveDependenciesAux(taskNameList,ltasks,i+1,toContinue,username,done)}
-			})(taskNameList,ltasks,i,username,done));
-			
-		}
-		else achieveDependenciesAux(taskNameList,ltasks,i+1,toContinue,username,done);
-	}
-	else
-	{		
-		if(toContinue) achieveDependencies(taskNameList,ltasks,username,done);
-		else done();
-	}
+	if(i<taskNameList.length) achieve(taskNameList[i],username,(function(taskNameList,i,username,done) {
+		return function() {listAux(taskNameList,i+1,username,done)};
+	})(taskNameList,i,username,done));
+	else done();
 }
 
-
-function achieveDependencies(taskNameList,ltasks,username,done) // on suppose ici que les dépendances ne modifie pas l'état : les paramètres font références à l'état initial
+function achieveList(taskNameList,username,done)
 {
-	achieveDependenciesAux(taskNameList,ltasks,0,false,username,done);
+	listAux(taskNameList,0,username,done);
 }
 
 //reecriture (systeme suppose confluent et fortement terminal)
@@ -178,8 +146,8 @@ function replaceAlias(message,username)
 			if((v=(new RegExp(aliap)).exec(message))!=null)
 			{
 				var toReplace=v.shift();
-				v.push(v.input);
 				v.push(username);
+				v.push(v.input);
 // 				console.log(v);
 				newM=message.replace(toReplace,parameterized_alias[aliap].apply(this,v));
 				if(newM!=message)
@@ -220,3 +188,4 @@ function processMessage(username, message)
 exports.init=init;
 exports.processMessage=processMessage;
 exports.achieve=achieve;
+exports.achieveList=achieveList;

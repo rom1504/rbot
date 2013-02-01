@@ -1,12 +1,28 @@
-function init(_bot,_vec3,_achieve)
+var bot;
+var vec3;
+var achieve;
+var achieveList;
+var directions;
+var direction;
+var repeating;
+
+function init(_bot,_vec3,_achieve,_achieveList)
 {
 	bot=_bot;
 	vec3=_vec3;
 	achieve=_achieve;
-	bot.on('blockUpdate',function(oldBlock,newBlock){if(isBlockEmpty(newBlock)){ bot.emit("pos_"+(newBlock.position)+"_empty");}});
+	achieveList=_achieveList;
+	bot.on('blockUpdate',function(oldBlock,newBlock){
+		if(newBlock!=null)
+		{
+			if(isBlockEmpty(newBlock)) bot.emit("pos_"+(newBlock.position)+"_empty");
+			else bot.emit("pos_"+(newBlock.position)+"_not_empty");
+		}
+	});
 	bot.navigate.on("stop",function(){bot.emit("stop");});
 	directions=[new vec3(0,0,1),new vec3(0,0,-1),new vec3(1,0,0),new vec3(-1,0,0)];
 	direction=directions[0];
+	repeating=false; // in init() rather
 }
 
 function isEmpty(pos)
@@ -27,15 +43,14 @@ function canFall(pos)
 	return b!=null && (b.type===13 || b.type===12);
 }
 
-function digAchieved(s)
-{
-	var pos=(stringToPosition(s)).floored();
-	return isEmpty(pos);
-}
-
 function dig(s,u,done)
 {
-	var pos=(stringToPosition(s)).floored();
+	var pos=(stringToPosition(s,u)).floored();
+	if(isEmpty(pos))
+	{
+		done();
+		return;
+	}
 	var rpos=pos.minus(bot.entity.position);
 	var face=-1;
 	if(rpos.x>0) {face=4;}
@@ -49,7 +64,7 @@ function dig(s,u,done)
 	console.log("I dig position "+pos);
 	bot.once("pos_"+pos+"_empty",(function (pos,done) {return function()
 	{
-		if(canFall(pos.offset(0,1,0))) setTimeout(function(){done();},2000);
+		if(canFall(pos.offset(0,1,0))) bot.once("pos_"+pos+"_not_empty",function(){done(false);});
 		else done();
 	};})(pos,done)
 	);// because a block can take some time to fall (maybe 2000ms can be reduced)
@@ -66,20 +81,6 @@ function norm(v)
 	return Math.sqrt(scalarProduct(v,v));
 }
 
-numbers={};
-function unique(name)
-{
-	if(numbers[name]==undefined) numbers[name]=0;
-	numbers[name]++;
-	return name+numbers[name];
-}
-
-function moveAchieved(s)
-{
-	var goalPosition=stringToPosition(s);
-// 	console.log(goalPosition.distanceTo(bot.entity.position));
-	return goalPosition.distanceTo(bot.entity.position)<0.3 || !isFree(goalPosition);
-}
 
 // // to continue
 // function build(s)
@@ -91,7 +92,7 @@ function moveAchieved(s)
 
 function move(s,u,done)
 {
-	var goalPosition=stringToPosition(s);
+	var goalPosition=stringToPosition(s,u);
 	
 	bot.lookAt(goalPosition.offset(0,bot.entity.height,0));
 	bot.setControlState('forward', true);
@@ -101,33 +102,19 @@ function move(s,u,done)
 		{
 			bot.setControlState('forward', false);
 			clearInterval(arrive);
-			done();
+			done();// maybe signal an error if the goal position isn't free (same thing for move to)
 		}
 	}})(goalPosition,done),50);
 }
 
-function moveToAchieved(s)
-{
-	var goalPosition=stringToPosition(s);
-	return goalPosition.distanceTo(bot.entity.position)<1 || !isFree(goalPosition);
-}
 
 function moveTo(s,u,done)
 {
-	var goalPosition=stringToPosition(s);
+	var goalPosition=stringToPosition(s,u);
 	bot.navigate.to(goalPosition);
-	bot.navigate.once("arrived",(function(goalPosition,done) {
-		return function()
-		{
-			if(goalPosition.distanceTo(bot.entity.position)<1 || !isFree(goalPosition)) done();// to change ?
-		}
-	})(goalPosition,done));
+	bot.navigate.once("arrived",done);
 }
 
-function stopMoveToAchieved(s)
-{
-	return null;
-}
 function stopMoveTo(u,done)
 {
 	bot.navigate.stop();
@@ -165,10 +152,10 @@ function isFree(pos)
 // 	e=move(direction.x,direction.y,direction.z);
 // 	return e;
 // }
-var repeating=false; // in init() rather
+
 function repeatAux(taskName,username,done)
 {
-	if(repeating) achieve(taskName,username,(function(taskName,username,done){return function() {repeatAux(taskName,username,done);}})(taskName,username,done));
+	if(repeating) achieve(taskName,username,(function(taskName,username,done){return function() {setTimeout(repeatAux,100,taskName,username,done);}})(taskName,username,done));
 	else done();
 }
 
@@ -178,27 +165,13 @@ function repeat(taskName,username,done)
 	repeatAux(taskName,username,done);
 }
 
-function repeatAchieved(taskName)
-{
-	return null;
-}
-
 function stopRepeat(taskName,u,done)
 {
 	repeating=false;
 	done();
 }
 
-function stopRepeatAchieved(taskName)
-{
-	return null;
-}
 
-
-function posAchieved(player)
-{
-	return null;
-}
 
 function pos(player,u,done)
 {
@@ -207,10 +180,6 @@ function pos(player,u,done)
 	done();
 }
 
-function lookForNearestMobAchieved(nameMob)
-{
-	return null;
-}
 
 function nearestEntity(entities)
 {
@@ -269,11 +238,6 @@ function equip(destination,itemName,u,done)
 	done();
 }
 
-function equipAchieved()
-{
-	return null;
-}
-
 function toss(itemName,u,done)
 {
 	var item = itemByName(itemName);
@@ -292,10 +256,13 @@ function toss(itemName,u,done)
 	done();
 }
 
-function tossAchieved()
+function attack(s,u,done)
 {
-	return null;
+	var ent=stringToEntity(s,u);
+	bot.attack(ent);
+	setTimeout(done,500);
 }
+
 
 function listInventory(u,done)
 {
@@ -311,10 +278,6 @@ function listInventory(u,done)
 	done();
 }
 
-function listInventoryAchieved()
-{
-	return null;
-}
 
 function itemByName(name)
 {
@@ -342,26 +305,24 @@ function attendre(temps)
 }*/
 
 
-function listAux(taskNameList,i,username,done)
+function list(taskNameList,username,done)
 {
-	if(i<taskNameList.length) achieve(taskNameList[i],username,(function(taskNameList,i,username,done) {
-		return function() {listAux(taskNameList,i+1,username,done)};
-	})(taskNameList,i,username,done));
-	else done();
+	achieveList(taskNameList.split(" then "),username,done);
 }
 
-function listAchieved(taskNameList)
+function stringToEntity(s,u)
 {
+	if(s==="me") return bot.players[u].entity;
+	var v;
+	if((v=new RegExp("^nearest mob (.+)$").exec(s))!=null) {var mob=nearestMob(v[1]); if(mob!=null) return mob}
+	if((v=new RegExp("^nearest mob$").exec(s))!=null) {var mob=nearestMob("*"); if(mob!=null) return mob}
 	return null;
 }
 
-function list(taskNameList,username,done)
+function stringToPosition(s,u)
 {
-	listAux(taskNameList.split(" then "),0,username,done);
-}
-
-function stringToPosition(s)
-{
+	var ent=stringToEntity(s,u);
+	if(ent!=null) return ent.position;
 	var c=s.split(",");
 	return new vec3(parseFloat(c[0]),parseFloat(c[1]),parseFloat(c[2]));
 }
@@ -378,29 +339,33 @@ tasks=
 		// va y avoir un pb ici : pas de end list et repeat...
 		// les conditions sont des post condition, pas pré
 		// pré condition réalisé grace aux dépendances
-		"repeat (.+)":{action:{f:repeat,c:repeatAchieved}},//priorité avec then
-		"stop repeat (.+)":{action:{f:stopRepeat,c:stopRepeatAchieved}},
-		"(.+ then .+)":{action:{f:list,c:listAchieved}},
-		"dig position":{action:{f:dig,c:digAchieved}},
-		"move position":{action:{f:move,c:moveAchieved}},
-		"pos (.+)":{action:{f:pos,c:posAchieved}},
-		"look for mob (.+)":{action:{f:lookForNearestMob,c:lookForNearestMobAchieved}},
-		"look for mob":{action:{f:lookForNearestMob,c:lookForNearestMobAchieved,p:["*"]}},
-		"move to position":{action:{f:moveTo,c:moveToAchieved}},
-		"stop move to position":{action:{f:stopMoveTo,c:stopMoveToAchieved}},
-		"list":{action:{f:listInventory,c:listInventoryAchieved}},
-		"toss (.+)":{action:{f:toss,c:tossAchieved}},
-		"equip (.+?) (.+?)":{action:{f:equip,c:equipAchieved}},
+		"repeat (.+)":{action:{f:repeat}},//priorité avec then
+		"stop repeat (.+)":{action:{f:stopRepeat}},
+		"(.+ then .+)":{action:{f:list}},
+		"dig (.+)":{action:{f:dig}},
+		"move to (.+)":{action:{f:moveTo}},
+		"move (.+)":{action:{f:move}},
+		"pos (.+)":{action:{f:pos}},
+		"look for mob (.+)":{action:{f:lookForNearestMob}},
+		"look for mob":{action:{f:lookForNearestMob,p:["*"]}},
+		"stop move to (.+)":{action:{f:stopMoveTo}},
+		"list":{action:{f:listInventory}},
+		"toss (.+)":{action:{f:toss}},
+		"equip (.+?) (.+?)":{action:{f:equip}},
 // 		"attendre ([0-9]+)":{action:{f:attendre,c:conditionAttendre}}
 // 		"avancer":{action:{f:avancer,c:conditionAvancer}},
 };
 
 generated_tasks=
 {
-	"dig forward position":function (s) 
+	"dig forward (.+)":function (s,u) 
 	{
-		p=stringToPosition(s);
-		return {action:{f:move,c:moveAchieved},deps:["dig "+positionToString(p.offset(0,1,0)),"dig "+s]};
+		var p=stringToPosition(s,u);
+		return {action:{f:move},deps:["dig "+positionToString(p.offset(0,1,0)),"dig "+s]};
+	},
+	"attack (.+)":function (s,u)
+	{
+		return {action:{f:attack},deps:["move to "+s]};
 	}
 };
 
@@ -420,17 +385,9 @@ alias=
 
 parameterized_alias=
 {
-	"position":function(s,input,username)
+	"r(-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?)":function (s,u,input) 
 	{
-		if(s==="me") return positionToString(bot.players[username].entity.position);
-		var v;
-		if((v=new RegExp("^nearest mob (.+)$").exec(s))!=null) {var mob=nearestMob(v[1]); if(mob!=null) return positionToString(mob.position);}
-		if((v=new RegExp("^nearest mob$").exec(s))!=null) {var mob=nearestMob("*"); if(mob!=null) return positionToString(mob.position);}
-		return s;
-	},
-	"rposition":function (s,input) 
-	{
-		p=stringToPosition(s);
+		p=stringToPosition(s,u);
 		if(input.indexOf("repeat")>-1 || input.indexOf("then")>-1) return "r"+s;// deps ?
 		return positionToString(bot.entity.position.plus(p));
 	}
@@ -438,7 +395,7 @@ parameterized_alias=
 
 regex=
 {
-	"position":"(-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?|me|nearest mob .+|nearest mob)"
+	//"position":"(-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?|me|nearest mob .+|nearest mob)"
 }
 
 exports.tasks=tasks;
@@ -446,5 +403,4 @@ exports.generated_tasks=generated_tasks;
 exports.alias=alias;
 exports.parameterized_alias=parameterized_alias;
 exports.regex=regex;
-exports.unique=unique;
 exports.init=init;

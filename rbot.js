@@ -11,8 +11,8 @@ navigatePlugin(bot);
 var task=require('./task');
 var achieve=require('./achieve');
 
-task.init(bot,vec3,achieve.achieve);
-achieve.init(task.regex,task.generated_tasks,task.tasks,task.parameterized_alias,task.alias,task.unique,bot,vec3);
+task.init(bot,vec3,achieve.achieve,achieve.achieveList);
+achieve.init(task.regex,task.generated_tasks,task.tasks,task.parameterized_alias,task.alias,bot,vec3);
 
 bot.on('login', function() {
   console.log("I logged in.");
@@ -30,9 +30,9 @@ bot.on('death', function() {
 
 bot.on('chat',achieve.processMessage);
 
-// bot.navigate.on('pathFound', function (path) {
-//   bot.chat("found path. I can get there in " + path.length + " moves.");
-// });
+bot.navigate.on('pathFound', function (path) {
+  console.log("found path. I can get there in " + path.length + " moves.");
+});
 bot.navigate.on('cannotFind', function () {
   console.log("unable to find path");
 });

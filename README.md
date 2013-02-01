@@ -9,6 +9,7 @@ A bot based on mineflayer which can execute task with dependancies
  * integration of mineflayer-navigate which can make the bot go to any position not too far away
  * building a spiral staircase
  * inventory management : equip,toss,list
+ * attack
  
 ### Roadmap
 
@@ -38,6 +39,7 @@ Commands :
  * equip &lsaquo;emplacement&rsaquo; &lsaquo;item&rsaquo; : equip item at emplacement (for example hand)
  * toss &lsaquo;item&rsaquo;
  * list : list all items of the bot
+ * attack &lsaquo;entity&rsaquo;
 
 Parameters :
  * &lsaquo;position&rsaquo; can be :
@@ -51,3 +53,7 @@ Parameters :
   * enderman
   * creeper
   * ...
+ * &lsaquo;entity&rsaquo; can be :
+  * nearest mob &lsaquo;mob&rsaquo;
+  * nearest mob : any nearest mob
+  * me
