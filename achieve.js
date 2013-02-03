@@ -1,8 +1,10 @@
 var ce = require('cloneextend');
 
+var bot,vec3,generated_tasks,tasks,parameterized_alias,alias,master;
 
-function init(_regex,_generated_tasks,_tasks,_parameterized_alias,_alias,_bot,_vec3) // ou passer simplement task...
+function init(_regex,_generated_tasks,_tasks,_parameterized_alias,_alias,_bot,_vec3,_master) // ou passer simplement task...
 {
+	master=_master;
 	bot=_bot;
 	vec3=_vec3;
 	function replaceRegex(text)
@@ -85,7 +87,7 @@ function nameToTask(taskName,username)
 			v.push(username);
 			task=ce.clone(tasks[rtaskName]);
 			task.action.p=task.action.p != undefined ? task.action.p.concat(v) : v
-			break;
+			return task;
 		}
 	}
 	for(rtaskName in generated_tasks)
@@ -95,17 +97,16 @@ function nameToTask(taskName,username)
 			v.shift();
 			v.push(username);
 			task=generated_tasks[rtaskName].apply(this,v);
-			task.action.p=task.action.p != undefined ? task.action.p.concat(v) : v
-			break;
+			task.action.p=task.action.p != undefined ? task.action.p.concat(v) : v;
+			return task;
 		}
 	}
-	return task;
 }
 
 function achieve(taskName,username,done)
 {
 	var task=nameToTask(taskName,username);
-//  	taskName=replaceAlias(taskName,username);//utile ? // bien ?
+		//  	taskName=replaceAlias(taskName,username);//utile ? // bien ?
 	console.log("I'm going to achieve task "+taskName);
 	achieveList(task.deps!=undefined ? task.deps : [],username,applyAction(task,taskName,done));
 }
@@ -164,23 +165,26 @@ function replaceAlias(message,username)
 
 function processMessage(username, message)
 {
-	message=replaceAlias(message,username);
-// 	console.log(message);
-	for(taskName in tasks)
+	if(username===master || master===undefined)
 	{
-		if((new RegExp("^"+taskName+"$")).test(message))
+		message=replaceAlias(message,username);
+	// 	console.log(message);
+		for(taskName in tasks)
 		{
-			achieve(message,username,function(){});
-			return;
-		}		
-	}
-	for(taskName in generated_tasks)
-	{
-		if((new RegExp("^"+taskName+"$")).test(message))
+			if((new RegExp("^"+taskName+"$")).test(message))
+			{
+				achieve(message,username,function(){});
+				return;
+			}		
+		}
+		for(taskName in generated_tasks)
 		{
-			achieve(message,username,function(){});
-			return;
-		}		
+			if((new RegExp("^"+taskName+"$")).test(message))
+			{
+				achieve(message,username,function(){});
+				return;
+			}		
+		}
 	}
 }
 

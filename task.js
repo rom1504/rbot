@@ -46,7 +46,7 @@ function canFall(pos)
 
 function dig(s,u,done)
 {
-	var pos=(stringToPosition(s)).floored();
+	var pos=stringToPosition(s).floored();
 	if(isEmpty(pos))
 	{
 		done();
@@ -63,12 +63,10 @@ function dig(s,u,done)
 	bot.client.write(0x0e, {status: 0,x:pos.x,y:pos.y,z:pos.z,face:face});
 	bot.client.write(0x0e, {status: 2,x:pos.x,y:pos.y,z:pos.z,face:face});
 	console.log("I dig position "+pos);
-	bot.once("pos_"+pos+"_empty",(function (pos,done) {return function()
-	{
+	bot.once("pos_"+pos+"_empty",(function (pos,done) {return function() {
 		if(canFall(pos.offset(0,1,0))) bot.once("pos_"+pos+"_not_empty",function(){done(false);});
 		else done();
-	};})(pos,done)
-	);// because a block can take some time to fall (maybe 2000ms can be reduced)
+	};})(pos,done));// because a block can take some time to fall (maybe 2000ms can be reduced)
 }
 
 
@@ -94,7 +92,6 @@ function norm(v)
 function move(s,u,done)
 {
 	var goalPosition=stringToPosition(s);
-	
 	bot.lookAt(goalPosition.offset(0,bot.entity.height,0));
 	bot.setControlState('forward', true);
 	var arrive=setInterval((function(goalPosition,done){return function()
@@ -105,7 +102,7 @@ function move(s,u,done)
 			clearInterval(arrive);
 			done();// maybe signal an error if the goal position isn't free (same thing for move to)
 		}
-	}})(goalPosition,done),50);
+	}})(goalPosition,done),50);	
 }
 
 
@@ -114,7 +111,7 @@ function moveTo(s,u,done)
 	var goalPosition=stringToPosition(s);
 	if(goalPosition.distanceTo(bot.entity.position)>=1)
 	{
-		bot.navigate.to(goalPosition);
+		bot.navigate.to(goalPosition,{endRadius:0.5});//use callback here ?
 		bot.once("stop",done);
 	}
 	else done();
@@ -185,6 +182,36 @@ function pos(player,u,done)
 	done();
 }
 
+function remove(a,e)
+{
+	return a.filter(function(v) { return v == e ? false : true;});
+}
+// var a;
+// var b;
+
+function nearestReachableEntity(entities) // problem if an entity dies
+{// changer ici...
+// 	var ent=nearestEntity(entities);
+// 	bot.navigate.once("pathFound",a=(function(ent){return function(){setTimeout(function(){bot.navigate.removeListener("cannotFind",b);bot.navigate.stop();done(ent);},100);}}(ent)));
+// 	bot.navigate.once("cannotFind",b=(function(entities,ent){return function(){bot.navigate.removeListener("pathFound",a);if(entities.length>1) nearestReachableEntity(remove(entities,ent),done); else done(null);}}(entities,ent)));
+// 	bot.navigate.to(ent.position,{timeout:1000});
+// 	var result;
+	var ent;
+	while(1) // see if a too long computation couldn't cause problem (fork ?)
+	{
+		ent=nearestEntity(entities);
+// 		console.log(ent.position);
+		result=bot.navigate.findPathSync(ent.position,{endRadius:0.5,timeout:1000});
+// 		console.log(result);
+		if(result.status != 'success')
+		{
+// 			console.log(entities.length);
+			if(entities.length>1) entities=remove(entities,ent); // to change ?
+			else return null;
+		}
+		else return ent;
+	}
+}
 
 function nearestEntity(entities)
 {
@@ -201,12 +228,11 @@ function nearestEntity(entities)
 	return r[0];
 }
 
-function nearestMob(nameMob)
+function mobs(nameMob)
 {
 	var a=[];
 	for(i in bot.entities) a.push(bot.entities[i]);
-	var mobs=a.filter(function(entity) {return entity.type === 'mob' && (nameMob==="*" || entity.mobType ===nameMob);});
-	return nearestEntity(mobs);
+	return a.filter(function(entity) {return entity.type === 'mob' && (nameMob==="*" || entity.mobType ===nameMob);});
 }
 
 // je ne sais pas, demander...
@@ -218,11 +244,11 @@ function nearestMob(nameMob)
 // 	return nearestEntity(mobs);
 // }
 
-function lookForNearestMob(nameMob,u,done)
+function lookForEntity(s,u,done)
 {
-	var mob=nearestMob(nameMob);
-	if(mob===null)bot.chat("I can't find any "+(nameMob==="*" ? "mob" : nameMob)+".");
-	else bot.chat("Nearest "+mob.mobType+" is in "+mob.position+" , it is at a distance of "+Math.round(mob.position.distanceTo(bot.entity.position))+" from my position");
+	var ent=stringToEntity(s);
+	if(ent===null) bot.chat("I can't find "+s);
+	else bot.chat((ent.type === 'mob' ? "Nearest "+ent.mobType : s)+" is in "+ent.position);
 	done();
 }
 
@@ -329,8 +355,10 @@ function stringToEntity(s)
 {
 	var v;
 	if((v=new RegExp("^player (.+)$").exec(s))!=null) return bot.players[v[1]].entity;
-	if((v=new RegExp("^nearest mob (.+)$").exec(s))!=null) {var mob=nearestMob(v[1]); if(mob!=null) return mob}
-	if((v=new RegExp("^nearest mob$").exec(s))!=null) {var mob=nearestMob("*"); if(mob!=null) return mob}
+	if((v=new RegExp("^nearest mob (.+)$").exec(s))!=null) return nearestEntity(mobs(v[1]));
+	if((v=new RegExp("^nearest mob$").exec(s))!=null) return nearestEntity(mobs("*"));
+	if((v=new RegExp("^nearest reachable mob (.+)$").exec(s))!=null) return nearestReachableEntity(mobs(v[1]));
+	if((v=new RegExp("^nearest reachable mob$").exec(s))!=null) return nearestReachableEntity(mobs("*"));
 	return null;
 }
 
@@ -338,6 +366,11 @@ function stringToPosition(s)
 {
 	var ent=stringToEntity(s);
 	if(ent!=null) return ent.position;
+	return simpleStringToPosition(s);
+}
+
+function simpleStringToPosition(s)
+{
 	var c=s.split(",");
 	return new vec3(parseFloat(c[0]),parseFloat(c[1]),parseFloat(c[2]));
 }
@@ -368,9 +401,8 @@ tasks=
 		"move (.+)":{action:{f:move}},
 		"pos (.+)":{action:{f:pos}},
 // 		"look for block (.+)":{action:{lookForNearestBlock}},
-		"look for mob (.+)":{action:{f:lookForNearestMob}},
-		"look for mob":{action:{f:lookForNearestMob,p:["*"]}},
-		"stop move to (.+)":{action:{f:stopMoveTo}},
+		"look for entity (.+)":{action:{f:lookForEntity}},
+		"stop move to":{action:{f:stopMoveTo}},
 		"list":{action:{f:listInventory}},
 		"toss (.+)":{action:{f:toss}},
 		"equip (.+?) (.+?)":{action:{f:equip}},
@@ -410,7 +442,7 @@ parameterized_alias=
 {
 	"r(-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?)":function (s,u,input) 
 	{
-		p=stringToPosition(s);
+		p=simpleStringToPosition(s);
 		if(input.indexOf("repeat")>-1 || input.indexOf("then")>-1) return "r"+s;// deps ?
 		return positionToString(bot.entity.position.plus(p));
 	},

@@ -18,7 +18,9 @@ A bot based on mineflayer which can execute task with dependancies
  * Improve/simplify the code
  
 ## Usage
-	node index.js host port name password
+ If you specify a master the bot will only obey to him
+	node index.js &lsaquo;host&rsaquo; &lsaquo;port&rsaquo; &lsaquo;name&rsaquo; &lsaquo;password&rsaquo; [&lsaquo;master&rsaquo;]
+
 
 Commands :
  * dig &lsaquo;position&rsaquo;
@@ -55,5 +57,7 @@ Parameters :
  * &lsaquo;entity&rsaquo; can be :
   * nearest mob &lsaquo;mob&rsaquo;
   * nearest mob : any nearest mob
+  * nearest mob reachable &lsaquo;mob&rsaquo;
+  * nearest mob reachable : any nearest reachable mob
   * me
   * player &lsaquo;playerName&rsaquo;
