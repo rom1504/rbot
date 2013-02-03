@@ -61,3 +61,9 @@ Parameters :
   * nearest mob reachable : any nearest reachable mob
   * me
   * player &lsaquo;playerName&rsaquo;
+
+Interesting use of commands :
+ * repeat spiral down : build a spiral staircase from y=64 to y=0
+ * repeat attack nearest reachable mob : attack mobs close from the mob
+ * repeat dig forward r0,0,1 : if you want to build a tunnel (not stopped by gravel, but can die from drowning)
+ * move to me

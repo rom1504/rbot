@@ -111,7 +111,7 @@ function moveTo(s,u,done)
 	var goalPosition=stringToPosition(s);
 	if(goalPosition.distanceTo(bot.entity.position)>=1)
 	{
-		bot.navigate.to(goalPosition,{endRadius:0.5});//use callback here ?
+		bot.navigate.to(goalPosition);//use callback here ?
 		bot.once("stop",done);
 	}
 	else done();
@@ -189,23 +189,15 @@ function remove(a,e)
 // var a;
 // var b;
 
-function nearestReachableEntity(entities) // problem if an entity dies
-{// changer ici...
-// 	var ent=nearestEntity(entities);
-// 	bot.navigate.once("pathFound",a=(function(ent){return function(){setTimeout(function(){bot.navigate.removeListener("cannotFind",b);bot.navigate.stop();done(ent);},100);}}(ent)));
-// 	bot.navigate.once("cannotFind",b=(function(entities,ent){return function(){bot.navigate.removeListener("pathFound",a);if(entities.length>1) nearestReachableEntity(remove(entities,ent),done); else done(null);}}(entities,ent)));
-// 	bot.navigate.to(ent.position,{timeout:1000});
-// 	var result;
+function nearestReachableEntity(entities)
+{
 	var ent;
 	while(1) // see if a too long computation couldn't cause problem (fork ?)
 	{
 		ent=nearestEntity(entities);
-// 		console.log(ent.position);
-		result=bot.navigate.findPathSync(ent.position,{endRadius:0.5,timeout:1000});
-// 		console.log(result);
+		result=bot.navigate.findPathSync(ent.position);
 		if(result.status != 'success')
 		{
-// 			console.log(entities.length);
 			if(entities.length>1) entities=remove(entities,ent); // to change ?
 			else return null;
 		}
@@ -300,8 +292,8 @@ function toss(itemName,u,done)
 function attack(s,u,done)
 {
 	var ent=stringToEntity(s);
-	bot.attack(ent);
-	setTimeout(done,500);
+	if(ent!=null) bot.attack(ent);
+	done();
 }
 
 
