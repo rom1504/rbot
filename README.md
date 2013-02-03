@@ -19,7 +19,7 @@ A bot based on mineflayer which can execute task with dependancies
  
 ## Usage
  * If you specify a master the bot will only obey to him
- * node index.js &lsaquo;host&rsaquo; &lsaquo;port&rsaquo; &lsaquo;name&rsaquo; &lsaquo;password&rsaquo; [&lsaquo;master&rsaquo;]
+ * node rbot.js &lsaquo;host&rsaquo; &lsaquo;port&rsaquo; &lsaquo;name&rsaquo; &lsaquo;password&rsaquo; [&lsaquo;master&rsaquo;]
 
 
 Commands :
