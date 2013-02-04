@@ -47,6 +47,7 @@ A bot based on mineflayer which can execute task with dependancies
  * `raise chicken` : get an egg then throw it then wait 1 sec then do this again
  * `stop raise chicken`
  * `look at <position>`
+ * `shoot <position>` : if it has a bow and arrows, shoot <position>
 
 ### Parameters
  * `<position>` can be :
@@ -78,3 +79,5 @@ A bot based on mineflayer which can execute task with dependancies
  * `raise chicken`
  * `stop raise chicken`
  * `repeat look at me`
+ * `repeat shoot nearest reachable mob` : kill close mobs
+ * `repeat shoot me` : kill you

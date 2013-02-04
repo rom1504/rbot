@@ -370,6 +370,14 @@ function stringToEntity(s)
 
 function stringToPosition(s)
 {
+// 	var v;
+// 	if((v=new RegExp("^adapted (.+)$").exec(s))!=null)
+// 	{
+// 		var entity=stringToEntity(v[1]);
+// 		var distance = bot.entity.position.distanceTo(entity.position);
+// 		var heightAdjust = entity.height * 0.8 + (distance * 0.05); wrong formula ?
+// 		return entity.position.offset(0, heightAdjust, 0);
+// 	}
 	var ent=stringToEntity(s);
 	if(ent!=null) return ent.position;
 	return simpleStringToPosition(s);
@@ -398,6 +406,12 @@ function activateItem(u,done)
 	done();
 }
 
+function deactivateItem(u,done)
+{
+	bot.deactivateItem();
+	done();
+}
+
 // (-?[0-9]+(?:\\.[0-9]+)?),(-?[0-9]+(?:\\.[0-9]+)?),(-?[0-9]+(?:\\.[0-9]+)?)
 //remplacer par taches (ou cible ?) ?
 tasks=
@@ -419,7 +433,8 @@ tasks=
 		"look at (.+)":{action:{f:lookAt}},
 		"say (.+)":{action:{f:say}},
 		"wait ([0-9]+)":{action:{f:wait}},
-		"activate item":{action:{f:activateItem}}
+		"activate item":{action:{f:activateItem}},
+		"deactivate item":{action:{f:deactivateItem}}
 // 		"attendre ([0-9]+)":{action:{f:attendre,c:conditionAttendre}}
 // 		"avancer":{action:{f:avancer,c:conditionAvancer}},
 };
@@ -454,7 +469,7 @@ alias=
 }
 
 parameterized_alias=
-{
+{ // put these two things in stringToPosition
 	"r(-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?)":function (s,u,input) 
 	{
 		p=simpleStringToPosition(s);
@@ -464,6 +479,10 @@ parameterized_alias=
 	" me":function(u)
 	{
 		return " player "+u;
+	},
+	"shoot (.+)":function(s,u)
+	{
+		return "look at "+s+" then activate item then wait 1000 then deactivate item"
 	}
 }
 
