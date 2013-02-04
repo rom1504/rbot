@@ -334,19 +334,12 @@ function itemByName(name)
 	return null;
 }
 
-/*
-function conditionAttendre(temps)
-{
-	return null;
-}
 
-function attendre(temps)
+function wait(s,u,done)
 {
-	var temps=parseInt(temps);
-	var f=unique("end");
-	setTimeout(function(f){function(){bot.emit(f);}}(f),temps);
-	return f;
-}*/
+	var time=parseInt(s);
+	setTimeout(done,time);
+}
 
 
 function list(taskNameList,username,done)
@@ -418,6 +411,7 @@ tasks=
 		"toss (.+)":{action:{f:toss}},
 		"equip (.+?) (.+?)":{action:{f:equip}},
 		"say (.+)":{action:{f:say}},
+		"wait ([0-9]+)":{action:{f:wait}},
 		"activate item":{action:{f:activateItem}}
 // 		"attendre ([0-9]+)":{action:{f:attendre,c:conditionAttendre}}
 // 		"avancer":{action:{f:avancer,c:conditionAvancer}},

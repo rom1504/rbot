@@ -43,6 +43,7 @@ A bot based on mineflayer which can execute task with dependancies
  * `attack <entity>`
  * `say <message>`
  * `activate item`
+ * `wait <milliseconds>`
 
 ### Parameters
  * `<position>` can be :
