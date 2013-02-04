@@ -35,6 +35,7 @@ A bot based on mineflayer which can execute task with dependancies
  * `stop repeat <action>`
  * `pos <player>` : say the position of the other player if he is not too far away
  * `move to <position>` : use mineflayer-navigate to get to <position>
+ * `stop move to`
  * `spiral up` : dig an ascending spiral staircase
  * `spiral down` : dig a descending spiral staircase
  * `equip <emplacement> <item>` : equip item at emplacement (for example hand)
@@ -43,6 +44,7 @@ A bot based on mineflayer which can execute task with dependancies
  * `attack <entity>`
  * `say <message>`
  * `activate item`
+ * `deactivate item`
  * `wait <milliseconds>`
  * `raise chicken` : get an egg then throw it then wait 1 sec then do this again
  * `stop raise chicken`
