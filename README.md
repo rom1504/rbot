@@ -44,6 +44,8 @@ A bot based on mineflayer which can execute task with dependancies
  * `say <message>`
  * `activate item`
  * `wait <milliseconds>`
+ * `raise chicken` : get an egg then throw it then wait 1 sec then do this again
+ * `stop raise chicken`
 
 ### Parameters
  * `<position>` can be :
@@ -72,3 +74,5 @@ A bot based on mineflayer which can execute task with dependancies
  * `repeat attack nearest reachable mob` : attack mobs close from the mob
  * `repeat dig forward r0,0,1` : if you want to build a tunnel (not stopped by gravel, but can die from drowning)
  * `move to me`
+ * `raise chicken`
+ * `stop raise chicken`
