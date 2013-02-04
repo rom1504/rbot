@@ -393,6 +393,12 @@ function say(s,u,done)
 	done();
 }
 
+function activateItem(u,done)
+{
+	bot.activateItem();
+	done();
+}
+
 // (-?[0-9]+(?:\\.[0-9]+)?),(-?[0-9]+(?:\\.[0-9]+)?),(-?[0-9]+(?:\\.[0-9]+)?)
 //remplacer par taches (ou cible ?) ?
 tasks=
@@ -411,7 +417,8 @@ tasks=
 		"list":{action:{f:listInventory}},
 		"toss (.+)":{action:{f:toss}},
 		"equip (.+?) (.+?)":{action:{f:equip}},
-		"say (.+)":{action:{f:say}}
+		"say (.+)":{action:{f:say}},
+		"activate item":{action:{f:activateItem}}
 // 		"attendre ([0-9]+)":{action:{f:attendre,c:conditionAttendre}}
 // 		"avancer":{action:{f:avancer,c:conditionAvancer}},
 };
