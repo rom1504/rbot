@@ -109,12 +109,15 @@ function move(s,u,done)
 function moveTo(s,u,done)
 {
 	var goalPosition=stringToPosition(s);
-	if(goalPosition.distanceTo(bot.entity.position)>=1)
+	if(goalPosition!=null)
 	{
-		bot.navigate.to(goalPosition);//use callback here ?
-		bot.once("stop",done);
-	}
-	else done();
+		if(goalPosition.distanceTo(bot.entity.position)>=1)
+		{
+			bot.navigate.to(goalPosition);//use callback here ?
+			bot.once("stop",done);
+		}
+		else done();
+	} else done();
 }
 
 function stopMoveTo(u,done)
@@ -186,8 +189,6 @@ function remove(a,e)
 {
 	return a.filter(function(v) { return v == e ? false : true;});
 }
-// var a;
-// var b;
 
 function nearestReachableEntity(entities)
 {
@@ -220,11 +221,21 @@ function nearestEntity(entities)
 	return r[0];
 }
 
-function mobs(nameMob)
+function entitiesToArray()
 {
 	var a=[];
 	for(i in bot.entities) a.push(bot.entities[i]);
-	return a.filter(function(entity) {return entity.type === 'mob' && (nameMob==="*" || entity.mobType ===nameMob);});
+	return a;
+}
+
+function objects(name)
+{
+	return entitiesToArray().filter(function(entity) {return entity.type === 'object' && (name==="*" || entity.objectType === name);});
+}
+
+function mobs(name)
+{
+	return entitiesToArray().filter(function(entity) {return entity.type === 'mob' && (name==="*" || entity.mobType ===name);});
 }
 
 // je ne sais pas, demander...
@@ -240,7 +251,7 @@ function lookForEntity(s,u,done)
 {
 	var ent=stringToEntity(s);
 	if(ent===null) bot.chat("I can't find "+s);
-	else bot.chat((ent.type === 'mob' ? "Nearest "+ent.mobType : s)+" is in "+ent.position);
+	else bot.chat(s+" is in "+ent.position+(ent.type === 'mob' ? ".It's a "+ent.mobType : (ent.type === 'object' ? ".It's a "+ent.objectType : "")));
 	done();
 }
 
@@ -349,8 +360,12 @@ function stringToEntity(s)
 	if((v=new RegExp("^player (.+)$").exec(s))!=null) return bot.players[v[1]].entity;
 	if((v=new RegExp("^nearest mob (.+)$").exec(s))!=null) return nearestEntity(mobs(v[1]));
 	if((v=new RegExp("^nearest mob$").exec(s))!=null) return nearestEntity(mobs("*"));
+	if((v=new RegExp("^nearest object (.+)$").exec(s))!=null) return nearestEntity(objects(v[1]));
+	if((v=new RegExp("^nearest object$").exec(s))!=null) return nearestEntity(objects("*"));
 	if((v=new RegExp("^nearest reachable mob (.+)$").exec(s))!=null) return nearestReachableEntity(mobs(v[1]));
 	if((v=new RegExp("^nearest reachable mob$").exec(s))!=null) return nearestReachableEntity(mobs("*"));
+	if((v=new RegExp("^nearest reachable object (.+)$").exec(s))!=null) return nearestReachableEntity(objects(v[1]));
+	if((v=new RegExp("^nearest reachable object$").exec(s))!=null) return nearestReachableEntity(objects("*"));
 	return null;
 }
 
@@ -383,8 +398,6 @@ function say(s,u,done)
 tasks=
 {
 		// va y avoir un pb ici : pas de end list et repeat...
-		// les conditions sont des post condition, pas pré
-		// pré condition réalisé grace aux dépendances
 		"repeat (.+)":{action:{f:repeat}},//priorité avec then
 		"stop repeat (.+)":{action:{f:stopRepeat}},
 		"(.+ then .+)":{action:{f:list}},

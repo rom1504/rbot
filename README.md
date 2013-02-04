@@ -22,7 +22,7 @@ A bot based on mineflayer which can execute task with dependancies
  * `node rbot.js <host> <port> <name> <password> [<master>]`
 
 
-Commands :
+### Commands
  * `dig <position>`
  * `move <position>`
  * `x+` `x-` `z+` `z-`
@@ -43,7 +43,7 @@ Commands :
  * `attack <entity>`
  * `say <message>`
 
-Parameters :
+### Parameters
  * `<position>` can be :
   * `rx,y,z` : relative position
   * `x,y,z` : absolute position
@@ -53,6 +53,10 @@ Parameters :
   * `nearest mob : any nearest mob`
   * `nearest mob reachable <mob>`
   * `nearest mob reachable` : any nearest reachable mob
+  * `nearest object <object>`
+  * `nearest object : any nearest object`
+  * `nearest object reachable <object>`
+  * `nearest object reachable` : any nearest reachable object
   * `me`
   * `player <playerName>`
  * `<mob>` can be :
@@ -61,7 +65,7 @@ Parameters :
   * `creeper`
   * ...
 
-Interesting use of commands :
+### Interesting use of commands
  * `repeat spiral down` : build a spiral staircase from y=64 to y=0
  * `repeat attack nearest reachable mob` : attack mobs close from the mob
  * `repeat dig forward r0,0,1` : if you want to build a tunnel (not stopped by gravel, but can die from drowning)
