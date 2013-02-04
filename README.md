@@ -46,6 +46,7 @@ A bot based on mineflayer which can execute task with dependancies
  * `wait <milliseconds>`
  * `raise chicken` : get an egg then throw it then wait 1 sec then do this again
  * `stop raise chicken`
+ * `look at <position>`
 
 ### Parameters
  * `<position>` can be :
@@ -76,3 +77,4 @@ A bot based on mineflayer which can execute task with dependancies
  * `move to me`
  * `raise chicken`
  * `stop raise chicken`
+ * `repeat look at me`

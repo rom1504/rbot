@@ -88,6 +88,12 @@ function norm(v)
 // 	bot.placeBlock
 // }
 
+function lookAt(s,u,done)
+{
+	var goalPosition=stringToPosition(s);
+	if(goalPosition!=null) bot.lookAt(goalPosition.offset(0,bot.entity.height,0));
+	done();
+}
 
 function move(s,u,done)
 {
@@ -410,6 +416,7 @@ tasks=
 		"list":{action:{f:listInventory}},
 		"toss (.+)":{action:{f:toss}},
 		"equip (.+?) (.+?)":{action:{f:equip}},
+		"look at (.+)":{action:{f:lookAt}},
 		"say (.+)":{action:{f:say}},
 		"wait ([0-9]+)":{action:{f:wait}},
 		"activate item":{action:{f:activateItem}}
