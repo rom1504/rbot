@@ -356,7 +356,11 @@ function list(taskNameList,username,done)
 function stringToEntity(s)
 {
 	var v;
-	if((v=new RegExp("^player (.+)$").exec(s))!=null) return bot.players[v[1]].entity;
+	if((v=new RegExp("^player (.+)$").exec(s))!=null)
+	{
+	  if(bot.players[v[1]]===undefined) return null;
+	  return bot.players[v[1]].entity;
+	}
 	if((v=new RegExp("^nearest mob (.+)$").exec(s))!=null) return nearestEntity(mobs(v[1]));
 	if((v=new RegExp("^nearest mob$").exec(s))!=null) return nearestEntity(mobs("*"));
 	if((v=new RegExp("^nearest object (.+)$").exec(s))!=null) return nearestEntity(objects(v[1]));
