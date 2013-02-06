@@ -32,6 +32,7 @@ A bot based on mineflayer which can execute task with dependancies
  * `<action1> then <action2>` : do first action then do the second one, for example :
   * `x+ then z+`
  * `look for entity <entity>`
+ * `look for block <block>`
  * `stop repeat <action>`
  * `pos <player>` : say the position of the other player if he is not too far away
  * `move to <position>` : use mineflayer-navigate to get to <position>
@@ -46,7 +47,7 @@ A bot based on mineflayer which can execute task with dependancies
  * `activate item`
  * `deactivate item`
  * `wait <milliseconds>`
- * `raise chicken` : get an egg then throw it then wait 1 sec then do this again
+ * `raise chicken` : get an egg then throw it
  * `stop raise chicken`
  * `look at <position>`
  * `shoot <position>` : if it has a bow and arrows, shoot <position>
@@ -56,6 +57,10 @@ A bot based on mineflayer which can execute task with dependancies
   * `rx,y,z` : relative position
   * `x,y,z` : absolute position
   * `<entity>`
+  * `<block>`
+ * `<block>` can be :
+  * `nearest block <nameBlock>`
+  * `nearest block : any nearest block`
  * `<entity>` can be :
   * `nearest mob <mob>`
   * `nearest mob : any nearest mob`
@@ -78,8 +83,8 @@ A bot based on mineflayer which can execute task with dependancies
  * `repeat attack nearest reachable mob` : attack mobs close from the mob
  * `repeat dig forward r0,0,1` : if you want to build a tunnel (not stopped by gravel, but can die from drowning)
  * `move to me`
- * `raise chicken`
- * `stop raise chicken`
+ * `repeat raise chicken then wait 1000`
+ * `stop repeat raise chicken then wait 1000`
  * `repeat look at me`
  * `repeat shoot nearest reachable mob` : kill close mobs
  * `repeat shoot me` : kill you

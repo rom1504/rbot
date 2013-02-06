@@ -115,7 +115,7 @@ function move(s,u,done)
 function moveTo(s,u,done)
 {
 	var goalPosition=stringToPosition(s);
-	if(goalPosition!=null)
+	if(goalPosition!=null && isFree(goalPosition))
 	{
 		if(goalPosition.distanceTo(bot.entity.position)>=1)
 		{
@@ -227,6 +227,34 @@ function nearestEntity(entities)
 	return r[0];
 }
 
+function nearestBlock(blockName)
+{
+	// what's the most expensive : blockAt or distanceTo ?
+	var dmax=new vec3(20,10,20),block,dmin=100000000,bmin=null,d;
+	var x,y,z;
+	for(x=-dmax.x;x<dmax.x;x++)
+	{
+		for(y=-dmax.y;y<dmax.y;y++)
+		{
+			for(z=-dmax.z;z<dmax.z;z++)
+			{
+				block=bot.blockAt(bot.entity.position.offset(x,y,z));
+				if(block!==null && (blockName==='*' || block.name===blockName))
+				{
+					d=x*x+y*y+z*z;
+					if(d<dmin)
+					{
+						bmin=block;
+						dmin=d;
+					}
+				}
+			}
+		}
+	}
+	return bmin;
+}
+
+
 function entitiesToArray()
 {
 	var a=[];
@@ -244,30 +272,21 @@ function mobs(name)
 	return entitiesToArray().filter(function(entity) {return entity.type === 'mob' && (name==="*" || entity.mobType ===name);});
 }
 
-// je ne sais pas, demander...
-// function nearestBlock(nameBlock)
-// {
-// 	var a=[];
-// 	for(i in bot.entities) a.push(bot.entities[i]);
-// 	var mobs=a.filter(function(entity) {return entity.type === 'mob' && (nameMob==="*" || entity.mobType ===nameMob);});
-// 	return nearestEntity(mobs);
-// }
-
 function lookForEntity(s,u,done)
 {
 	var ent=stringToEntity(s);
 	if(ent===null) bot.chat("I can't find "+s);
-	else bot.chat(s+" is in "+ent.position+(ent.type === 'mob' ? ".It's a "+ent.mobType : (ent.type === 'object' ? ".It's a "+ent.objectType : "")));
+	else bot.chat(s+" is in "+ent.position+(ent.type === 'mob' ? ". It's a "+ent.mobType : (ent.type === 'object' ? ". It's a "+ent.objectType : "")));
 	done();
 }
 
-// function lookForNearestBlock(nameBlock,u,done)
-// {
-// 	var block=nearestBlock(nameBlock);
-// 	if(block===null)bot.chat("I can't find any "+(nameBlock==="*" ? "block" : nameBlock)+".");
-// 	else bot.chat("Nearest "+block.name+" is in "+block.position+" , it is at a distance of "+Math.round(block.position.distanceTo(bot.entity.position))+" from my position");
-// 	done();
-// }
+function lookForBlock(s,u,done)
+{
+	var block=stringToBlock(s);
+	if(block===null) bot.chat("I can't find "+s);
+	else bot.chat(s+" is in "+block.position+". It's a "+block.name);
+	done();
+}
 
 function equip(destination,itemName,u,done)
 {
@@ -353,6 +372,13 @@ function list(taskNameList,username,done)
 	achieveList(taskNameList.split(" then "),username,done);
 }
 
+function stringToBlock(s)
+{
+	if((v=new RegExp("^nearest block (.+)$").exec(s))!=null) return nearestBlock(v[1]);
+	if((v=new RegExp("^nearest block$").exec(s))!=null) return nearestBlock("*");
+	return null;
+}
+
 function stringToEntity(s)
 {
 	var v;
@@ -382,6 +408,8 @@ function stringToPosition(s)
 // 		var heightAdjust = entity.height * 0.8 + (distance * 0.05); wrong formula ?
 // 		return entity.position.offset(0, heightAdjust, 0);
 // 	}
+	var block=stringToBlock(s);
+	if(block!=null) return block.position;
 	var ent=stringToEntity(s);
 	if(ent!=null) return ent.position;
 	return simpleStringToPosition(s);
@@ -428,7 +456,7 @@ tasks=
 		"move to (.+)":{action:{f:moveTo}},
 		"move (.+)":{action:{f:move}},
 		"pos (.+)":{action:{f:pos}},
-// 		"look for block (.+)":{action:{lookForNearestBlock}},
+ 		"look for block (.+)":{action:{f:lookForBlock}},
 		"look for entity (.+)":{action:{f:lookForEntity}},
 		"stop move to":{action:{f:stopMoveTo}},
 		"list":{action:{f:listInventory}},
@@ -439,7 +467,6 @@ tasks=
 		"wait ([0-9]+)":{action:{f:wait}},
 		"activate item":{action:{f:activateItem}},
 		"deactivate item":{action:{f:deactivateItem}}
-// 		"attendre ([0-9]+)":{action:{f:attendre,c:conditionAttendre}}
 // 		"avancer":{action:{f:avancer,c:conditionAvancer}},
 };
 
@@ -468,8 +495,7 @@ alias=
 	"z-":"move r0,0,-1",
 	"spiral up":"dig r0,2,0 then dig r0,1,1 then dig r0,2,1 then move to r0,1,1 then dig r0,2,0 then dig r-1,1,0 then dig r-1,2,0 then move to r-1,1,0 then dig r0,2,0 then dig r0,1,-1 then dig r0,2,-1 then move to r0,1,-1 then dig r0,2,0 then dig r1,1,0 then dig r1,2,0 then move to r1,1,0",
 	"spiral down":"dig r1,1,0 then dig r1,0,0 then dig r1,-1,0 then move to r1,-1,0 then dig r0,0,1 then dig r0,1,1 then dig r0,-1,1 then move to r0,-1,1 then dig r-1,1,0 then dig r-1,0,0 then dig r-1,-1,0 then move to r-1,-1,0 then dig r0,1,-1 then dig r0,0,-1 then dig r0,-1,-1 then move to r0,-1,-1",
-	"raise chicken":"repeat move to nearest reachable object then equip hand egg then activate item then wait 1000",
-	"stop raise chicken":"stop repeat move to nearest reachable object then equip hand egg then activate item then wait 1000",
+	"raise chicken":"move to nearest reachable object then equip hand egg then activate item"
 }
 
 parameterized_alias=
