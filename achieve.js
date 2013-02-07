@@ -79,17 +79,6 @@ function nameToTask(taskName,username)
 	taskName=replaceAlias(taskName,username);
 	var v;
 	var task;
-	for(rtaskName in tasks)
-	{
-		if((v=(new RegExp("^"+rtaskName+"$")).exec(taskName))!=null)
-		{
-			v.shift();
-			v.push(username);
-			task=ce.clone(tasks[rtaskName]);
-			task.action.p=task.action.p != undefined ? task.action.p.concat(v) : v
-			return task;
-		}
-	}
 	for(rtaskName in generated_tasks)
 	{
 		if((v=(new RegExp("^"+rtaskName+"$")).exec(taskName))!=null)
@@ -98,6 +87,17 @@ function nameToTask(taskName,username)
 			v.push(username);
 			task=generated_tasks[rtaskName].apply(this,v);
 			task.action.p=task.action.p != undefined ? task.action.p.concat(v) : v;
+			return task;
+		}
+	}
+	for(rtaskName in tasks)
+	{
+		if((v=(new RegExp("^"+rtaskName+"$")).exec(taskName))!=null)
+		{
+			v.shift();
+			v.push(username);
+			task=ce.clone(tasks[rtaskName]);
+			task.action.p=task.action.p != undefined ? task.action.p.concat(v) : v
 			return task;
 		}
 	}

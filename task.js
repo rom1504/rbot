@@ -39,10 +39,19 @@ function isEmpty(pos)
 	return isBlockEmpty(bot.blockAt(pos));
 }
 
-
 function isBlockEmpty(b)
 {
 	return b!==null && b.boundingBox==="empty";
+}
+
+function isNotEmpty(pos)
+{
+	return isBlockNotEmpty(bot.blockAt(pos));
+}
+
+function isBlockNotEmpty(b)
+{
+	return b!==null && b.boundingBox!=="empty";
 }
 
 
@@ -88,13 +97,22 @@ function norm(v)
 	return Math.sqrt(scalarProduct(v,v));
 }
 
-
-// // to continue
-// function build(s)
-// {
-// 	var blockPosition=pos;
-// 	bot.placeBlock
-// }
+function build(s,u,done)
+{
+	var blockPosition=stringToPosition(s).floored();
+	var x,y,z,p;
+	var contiguousBlocks=[new vec3(1,0,0),new vec3(-1,0,0),new vec3(0,1,0),new vec3(0,-1,0),new vec3(0,0,-1),new vec3(0,0,1)];
+	for(i in contiguousBlocks)
+	{
+		p=blockPosition.plus(contiguousBlocks[i]);
+		if(isNotEmpty(p))
+		{
+			bot.placeBlock({position:p},(new vec3(0,0,0)).minus(contiguousBlocks[i]));
+			done();
+			return;
+		}
+	}
+}
 
 function lookAt(s,u,done)
 {
@@ -498,8 +516,6 @@ function deactivateItem(u,done)
 	done();
 }
 
-// (-?[0-9]+(?:\\.[0-9]+)?),(-?[0-9]+(?:\\.[0-9]+)?),(-?[0-9]+(?:\\.[0-9]+)?)
-//remplacer par taches (ou cible ?) ?
 tasks=
 {
 		// va y avoir un pb ici : pas de end list et repeat...
@@ -520,7 +536,8 @@ tasks=
 		"say (.+)":{action:{f:say}},
 		"wait ([0-9]+)":{action:{f:wait}},
 		"activate item":{action:{f:activateItem}},
-		"deactivate item":{action:{f:deactivateItem}}
+		"deactivate item":{action:{f:deactivateItem}},
+		"build (.+)":{action:{f:build}}
 // 		"avancer":{action:{f:avancer,c:conditionAvancer}},
 };
 
@@ -537,7 +554,7 @@ generated_tasks=
 	}
 };
 
-// ou passer à du pur string ?
+// ou passer à du pur string ? (what ?)
 
 alias=
 {
@@ -549,17 +566,21 @@ alias=
 	"z-":"move r0,0,-1",
 	"spiral up":"dig r0,2,0 then dig r0,1,1 then dig r0,2,1 then move to r0,1,1 then dig r0,2,0 then dig r-1,1,0 then dig r-1,2,0 then move to r-1,1,0 then dig r0,2,0 then dig r0,1,-1 then dig r0,2,-1 then move to r0,1,-1 then dig r0,2,0 then dig r1,1,0 then dig r1,2,0 then move to r1,1,0",
 	"spiral down":"dig r1,1,0 then dig r1,0,0 then dig r1,-1,0 then move to r1,-1,0 then dig r0,0,1 then dig r0,1,1 then dig r0,-1,1 then move to r0,-1,1 then dig r-1,1,0 then dig r-1,0,0 then dig r-1,-1,0 then move to r-1,-1,0 then dig r0,1,-1 then dig r0,0,-1 then dig r0,-1,-1 then move to r0,-1,-1",
-	"raise chicken":"move to nearest reachable object then equip hand egg then activate item"
+	"raise chicken":"move to nearest reachable object then equip hand egg then activate item",
+	"build shelter":"build r-1,0,0 then build r0,0,-1 then build r1,0,0 then build r0,0,1 then build r1,0,1 then build r-1,0,-1 then build r-1,0,1 then build r1,0,-1 then build r-1,1,0 then build r0,1,-1 then build r1,1,0 then build r0,1,1 then build r1,1,1 then build r-1,1,-1 then build r-1,1,1 then build r1,1,-1 then build r-1,2,0 then build r0,2,-1 then build r1,2,0 then build r0,2,1 then build r1,2,1 then build r-1,2,-1 then build r-1,2,1 then build r1,2,-1 then build r0,2,0",
+	"destroy shelter":"dig r-1,0,0 then dig r0,0,-1 then dig r1,0,0 then dig r0,0,1 then dig r1,0,1 then dig r-1,0,-1 then dig r-1,0,1 then dig r1,0,-1 then dig r-1,1,0 then dig r0,1,-1 then dig r1,1,0 then dig r0,1,1 then dig r1,1,1 then dig r-1,1,-1 then dig r-1,1,1 then dig r1,1,-1 then dig r-1,2,0 then dig r0,2,-1 then dig r1,2,0 then dig r0,2,1 then dig r1,2,1 then dig r-1,2,-1 then dig r-1,2,1 then dig r1,2,-1 then dig r0,2,0"
 }
 
 parameterized_alias=
-{ // put these two things in stringToPosition
+{ 
+	// put this in stringToPosition
 	"r(-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?)":function (s,u,input) 
 	{
 		p=simpleStringToPosition(s);
 		if(input.indexOf("repeat")>-1 || input.indexOf("then")>-1) return "r"+s;// deps ?
 		return positionToString(bot.entity.position.plus(p));
 	},
+	//put this in stringToEntity
 	" me":function(u)
 	{
 		return " player "+u;
@@ -578,9 +599,10 @@ parameterized_alias=
 	}
 }
 
+// remove this ?
 regex=
 {
-	//"position":"(-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?|me|nearest mob .+|nearest mob)"
+	
 }
 
 exports.tasks=tasks;

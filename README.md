@@ -61,7 +61,10 @@ A bot based on mineflayer which can execute task with dependancies
  * `look at <position>`
  * `shoot <position>` : if it has a bow and arrows, shoot <position>
  * `follow <position>` : go to `<position>` every 2 sec
- * `get <block>` : go to a position next to `<block>` then dig it
+ * `get <nameBlock>` : go to a position next to nearest `<nameBlock>` then dig it
+ * `build <position>` : build at position with the equipped block
+ * `build shelter` : build a very simple shelter with the equipped block (need 25 blocks)
+ * `destroy shelter` : destroy this shelter
 
 ### Parameters
  * `<position>` can be :
@@ -104,3 +107,4 @@ A bot based on mineflayer which can execute task with dependancies
  * `follow me`
  * `stop follow me`
  * `get log`
+ * `repeat build shelter then destroy shelter` : fun
