@@ -39,6 +39,8 @@ First, you need to install [node](http://nodejs.org/)
  * Follow the Windows instructions from [Obvious/ursa](https://github.com/Obvious/ursa)
  * `npm install -g rbot`
 
+If you download the source via github, you can just run `npm install`
+
 
 ## Usage
  * If you specify a master the bot will only obey to him
