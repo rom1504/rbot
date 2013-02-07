@@ -4,7 +4,7 @@
   "description": "bot made with mineflayer which can do task",
   "main": "rbot.js",
   "bin": {
-    "helperbot": "./rbot.js"
+    "rbot": "./rbot.js"
   },
   "repository": {
     "type": "git",
