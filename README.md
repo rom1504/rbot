@@ -5,11 +5,20 @@ A bot based on mineflayer which can execute task with dependancies
 
 ## Features
  * basic mecanism to handle task and dependancies
- * a few task : dig, move, repeat, sequence
- * integration of mineflayer-navigate which can make the bot go to any position not too far away
+ * dig
+ * move to any not too far away position thanks to mineflayer-navigate
+ * repeat
+ * sequence
  * dig a spiral staircase
  * inventory management : equip,toss,list
- * attack
+ * attack : mobs, players
+ * build
+ * find and get a block
+ * activate an item (shoot and arrow for example)
+ * follow 
+ * build a shelter
+ * dig a tunnel
+ * raise chicken
  
 ### Roadmap
 
