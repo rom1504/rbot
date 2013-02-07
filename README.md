@@ -13,10 +13,11 @@ A bot based on mineflayer which can execute task with dependancies
  
 ### Roadmap
 
- * Doing more complicated things : getting any block, crafting things, getting anywhere by digging
- * Integrate other mineflayer functionnality : building, crafting
+ * Doing more complicated things : crafting things, getting anywhere even if it's hard, building things
+ * Integrate other mineflayer functionnality : building, crafting, using chests, dispensers, enchantment tables, use vehicle, activate block
+ * React to the world : for example if a mob attack the bot, the bot should defend itself
  * Improve/simplify the code
- 
+
 ## Usage
  * If you specify a master the bot will only obey to him
  * `node rbot.js <host> <port> <name> <password> [<master>]`
@@ -51,8 +52,8 @@ A bot based on mineflayer which can execute task with dependancies
  * `stop raise chicken`
  * `look at <position>`
  * `shoot <position>` : if it has a bow and arrows, shoot <position>
- * `follow <position>` : got to `<position>` every 2 sec
- * `get <block>` : got to a position next to `<block>` then dig it
+ * `follow <position>` : go to `<position>` every 2 sec
+ * `get <block>` : go to a position next to `<block>` then dig it
 
 ### Parameters
  * `<position>` can be :
