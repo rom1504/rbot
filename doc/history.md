@@ -28,3 +28,13 @@
  * look at
  * shoot
  * better README
+
+## 0.0.6
+
+ * nearest block
+ * nearest reachable position
+ * follow
+ * get
+ * build
+ * build shelter
+ * destroy shelter
