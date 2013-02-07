@@ -58,6 +58,7 @@ A bot based on mineflayer which can execute task with dependancies
   * `x,y,z` : absolute position
   * `<entity>`
   * `<block>`
+  * `nearest reachable position <position>`
  * `<block>` can be :
   * `nearest block <nameBlock>`
   * `nearest block : any nearest block`
@@ -88,3 +89,4 @@ A bot based on mineflayer which can execute task with dependancies
  * `repeat look at me`
  * `repeat shoot nearest reachable mob` : kill close mobs
  * `repeat shoot me` : kill you
+ * `move to nearest reachable position nearest block log`

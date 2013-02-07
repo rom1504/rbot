@@ -1,14 +1,10 @@
-var bot;
-var vec3;
-var achieve;
-var achieveList;
-var directions;
-var direction;
-var repeating;
+var bot,vec3,achieve,achieveList,directions,direction,repeating,blocks,mf;
 
-function init(_bot,_vec3,_achieve,_achieveList)
+function init(_bot,_vec3,_achieve,_achieveList,_mf)
 {
+	mf=_mf;
 	bot=_bot;
+	require('./blockFinder').inject(bot);
 	vec3=_vec3;
 	achieve=_achieve;
 	achieveList=_achieveList;
@@ -23,7 +19,19 @@ function init(_bot,_vec3,_achieve,_achieveList)
 	bot.navigate.on("cannotFind",function(){bot.emit("stop");});
 	directions=[new vec3(0,0,1),new vec3(0,0,-1),new vec3(1,0,0),new vec3(-1,0,0)];
 	direction=directions[0];
-	repeating=false; // in init() rather
+	repeating=false;
+	var block;
+	blocks={};
+	for(i in mf.blocks)
+	{
+		block=mf.blocks[i];
+		blocks[block.name]=block;
+	}
+}
+
+function blockNameToBlockType(blockName)
+{
+	return blocks[blockName].id;
 }
 
 function isEmpty(pos)
@@ -66,7 +74,7 @@ function dig(s,u,done)
 	bot.once("pos_"+pos+"_empty",(function (pos,done) {return function() {
 		if(canFall(pos.offset(0,1,0))) bot.once("pos_"+pos+"_not_empty",function(){done(false);});
 		else done();
-	};})(pos,done));// because a block can take some time to fall (maybe 2000ms can be reduced)
+	};})(pos,done));// because a block can fall
 }
 
 
@@ -183,7 +191,6 @@ function stopRepeat(taskName,u,done)
 }
 
 
-
 function pos(player,u,done)
 {
 	if(bot.players[player].entity!=undefined) bot.chat(player+" is in "+bot.players[player].entity.position);
@@ -196,14 +203,18 @@ function remove(a,e)
 	return a.filter(function(v) { return v == e ? false : true;});
 }
 
+function positionReachable(pos,params)
+{
+	return bot.navigate.findPathSync(pos,params).status === 'success';
+}
+
 function nearestReachableEntity(entities)
 {
 	var ent;
 	while(1) // see if a too long computation couldn't cause problem (fork ?)
 	{
 		ent=nearestEntity(entities);
-		result=bot.navigate.findPathSync(ent.position);
-		if(result.status != 'success')
+		if(!positionReachable(ent.position))
 		{
 			if(entities.length>1) entities=remove(entities,ent); // to change ?
 			else return null;
@@ -227,10 +238,11 @@ function nearestEntity(entities)
 	return r[0];
 }
 
-function nearestBlock(blockName)
+function nearestBlock_(blockName)
 {
-	// what's the most expensive : blockAt or distanceTo ?
-	var dmax=new vec3(20,10,20),block,dmin=100000000,bmin=null,d;
+	if(blockName==='*') blockType=-1;
+	else blockType=blockNameToBlockType(blockName);
+	var dmax=new vec3(64,64,64),block,dmin=100000000,bmin=null,d;
 	var x,y,z;
 	for(x=-dmax.x;x<dmax.x;x++)
 	{
@@ -238,20 +250,59 @@ function nearestBlock(blockName)
 		{
 			for(z=-dmax.z;z<dmax.z;z++)
 			{
-				block=bot.blockAt(bot.entity.position.offset(x,y,z));
-				if(block!==null && (blockName==='*' || block.name===blockName))
+				d=x*x+y*y+z*z;
+				if(d<dmin)
 				{
-					d=x*x+y*y+z*z;
-					if(d<dmin)
+					block=bot.blockAt(bot.entity.position.offset(x,y,z));
+					if(block!==null && (blockType===-1 || block.type===blockType))
 					{
-						bmin=block;
-						dmin=d;
+							bmin=block;
+							dmin=d;
+						
 					}
 				}
 			}
 		}
 	}
 	return bmin;
+}
+
+function nearestBlock(blockName)
+{
+	if(blockName==='*') blockType=-1;
+	else blockType=blockNameToBlockType(blockName);
+	var p=bot.findBlock(bot.entity.position,blockType,64);
+	var pos=new vec3(p[0],p[1],p[2]);
+	pos=pos.floored();
+	return bot.blockAt(pos);
+}
+
+
+function nearestReachablePosition(pos)
+{
+// 	var dmax=new vec3(5,10,5),dmin=100000000,d,pmin=null,p,b;
+// 	var x,y,z;
+// 	for(x=-dmax.x;x<dmax.x;x++)
+// 	{
+// 		for(y=-dmax.y;y<dmax.y;y++)
+// 		{
+// 			for(z=-dmax.z;z<dmax.z;z++)
+// 			{
+// 				d=x*x+y*y+z*z;
+// 				if(d<dmin)
+// 				{
+// 					p=pos.offset(x,y,z);
+// 					if(isFree(p))
+// 					{
+// 						dmin=d;
+// 						pmin=p;
+// 					}
+// 				}
+// 			}
+// 		}
+// 	}
+	var a=bot.navigate.findPathSync(pos,{timeout:2000});
+	return a.path[a.path.length-1];
 }
 
 
@@ -408,6 +459,9 @@ function stringToPosition(s)
 // 		var heightAdjust = entity.height * 0.8 + (distance * 0.05); wrong formula ?
 // 		return entity.position.offset(0, heightAdjust, 0);
 // 	}
+	// could be used, maybe (0.8 not 1.8 ...)
+	var v;
+	if((v=new RegExp("^nearest reachable position (.+)$").exec(s))!=null) return nearestReachablePosition(stringToPosition(v[1]));
 	var block=stringToBlock(s);
 	if(block!=null) return block.position;
 	var ent=stringToEntity(s);

@@ -11,7 +11,7 @@ navigatePlugin(bot);
 var task=require('./task');
 var achieve=require('./achieve');
 
-task.init(bot,vec3,achieve.achieve,achieve.achieveList);
+task.init(bot,vec3,achieve.achieve,achieve.achieveList,mineflayer);
 achieve.init(task.regex,task.generated_tasks,task.tasks,task.parameterized_alias,task.alias,bot,vec3,process.argv[6]);
 
 bot.on('login', function() {
