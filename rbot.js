@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 var mineflayer = require('mineflayer');
 var navigatePlugin = require('mineflayer-navigate')(mineflayer);
 var vec3 = mineflayer.vec3;

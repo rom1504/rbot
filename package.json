@@ -3,6 +3,9 @@
   "version": "0.0.6",
   "description": "bot made with mineflayer which can do task",
   "main": "rbot.js",
+  "bin": {
+    "helperbot": "./rbot.js"
+  },
   "repository": {
     "type": "git",
     "url": "git://github.com/rom1504/rbot.git"

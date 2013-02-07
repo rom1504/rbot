@@ -26,9 +26,23 @@ A bot based on mineflayer which can execute task with dependancies
  * React to the world : for example if a mob attack the bot, the bot should defend itself
  * Improve/simplify the code
 
+## Installation
+
+First, you need to install [node](http://nodejs.org/)
+
+### Linux / OSX
+
+ * `npm install -g rbot`
+ 
+### Windows
+
+ * Follow the Windows instructions from [Obvious/ursa](https://github.com/Obvious/ursa)
+ * `npm install -g rbot`
+
+
 ## Usage
  * If you specify a master the bot will only obey to him
- * `node rbot.js <host> <port> <name> <password> [<master>]`
+ * `rbot <host> <port> <name> <password> [<master>]`
 
 
 ### Commands
