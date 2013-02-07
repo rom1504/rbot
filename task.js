@@ -567,6 +567,14 @@ parameterized_alias=
 	"shoot (.+)":function(s,u)
 	{
 		return "look at "+s+" then activate item then wait 1000 then deactivate item"
+	},
+	"get (.+)":function(s,u)
+	{
+		return "move to nearest reachable position nearest block "+s+" then dig nearest block "+s;//add+" then move to nearest reachable object" when improved
+	},
+	"follow (.+)":function(s,u)
+	{
+		return "repeat move to "+s+" then wait 2000"// can make it follow with some distance maybe ?
 	}
 }
 

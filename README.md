@@ -51,6 +51,8 @@ A bot based on mineflayer which can execute task with dependancies
  * `stop raise chicken`
  * `look at <position>`
  * `shoot <position>` : if it has a bow and arrows, shoot <position>
+ * `follow <position>` : got to `<position>` every 2 sec
+ * `get <block>` : got to a position next to `<block>` then dig it
 
 ### Parameters
  * `<position>` can be :
@@ -90,3 +92,6 @@ A bot based on mineflayer which can execute task with dependancies
  * `repeat shoot nearest reachable mob` : kill close mobs
  * `repeat shoot me` : kill you
  * `move to nearest reachable position nearest block log`
+ * `follow me`
+ * `stop follow me`
+ * `get log`
