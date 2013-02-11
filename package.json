@@ -22,8 +22,6 @@
   "dependencies": {
 	"mineflayer": "~0.0.26",
     "mineflayer-navigate": "~0.0.8",
-    "cloneextend":"~0.0.3",
-    "jison":"~0.4.2"
-  },
-  "scripts":{"postinstall": "jison grammar.jison"}
+    "cloneextend":"~0.0.3"
+  }
 }
