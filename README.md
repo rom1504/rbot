@@ -19,7 +19,6 @@ A bot based on mineflayer which can execute task with dependancies
  * dig a tunnel
  * raise chicken
  * move by building and digging
- * activate block
  * building things
  
 ### Roadmap
@@ -32,6 +31,7 @@ A bot based on mineflayer which can execute task with dependancies
   * crafting
   * using chests, dispensers and enchantment tables
   * use vehicle
+  * activate block
  * React to the world : for example if a mob attack the bot, the bot should defend itself
  * Improve/simplify the code
 

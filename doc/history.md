@@ -38,3 +38,8 @@
  * build
  * build shelter
  * destroy shelter
+
+## 0.0.7
+
+ * more syntax (using jison)
+ * more commands (moving by building and digging for example)
