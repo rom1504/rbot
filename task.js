@@ -27,6 +27,13 @@ function init(_bot,_vec3,_achieve,_achieveList,_mf)
 		block=mf.blocks[i];
 		blocks[block.name]=block;
 	}
+	var item;
+	items={};
+	for(i in mf.items)
+	{
+		item=mf.items[i];
+		items[item.name]=item;
+	}
 }
 
 function blockNameToBlockType(blockName)
@@ -63,7 +70,7 @@ function canFall(pos)
 
 function dig(s,u,done)
 {
-	var pos=stringToPosition(s).floored();
+	var pos=stringToPosition(s,u).floored();
 	if(isEmpty(pos))
 	{
 		done();
@@ -99,7 +106,7 @@ function norm(v)
 
 function build(s,u,done)
 {
-	var blockPosition=stringToPosition(s).floored();
+	var blockPosition=stringToPosition(s,u).floored();
 	var x,y,z,p;
 	var contiguousBlocks=[new vec3(1,0,0),new vec3(-1,0,0),new vec3(0,1,0),new vec3(0,-1,0),new vec3(0,0,-1),new vec3(0,0,1)];
 	for(i in contiguousBlocks)
@@ -114,16 +121,77 @@ function build(s,u,done)
 	}
 }
 
+
+function findItemType(name)
+{
+	var id;
+	if((id=items[name])!=undefined) return id;
+	if((id=blocks[name])!=undefined) return id;
+	return null;
+}
+
+
+function findCraftingTable()
+{
+	var cursor = new vec3();
+	for(cursor.x = bot.entity.position.x - 4; cursor.x < bot.entity.position.x + 4; cursor.x++)
+	{
+		for(cursor.y = bot.entity.position.y - 4; cursor.y < bot.entity.position.y + 4; cursor.y++)
+		{
+			for(cursor.z = bot.entity.position.z - 4; cursor.z < bot.entity.position.z + 4; cursor.z++)
+			{
+				var block = bot.blockAt(cursor);
+				if (block.type === 58) return block;
+			}
+		}
+	}
+}
+
+function craft(amount,name,u,done)
+{
+	amount=parseInt(amount);
+	var item=findItemType(name);
+	var craftingTable=findCraftingTable();
+	var wbText = craftingTable ? "with a crafting table, " : "without a crafting table, ";
+	if (item == null) bot.chat(wbText + "unknown item: " + name);
+	else
+	{
+		var recipes = bot.recipesFor(item.id, null, 1, craftingTable);
+		if (recipes.length)
+		{
+			bot.chat(wbText + "I can make " + item.name);
+			bot.craft(recipes[0], amount, craftingTable, function(err)
+			{
+				if (err)
+				{
+					bot.chat("error making " + item.name);
+					console.error(err.stack);
+				}
+				else bot.chat("made " + amount + " " + item.name);
+				done();
+			});
+		}
+		else bot.chat(wbText + "I can't make " + item.name);
+	}
+	done();
+}
+
+function unequip(s,u,done)
+{
+	bot.unequip(s);
+	done();
+}
+
 function lookAt(s,u,done)
 {
-	var goalPosition=stringToPosition(s);
+	var goalPosition=stringToPosition(s,u);
 	if(goalPosition!=null) bot.lookAt(goalPosition.offset(0,bot.entity.height,0));
 	done();
 }
 
 function move(s,u,done)
 {
-	var goalPosition=stringToPosition(s);
+	var goalPosition=stringToPosition(s,u);
 	bot.lookAt(goalPosition.offset(0,bot.entity.height,0));
 	bot.setControlState('forward', true);
 	var arrive=setInterval((function(goalPosition,done){return function()
@@ -140,7 +208,7 @@ function move(s,u,done)
 
 function moveTo(s,u,done)
 {
-	var goalPosition=stringToPosition(s);
+	var goalPosition=stringToPosition(s,u);
 	if(goalPosition!=null && isFree(goalPosition))
 	{
 		if(goalPosition.distanceTo(bot.entity.position)>=1)
@@ -190,22 +258,47 @@ function isFree(pos)
 // 	return e;
 // }
 
-function repeatAux(taskName,username,done)
+function repeatAux(taskName,over,username,done)
 {
-	if(repeating) achieve(taskName,username,(function(taskName,username,done){return function() {setTimeout(repeatAux,100,taskName,username,done);}})(taskName,username,done));
+	if(!over()) achieve(taskName,username,(function(taskName,over,username,done){return function() {setTimeout(repeatAux,100,taskName,over,username,done);}})(taskName,over,username,done));
 	else done();
 }
+
+
+
 
 function repeat(taskName,username,done)
 {
 	repeating=true;
-	repeatAux(taskName,username,done);
+	repeatAux(taskName,function(){return !repeating;},username,done);
 }
 
 function stopRepeat(taskName,u,done)
 {
 	repeating=false;
 	done();
+}
+
+function ifThenElse(condition,then,els,u,done)
+{
+	if(stringToPredicate(condition)()) achieve(then,u,done);
+	else achieve(els,u,done);
+}
+
+function ifThen(condition,then,u,done)
+{
+	if(stringToPredicate(condition)()) achieve(then,u,done);
+}
+
+function stringToPredicate(s)
+{
+	var v;
+	if((v=new RegExp("^at (.+)$").exec(s))!=null) return function(pos){return function(){return pos.distanceTo(bot.entity.position)<0.5};}(stringToPosition(v[1]));
+}
+
+function repeatUntil(taskName,condition,u,done)
+{
+	repeatAux(taskName,stringToPredicate(condition),u,done);
 }
 
 
@@ -343,7 +436,7 @@ function mobs(name)
 
 function lookForEntity(s,u,done)
 {
-	var ent=stringToEntity(s);
+	var ent=stringToEntity(s,u);
 	if(ent===null) bot.chat("I can't find "+s);
 	else bot.chat(s+" is in "+ent.position+(ent.type === 'mob' ? ". It's a "+ent.mobType : (ent.type === 'object' ? ". It's a "+ent.objectType : "")));
 	done();
@@ -376,27 +469,17 @@ function equip(destination,itemName,u,done)
 	done();
 }
 
-function toss(itemName,u,done)
+function toss(number,itemName,u,done)
 {
-	var item = itemByName(itemName);
-	if (item)
-	{
-		bot.tossStack(item, function(err) {
-			if (err)
-			{
-				console.log("unable to toss " + item.name);
-				console.log(err.stack);
-			} 
-			else console.log("tossed " + item.name);			  
-		});
-	}
+	var item=itemByName(itemName);
+	if(item) bot.toss(item.type,null,parseInt(number));
 	else console.log("I have no " + itemName);
 	done();
 }
 
 function attack(s,u,done)
 {
-	var ent=stringToEntity(s);
+	var ent=stringToEntity(s,u);
 	if(ent!=null) bot.attack(ent);
 	done();
 }
@@ -436,38 +519,30 @@ function wait(s,u,done)
 }
 
 
-function list(taskNameList,username,done)
-{
-	achieveList(taskNameList.split(" then "),username,done);
-}
 
 function stringToBlock(s)
 {
 	if((v=new RegExp("^nearest block (.+)$").exec(s))!=null) return nearestBlock(v[1]);
-	if((v=new RegExp("^nearest block$").exec(s))!=null) return nearestBlock("*");
 	return null;
 }
 
-function stringToEntity(s)
+function stringToEntity(s,u)
 {
 	var v;
+	if(s==="me") s="player "+u;
 	if((v=new RegExp("^player (.+)$").exec(s))!=null)
 	{
 	  if(bot.players[v[1]]===undefined) return null;
 	  return bot.players[v[1]].entity;
 	}
 	if((v=new RegExp("^nearest mob (.+)$").exec(s))!=null) return nearestEntity(mobs(v[1]));
-	if((v=new RegExp("^nearest mob$").exec(s))!=null) return nearestEntity(mobs("*"));
 	if((v=new RegExp("^nearest object (.+)$").exec(s))!=null) return nearestEntity(objects(v[1]));
-	if((v=new RegExp("^nearest object$").exec(s))!=null) return nearestEntity(objects("*"));
 	if((v=new RegExp("^nearest reachable mob (.+)$").exec(s))!=null) return nearestReachableEntity(mobs(v[1]));
-	if((v=new RegExp("^nearest reachable mob$").exec(s))!=null) return nearestReachableEntity(mobs("*"));
 	if((v=new RegExp("^nearest reachable object (.+)$").exec(s))!=null) return nearestReachableEntity(objects(v[1]));
-	if((v=new RegExp("^nearest reachable object$").exec(s))!=null) return nearestReachableEntity(objects("*"));
 	return null;
 }
 
-function stringToPosition(s)
+function stringToPosition(s,u)
 {
 // 	var v;
 // 	if((v=new RegExp("^adapted (.+)$").exec(s))!=null)
@@ -480,10 +555,9 @@ function stringToPosition(s)
 	// could be used, maybe (0.8 not 1.8 ...)
 	var v;
 	if((v=new RegExp("^nearest reachable position (.+)$").exec(s))!=null) return nearestReachablePosition(stringToPosition(v[1]));
-	var block=stringToBlock(s);
-	if(block!=null) return block.position;
-	var ent=stringToEntity(s);
-	if(ent!=null) return ent.position;
+	if((v=new RegExp("^block (.+)$").exec(s))!=null)  {var b;if((b=stringToBlock(v[1]))!=null) return b.position;}
+	if((v=new RegExp("^entity (.+)$").exec(s))!=null) {var e;if((e=stringToEntity(v[1],u))!=null) return e.position;}
+	if((v=new RegExp("^r(.+)$").exec(s))!=null) return bot.entity.position.plus(simpleStringToPosition(v[1]));
 	return simpleStringToPosition(s);
 }
 
@@ -516,41 +590,78 @@ function deactivateItem(u,done)
 	done();
 }
 
+function jump(u,done)
+{
+	bot.setControlState('jump', true);
+	bot.setControlState('jump', false);
+	setTimeout(done,400);// change this
+}
+
+function achieveListAux(p,u,done)
+{
+	achieveList(p,u,done);
+}
+
+function up(u,done) // change this a bit ?
+{
+  bot.setControlState('jump', true);
+  var targetBlock = bot.blockAt(bot.entity.position.offset(0, -1, 0));
+  var jumpY = bot.entity.position.y + 1;
+  bot.on('move', placeIfHighEnough);
+  
+  function placeIfHighEnough() {
+    if (bot.entity.position.y > jumpY) {
+      bot.placeBlock(targetBlock, vec3(0, 1, 0));
+      bot.setControlState('jump', false);
+      bot.removeListener('move', placeIfHighEnough);
+	  setTimeout(done,400);
+    }
+  }
+}
+
+
 tasks=
 {
 		// va y avoir un pb ici : pas de end list et repeat...
-		"repeat (.+)":{action:{f:repeat}},//priorité avec then
-		"stop repeat (.+)":{action:{f:stopRepeat}},
-		"(.+ then .+)":{action:{f:list}},
-		"dig (.+)":{action:{f:dig}},
-		"move to (.+)":{action:{f:moveTo}},
-		"move (.+)":{action:{f:move}},
-		"pos (.+)":{action:{f:pos}},
- 		"look for block (.+)":{action:{f:lookForBlock}},
-		"look for entity (.+)":{action:{f:lookForEntity}},
+		"ifThenElse":{action:{f:ifThenElse}},
+		"ifThen":{action:{f:ifThenElse}},
+		"repeatUntil":{action:{f:repeatUntil}},
+		"repeat":{action:{f:repeat}},//priorité avec then
+		"stopRepeat":{action:{f:stopRepeat}},
+		"taskList":{action:{f:achieveListAux}},
+		"dig":{action:{f:dig}},
+		"move to":{action:{f:moveTo}},
+		"move":{action:{f:move}},
+		"pos":{action:{f:pos}},
+ 		"look for block":{action:{f:lookForBlock}},
+		"look for entity":{action:{f:lookForEntity}},
 		"stop move to":{action:{f:stopMoveTo}},
 		"list":{action:{f:listInventory}},
-		"toss (.+)":{action:{f:toss}},
-		"equip (.+?) (.+?)":{action:{f:equip}},
-		"look at (.+)":{action:{f:lookAt}},
-		"say (.+)":{action:{f:say}},
-		"wait ([0-9]+)":{action:{f:wait}},
+		"toss":{action:{f:toss}},
+		"equip":{action:{f:equip}},
+		"unequip":{action:{f:unequip}},
+		"look at":{action:{f:lookAt}},
+		"say":{action:{f:say}},
+		"wait":{action:{f:wait}},
 		"activate item":{action:{f:activateItem}},
 		"deactivate item":{action:{f:deactivateItem}},
-		"build (.+)":{action:{f:build}}
+		"build":{action:{f:build}},
+		"craft":{action:{f:craft}},
+		"jump":{action:{f:jump}},
+		"up":{action:{f:up}}
 // 		"avancer":{action:{f:avancer,c:conditionAvancer}},
 };
 
 generated_tasks=
 {
-	"dig forward (.+)":function (s,u) 
+	"dig forward":function (s,u) 
 	{
-		var p=stringToPosition(s);
-		return {action:{f:move},deps:["dig "+positionToString(p.offset(0,1,0)),"dig "+s]};
+		var p=stringToPosition(s,u);
+		return {action:{f:move},deps:[["dig",[positionToString(p.offset(0,1,0))]],["dig",[s]]]};
 	},
-	"attack (.+)":function (s,u)
+	"attack":function (s,u)
 	{
-		return {action:{f:attack},deps:["move to "+s]};
+		return {action:{f:attack},deps:[["move to",[s]]]};
 	}
 };
 
@@ -564,39 +675,33 @@ alias=
 	"y-":"move r0,-1,0",
 	"z+":"move r0,0,1",
 	"z-":"move r0,0,-1",
-	"spiral up":"dig r0,2,0 then dig r0,1,1 then dig r0,2,1 then move to r0,1,1 then dig r0,2,0 then dig r-1,1,0 then dig r-1,2,0 then move to r-1,1,0 then dig r0,2,0 then dig r0,1,-1 then dig r0,2,-1 then move to r0,1,-1 then dig r0,2,0 then dig r1,1,0 then dig r1,2,0 then move to r1,1,0",
-	"spiral down":"dig r1,1,0 then dig r1,0,0 then dig r1,-1,0 then move to r1,-1,0 then dig r0,0,1 then dig r0,1,1 then dig r0,-1,1 then move to r0,-1,1 then dig r-1,1,0 then dig r-1,0,0 then dig r-1,-1,0 then move to r-1,-1,0 then dig r0,1,-1 then dig r0,0,-1 then dig r0,-1,-1 then move to r0,-1,-1",
-	"raise chicken":"move to nearest reachable object then equip hand egg then activate item",
-	"build shelter":"build r-1,0,0 then build r0,0,-1 then build r1,0,0 then build r0,0,1 then build r1,0,1 then build r-1,0,-1 then build r-1,0,1 then build r1,0,-1 then build r-1,1,0 then build r0,1,-1 then build r1,1,0 then build r0,1,1 then build r1,1,1 then build r-1,1,-1 then build r-1,1,1 then build r1,1,-1 then build r-1,2,0 then build r0,2,-1 then build r1,2,0 then build r0,2,1 then build r1,2,1 then build r-1,2,-1 then build r-1,2,1 then build r1,2,-1 then build r0,2,0",
-	"destroy shelter":"dig r-1,0,0 then dig r0,0,-1 then dig r1,0,0 then dig r0,0,1 then dig r1,0,1 then dig r-1,0,-1 then dig r-1,0,1 then dig r1,0,-1 then dig r-1,1,0 then dig r0,1,-1 then dig r1,1,0 then dig r0,1,1 then dig r1,1,1 then dig r-1,1,-1 then dig r-1,1,1 then dig r1,1,-1 then dig r-1,2,0 then dig r0,2,-1 then dig r1,2,0 then dig r0,2,1 then dig r1,2,1 then dig r-1,2,-1 then dig r-1,2,1 then dig r1,2,-1 then dig r0,2,0"
+	"spiral up":"do dig r0,2,0 then dig r0,1,1 then dig r0,2,1 then move to r0,1,1 then dig r0,2,0 then dig r-1,1,0 then dig r-1,2,0 then move to r-1,1,0 then dig r0,2,0 then dig r0,1,-1 then dig r0,2,-1 then move to r0,1,-1 then dig r0,2,0 then dig r1,1,0 then dig r1,2,0 then move to r1,1,0 done",
+	"spiral down":"do dig r1,1,0 then dig r1,0,0 then dig r1,-1,0 then move to r1,-1,0 then dig r0,0,1 then dig r0,1,1 then dig r0,-1,1 then move to r0,-1,1 then dig r-1,1,0 then dig r-1,0,0 then dig r-1,-1,0 then move to r-1,-1,0 then dig r0,1,-1 then dig r0,0,-1 then dig r0,-1,-1 then move to r0,-1,-1 done",
+	"raise chicken":"do move to nearest reachable object * then equip hand egg then activate item done",
+	"build shelter":"do build r-1,0,0 then build r0,0,-1 then build r1,0,0 then build r0,0,1 then build r1,0,1 then build r-1,0,-1 then build r-1,0,1 then build r1,0,-1 then build r-1,1,0 then build r0,1,-1 then build r1,1,0 then build r0,1,1 then build r1,1,1 then build r-1,1,-1 then build r-1,1,1 then build r1,1,-1 then build r-1,2,0 then build r0,2,-1 then build r1,2,0 then build r0,2,1 then build r1,2,1 then build r-1,2,-1 then build r-1,2,1 then build r1,2,-1 then build r0,2,0 done",
+	"destroy shelter":"do dig r-1,0,0 then dig r0,0,-1 then dig r1,0,0 then dig r0,0,1 then dig r1,0,1 then dig r-1,0,-1 then dig r-1,0,1 then dig r1,0,-1 then dig r-1,1,0 then dig r0,1,-1 then dig r1,1,0 then dig r0,1,1 then dig r1,1,1 then dig r-1,1,-1 then dig r-1,1,1 then dig r1,1,-1 then dig r-1,2,0 then dig r0,2,-1 then dig r1,2,0 then dig r0,2,1 then dig r1,2,1 then dig r-1,2,-1 then dig r-1,2,1 then dig r1,2,-1 then dig r0,2,0 done",
+	
+	"attack everymob":"repeat attack nearest reachable mob * done",
+	"come":"move to entity me",
+	"down":"do dig r0,-1,0 then wait 400 done" // could change the wait 400 to something like a when at r0,-1,0 or something
 }
 
 parameterized_alias=
-{ 
-	// put this in stringToPosition
-	"r(-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?,-?[0-9]+(?:\\.[0-9]+)?)":function (s,u,input) 
+{
+	"shoot":function(s,u)
 	{
-		p=simpleStringToPosition(s);
-		if(input.indexOf("repeat")>-1 || input.indexOf("then")>-1) return "r"+s;// deps ?
-		return positionToString(bot.entity.position.plus(p));
+		return "do look at "+s+" then activate item then wait 1000 then deactivate item done"
 	},
-	//put this in stringToEntity
-	" me":function(u)
+	"get":function(s,u)
 	{
-		return " player "+u;
-	},
-	"shoot (.+)":function(s,u)
+		return "do move to nearest reachable position block nearest block "+s+" then dig block nearest block "+s+" done";//add+" then move to nearest reachable object" when improved
+	}, // do move to nearest reachable position block nearest block log then dig block nearest block log done
+	"follow":function(s,u)
 	{
-		return "look at "+s+" then activate item then wait 1000 then deactivate item"
-	},
-	"get (.+)":function(s,u)
-	{
-		return "move to nearest reachable position nearest block "+s+" then dig nearest block "+s;//add+" then move to nearest reachable object" when improved
-	},
-	"follow (.+)":function(s,u)
-	{
-		return "repeat move to "+s+" then wait 2000"// can make it follow with some distance maybe ?
+		return "repeat do move to "+s+" then wait 2000 done done"// can make it follow with some distance maybe ?
 	}
+	
+	
 }
 
 // remove this ?

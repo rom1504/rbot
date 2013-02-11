@@ -1,4 +1,5 @@
 var ce = require('cloneextend');
+var parser = require("./grammar").parser;
 
 var bot,vec3,generated_tasks,tasks,parameterized_alias,alias,master;
 
@@ -39,11 +40,25 @@ function init(_regex,_generated_tasks,_tasks,_parameterized_alias,_alias,_bot,_v
 	alias=_alias;
 }
 
-function reportEndOfTask(taskName,done)
+function parsedTaskToString(parsedTask)
+{
+	function arrayToString(a)
+	{
+		return "["+a.map(taskToString).join()+"]";
+	}
+	function taskToString(t)
+	{
+		if(t.constructor == Array) return arrayToString(t);
+		if(t.constructor == String) return '"'+t+'"';
+	}
+	return(taskToString(parsedTask));
+}
+
+function reportEndOfTask(parsedTask,done)
 {
 	return function()
 	{
-		console.log("I achieved task "+taskName);
+		console.log("I achieved task "+parsedTaskToString(parsedTask));
 		done();
 	};
 }
@@ -62,53 +77,48 @@ function reportEndOfTask(taskName,done)
 // 	}
 // }
 
-function applyAction(task,taskName,done)
+function applyAction(task,parsedTask,done)
 {
 		return function()
 		{
 			var b;
-			task.action.f.apply(this,task.action.p.concat([function(success){if(success!=null && !success) {applyAction(task,taskName,done)()} else {reportEndOfTask(taskName,done)()}}]));
+			task.action.f.apply(this,task.action.p.concat([function(success){if(success!=null && !success) {applyAction(task,parsedTask,done)()} else {reportEndOfTask(parsedTask,done)()}}]));
 			// comportement différent mais peut etre interessant :
 // 			var actione=task.action.f.apply(this,task.action.p);
 // 			bot.once(actione,reportEndOfTask(taskName));
 		}
 }
 
-function nameToTask(taskName,username)
+function nameToTask(parsedTask,username)
 {
-	taskName=replaceAlias(taskName,username);
+// 	taskName=replaceAlias(taskName,username);// seems useless, check it...
 	var v;
 	var task;
-	for(rtaskName in generated_tasks)
+	var pars;
+	if(parsedTask[0] in generated_tasks)
 	{
-		if((v=(new RegExp("^"+rtaskName+"$")).exec(taskName))!=null)
-		{
-			v.shift();
-			v.push(username);
-			task=generated_tasks[rtaskName].apply(this,v);
-			task.action.p=task.action.p != undefined ? task.action.p.concat(v) : v;
-			return task;
-		}
+		pars=ce.clone(parsedTask[1]);
+		pars.push(username);
+		task=generated_tasks[parsedTask[0]].apply(this,pars);
+		task.action.p=task.action.p != undefined ? task.action.p.concat(pars) : pars;
+		return task;
 	}
-	for(rtaskName in tasks)
+	if(parsedTask[0] in tasks)
 	{
-		if((v=(new RegExp("^"+rtaskName+"$")).exec(taskName))!=null)
-		{
-			v.shift();
-			v.push(username);
-			task=ce.clone(tasks[rtaskName]);
-			task.action.p=task.action.p != undefined ? task.action.p.concat(v) : v
-			return task;
-		}
+		pars=ce.clone(parsedTask[1]);
+		pars.push(username);
+		task=ce.clone(tasks[parsedTask[0]]);
+		task.action.p=task.action.p != undefined ? task.action.p.concat(pars) : pars
+		return task;
 	}
 }
 
-function achieve(taskName,username,done)
+function achieve(parsedTask,username,done)
 {
-	var task=nameToTask(taskName,username);
+	var task=nameToTask(parsedTask,username);
 		//  	taskName=replaceAlias(taskName,username);//utile ? // bien ?
-	console.log("I'm going to achieve task "+taskName);
-	achieveList(task.deps!=undefined ? task.deps : [],username,applyAction(task,taskName,done));
+	console.log("I'm going to achieve task "+parsedTaskToString(parsedTask));
+	achieveList(task.deps!=undefined ? task.deps : [],username,applyAction(task,parsedTask,done));
 }
 
 function listAux(taskNameList,i,username,done)
@@ -141,50 +151,60 @@ function replaceAlias(message,username)
 				continue; // sure ?
 			}
 		}
-		var v;
-		for(var aliap in parameterized_alias)
-		{
-			if((v=(new RegExp(aliap)).exec(message))!=null)
-			{
-				var toReplace=v.shift();
-				v.push(username);
-				v.push(v.input);
-// 				console.log(v);
-				newM=message.replace(toReplace,parameterized_alias[aliap].apply(this,v));
-				if(newM!=message)
-				{
-					message=newM;
-					changed=1;
-					continue;
-				}
-			}
-		}
 	}
 	return message;
 }
 
+function mapParsedMessage(parsedMessage,fun)
+{
+	if(parsedMessage[0]==="taskList") for(i in parsedMessage[1]) parsedMessage[1][i]=mapParsedMessage(parsedMessage[1][i],fun);
+	else if(parsedMessage[0]==="repeat") parsedMessage[1][0]=mapParsedMessage(parsedMessage[1][0],fun);
+	else if(parsedMessage[0]==="repeatUntil") parsedMessage[1][0]=mapParsedMessage(parsedMessage[1][0],fun);
+	else if(parsedMessage[0]==="ifThen") parsedMessage[1][1]=mapParsedMessage(parsedMessage[1][1],fun);
+	else if(parsedMessage[0]==="ifThenElse")
+	{
+		parsedMessage[1][1]=mapParsedMessage(parsedMessage[1][1],fun);
+		parsedMessage[1][2]=mapParsedMessage(parsedMessage[1][2],fun);
+	}
+	else if(parsedMessage[0]==="stopRepeat") parsedMessage[1][0]=mapParsedMessage(parsedMessage[1][0],fun);
+	else parsedMessage=fun(parsedMessage);
+	return parsedMessage;
+}
+
+function parse(message,username)
+{
+	message=replaceAlias(message);
+	parsedMessage=parser.parse(message);
+	parsedMessage=mapParsedMessage(parsedMessage,function(username){return function(parsedMessage){
+		if(parsedMessage[0] in parameterized_alias)
+		{
+			var pars=ce.clone(parsedMessage[1]);
+			pars.push(username);
+// 			console.log(pars);
+			return parse(parameterized_alias[parsedMessage[0]].apply(this,pars));
+		}
+		else return parsedMessage;
+	};}(username));
+	return parsedMessage;
+}
+
 function processMessage(username, message)
 {
-	if(username===master || master===undefined)
+	if(username !=bot.username && (username===master || master===undefined))
 	{
 		message=replaceAlias(message,username);
-	// 	console.log(message);
-		for(taskName in tasks)
+		console.log(message);
+		var parsedMessage;
+		try
 		{
-			if((new RegExp("^"+taskName+"$")).test(message))
-			{
-				achieve(message,username,function(){});
-				return;
-			}		
+			parsedMessage=parse(message);
 		}
-		for(taskName in generated_tasks)
+		catch(error)
 		{
-			if((new RegExp("^"+taskName+"$")).test(message))
-			{
-				achieve(message,username,function(){});
-				return;
-			}		
+			console.log(error);
+			return;
 		}
+		if(parsedMessage[0] in generated_tasks || parsedMessage[0] in tasks) achieve(parsedMessage,username,function(){});
 	}
 }
 
