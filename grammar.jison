@@ -12,6 +12,8 @@
 "until" return 'until';
 "dig forward" return 'digForward';
 "dig" return 'dig';
+"sumove" return 'sumove';
+"smove" return 'smove';
 "move to" return 'moveTo';
 "move" return 'move';
 "pos" return 'pos';
@@ -28,10 +30,12 @@
 "activate item" return 'activateItem';
 "deactivate item" return 'deactivateItem';
 "build" return 'build';
+"nothing" return 'nothing';
 "craft" return 'craft';
 "jump" return 'jump';
 "attack" return 'attack';
 "shoot" return 'shoot';
+"sget" return 'sget';
 "get" return 'get';
 "follow" return 'follow';
 "player" return 'player';
@@ -45,6 +49,7 @@
 "block" return 'bloc';
 "me" return 'me';
 "*" return '*';
+";" return ';';
 "at" return 'at';
 "up" return 'up';
 "r"?"-"?[0-9]+(?:"."[0-9]+)?",""-"?[0-9]+(?:"."[0-9]+)?",""-"?[0-9]+(?:"."[0-9]+)? return 'simplePosition';
@@ -82,12 +87,14 @@ exp :
 	| 'repeat' 'S' exp 'S' 'done' {$$=['repeat',[$3]];}
 	| 'stopRepeat' 'S' exp 'S' 'done' {$$=['stopRepeat',[$3]];}
 	| 'do' 'S' listeE  {$$=['taskList',[$3]];}
-	| task {$$=$1}
+	| task {$$=$1} // needs a separator...
 ;
 
 
 task :
-	| 'dig' 'S' position  {$$=['dig',[$3]];}
+	 'dig' 'S' position  {$$=['dig',[$3]];}
+	| 'sumove' 'S' position {$$=['sumove',[$3]];}
+	| 'smove' 'S' position {$$=['smove',[$3]];}
 	| 'moveTo' 'S' position {$$=['move to',[$3]];}
 	| 'move' 'S' position {$$=['move',[$3]];}
 	| 'pos' 'S' simplePlayer {$$=['pos',[$3]];}
@@ -110,37 +117,42 @@ task :
 	| 'attack' 'S' entity {$$=['attack',[$3]];}
 	| 'shoot' 'S' position {$$=['shoot',[$3]];}
 	| 'get' 'S' simpleBlock {$$=['get',[$3]];}
+	| 'sget' 'S' simpleBlock {$$=['sget',[$3]];}
 	| 'follow' 'S' position {$$=['follow',[$3]];}
 	| 'up' {$$=['up',[]]}
-	| 'T'	{$$=[$1,[]];}
+	| 'nothing' {$$=['nothing',[]]}
+ 	| 'T' {$$=[$1,[]];}
+// 	| 'T' 'S' 'T' {$$=[$1,[$2]];} // can't work...
 ;
 
+
+
 int:
-	| 'N' {$$=$1}
+	'N' {$$=$1}
 ;
 
 
 // do list better with something like https://github.com/zaach/jison/blob/master/examples/json.js ?
 
 message :
-	|'T' '.' {$$=$1}
+	'T' '.' {$$=$1}
 	| 'T' 'S' message {$$=$1+' '+$3}
 ;
 
 destination :
-	| 'T' {$$=$1}
+	 'T' {$$=$1}
 ;
 
 item :
-	| 'T' {$$=$1}
+	 'T' {$$=$1}
 ;
 
 simplePlayer :
-	| 'T' {$$=$1}
+	 'T' {$$=$1}
 ;
 
 entity :
-	| 'me' {$$=$1}
+	 'me' {$$=$1}
 	| 'player' 'S' simplePlayer {$$=$1+' '+$3}
 	| 'nearestMob' 'S' mob {$$=$1+' '+$3;}
 	| 'nearestObject' 'S' object {$$=$1+' '+$3;}
@@ -149,29 +161,29 @@ entity :
 ;
 
 mob :
-	| 'T' {$$=$1}
+	'T' {$$=$1}
 	| '*' {$$=$1}
 ;
 
 object :
-	| 'T' {$$=$1}
+	 'T' {$$=$1}
 	| '*' {$$=$1}
 ;
 	
 position :
-	| 'nearestReachablePosition' 'S' position {$$=$1+' '+$3}
+	 'nearestReachablePosition' 'S' position {$$=$1+' '+$3}
 	| 'ent' 'S' entity {$$=$1+' '+$3}
 	| 'bloc' 'S' block {$$=$1+' '+$3}
 	| 'simplePosition'  {$$=$1}
 ;
 
 simpleBlock :
-	| 'T' {$$=$1;}
+	 'T' {$$=$1;}
 	| '*' {$$=$1}
 ;
 
 block :
-	| 'nearestBlock' 'S' simpleBlock {$$=$1+' '+$3;}
+	 'nearestBlock' 'S' simpleBlock {$$=$1+' '+$3;}
 ;
 
 listeE :

@@ -92,6 +92,8 @@ function applyAction(task,parsedTask,done)
 function nameToTask(parsedTask,username)
 {
 // 	taskName=replaceAlias(taskName,username);// seems useless, check it...
+	
+	parsedTask=replaceParameterizedAlias(parsedTask,username);
 	var v;
 	var task;
 	var pars;
@@ -111,12 +113,29 @@ function nameToTask(parsedTask,username)
 		task.action.p=task.action.p != undefined ? task.action.p.concat(pars) : pars
 		return task;
 	}
+	return null;
 }
 
 function achieve(parsedTask,username,done)
 {
-	var task=nameToTask(parsedTask,username);
+	var task;
+	try
+	{
+		task=nameToTask(parsedTask,username);
+	}
+	catch(error)
+	{
+		console.log(error);
+		done();
+		return;
+	}
 		//  	taskName=replaceAlias(taskName,username);//utile ? // bien ?
+	if(task===null)
+	{
+		console.log("Cannot find "+parsedTaskToString(parsedTask));
+		done();
+		return;
+	}
 	console.log("I'm going to achieve task "+parsedTaskToString(parsedTask));
 	achieveList(task.deps!=undefined ? task.deps : [],username,applyAction(task,parsedTask,done));
 }
@@ -155,59 +174,63 @@ function replaceAlias(message,username)
 	return message;
 }
 
-function mapParsedMessage(parsedMessage,fun)
+// function mapParsedMessage(parsedMessage,fun)
+// {
+// 	if(parsedMessage[0]==="taskList") for(i in parsedMessage[1]) parsedMessage[1][i]=mapParsedMessage(parsedMessage[1][i],fun);
+// 	else if(parsedMessage[0]==="repeat") parsedMessage[1][0]=mapParsedMessage(parsedMessage[1][0],fun);
+// 	else if(parsedMessage[0]==="repeatUntil") parsedMessage[1][0]=mapParsedMessage(parsedMessage[1][0],fun);
+// 	else if(parsedMessage[0]==="ifThen") parsedMessage[1][1]=mapParsedMessage(parsedMessage[1][1],fun);
+// 	else if(parsedMessage[0]==="ifThenElse")
+// 	{
+// 		parsedMessage[1][1]=mapParsedMessage(parsedMessage[1][1],fun);
+// 		parsedMessage[1][2]=mapParsedMessage(parsedMessage[1][2],fun);
+// 	}
+// 	else if(parsedMessage[0]==="stopRepeat") parsedMessage[1][0]=mapParsedMessage(parsedMessage[1][0],fun);
+// 	else parsedMessage=fun(parsedMessage);
+// 	return parsedMessage;
+// }
+// 
+// function replaceAllParameterizedAlias(parsedMessage,username)
+// {
+// 	return mapParsedMessage(parsedMessage,function(username){return function(parsedMessage){replaceParameterizedAlias(parsedMessage,username)};}(username));
+// }
+
+function replaceParameterizedAlias(parsedMessage,username)
 {
-	if(parsedMessage[0]==="taskList") for(i in parsedMessage[1]) parsedMessage[1][i]=mapParsedMessage(parsedMessage[1][i],fun);
-	else if(parsedMessage[0]==="repeat") parsedMessage[1][0]=mapParsedMessage(parsedMessage[1][0],fun);
-	else if(parsedMessage[0]==="repeatUntil") parsedMessage[1][0]=mapParsedMessage(parsedMessage[1][0],fun);
-	else if(parsedMessage[0]==="ifThen") parsedMessage[1][1]=mapParsedMessage(parsedMessage[1][1],fun);
-	else if(parsedMessage[0]==="ifThenElse")
+	if(parsedMessage[0] in parameterized_alias)
 	{
-		parsedMessage[1][1]=mapParsedMessage(parsedMessage[1][1],fun);
-		parsedMessage[1][2]=mapParsedMessage(parsedMessage[1][2],fun);
+		var pars=ce.clone(parsedMessage[1]);
+		pars.push(username);
+// 			console.log(pars);
+		return replaceParameterizedAlias(parse(parameterized_alias[parsedMessage[0]].apply(this,pars),username));
 	}
-	else if(parsedMessage[0]==="stopRepeat") parsedMessage[1][0]=mapParsedMessage(parsedMessage[1][0],fun);
-	else parsedMessage=fun(parsedMessage);
-	return parsedMessage;
+	else return parsedMessage;
 }
 
 function parse(message,username)
 {
-	message=replaceAlias(message);
-	parsedMessage=parser.parse(message);
-	parsedMessage=mapParsedMessage(parsedMessage,function(username){return function(parsedMessage){
-		if(parsedMessage[0] in parameterized_alias)
-		{
-			var pars=ce.clone(parsedMessage[1]);
-			pars.push(username);
-// 			console.log(pars);
-			return parse(parameterized_alias[parsedMessage[0]].apply(this,pars));
-		}
-		else return parsedMessage;
-	};}(username));
-	return parsedMessage;
+	return /*replaceAllParameterizedAlias(*/parser.parse(replaceAlias(message,username))/*)*/;
 }
 
 function processMessage(username, message)
 {
 	if(username !=bot.username && (username===master || master===undefined))
 	{
-		message=replaceAlias(message,username);
+// 		message=replaceAlias(message,username);
 		console.log(message);
 		var parsedMessage;
 		try
 		{
-			parsedMessage=parse(message);
+			parsedMessage=parse(message,username);
 		}
 		catch(error)
 		{
 			console.log(error);
 			return;
 		}
-		if(parsedMessage[0] in generated_tasks || parsedMessage[0] in tasks) achieve(parsedMessage,username,function(){});
+		if(parsedMessage[0] in generated_tasks || parsedMessage[0] in tasks ||parsedMessage[0] in parameterized_alias) achieve(parsedMessage,username,function(){});
 	}
 }
-
 
 exports.init=init;
 exports.processMessage=processMessage;

@@ -18,18 +18,20 @@ A bot based on mineflayer which can execute task with dependancies
  * build a shelter
  * dig a tunnel
  * raise chicken
+ * move by building and digging
+ * activate block
+ * building things
  
 ### Roadmap
 
  * Doing more complicated things :
   * crafting things
-  * getting anywhere even if it's hard
-  * building things
+  * getting anywhere even if it's hard (lava, water)
+  * building more things
  * Integrate other mineflayer functionnality : 
   * crafting
   * using chests, dispensers and enchantment tables
   * use vehicle
-  * activate block
  * React to the world : for example if a mob attack the bot, the bot should defend itself
  * Improve/simplify the code
 
@@ -55,22 +57,23 @@ If you download the source via github, you can just run `npm install`
 
 
 ### Commands
+#### Syntax
+ * `repeat <action> done`
+ * `stop repeat <action> done`
+ * `do <action1> then <action2> done` : do first action then do the second one
+ * `if <condition> do <task> done`
+ * `if <condition> do <task1> else <task2> done`
+ * `repeat <task> until <condition> done`
+
+
+#### Base commands
  * `dig <position>`
  * `move <position>`
- * `x+` `x-` `z+` `z-`
- * `dig forward <position>` : dig the two block in front of the bot then move, works if there is gravel that fall
- * `repeat <action> done` for example :
-  * `repeat dig forward <position> done`
- * `do <action1> then <action2> done` : do first action then do the second one, for example :
-  * `do x+ then z+ done`
  * `look for entity <entity>`
  * `look for block <block>`
- * `stop repeat <action> done`
  * `pos <player>` : say the position of the other player if he is not too far away
  * `move to <position>` : use mineflayer-navigate to get to <position>
  * `stop move to`
- * `spiral up` : dig an ascending spiral staircase
- * `spiral down` : dig a descending spiral staircase
  * `equip <emplacement> <item>` : equip item at emplacement (for example hand)
  * `unequip <emplacament>` : doesn't work yet
  * `toss <number> <item>`
@@ -80,19 +83,36 @@ If you download the source via github, you can just run `npm install`
  * `activate item`
  * `deactivate item`
  * `wait <milliseconds>`
- * `raise chicken` : get an egg then throw it
  * `stop raise chicken`
  * `look at <position>`
+ * `build <position>` : build at position with the equipped block
+ * `craft <number> <item>` : will craft this item if you have the required items : doesn't work yet
+ * `up` : jump and build under the bot (but doesn't dig the bot above the bot unlike sup)
+ * `jump`
+ * `nothing`
+ 
+ 
+#### Alias
+ * `x+` `x-` `z+` `z-`
+ * `dig forward <position>` : dig the two block in front of the bot then move, works if there is gravel that fall
+ * `spiral up` : dig an ascending spiral staircase
+ * `spiral down` : dig a descending spiral staircase
+ * `raise chicken` : get an egg then throw it
  * `shoot <position>` : if it has a bow and arrows, shoot <position>
  * `follow <position>` : go to `<position>` every 2 sec
  * `get <nameBlock>` : go to a position next to nearest `<nameBlock>` then dig it
- * `build <position>` : build at position with the equipped block
  * `build shelter` : build a very simple shelter with the equipped block (need 25 blocks)
  * `destroy shelter` : destroy this shelter
- * `craft <number> <item>` : will craft this item if you have the required items : doesn't work yet
- 
  * `come` : `move to me`
- * `attack everymob` : 
+ * `attack everymob` : kill any close mob
+ * `scome` : move to you by digging and building
+ * `down` : move down of one block
+ * `sup` : move up of one block
+ * `sget <blockName>` : get a block by building and digging
+ * `smove <position>` : get to the position by building and digging
+ * `sumove <position>` : move of 1 in the direction of the position by building and digging
+ 
+
 
 ### Parameters
  * `<position>` can be :
@@ -120,19 +140,22 @@ If you download the source via github, you can just run `npm install`
   * `enderman`
   * `creeper`
   * ...
+ * `<condition>` can be :
+  * `at <position>`
 
 ### Interesting use of commands
  * `repeat spiral down done` : build a spiral staircase from y=64 to y=0
- * `repeat attack nearest reachable mob done` : attack mobs close from the mob
+ * `attack everymob` : attack mobs close from the mob
  * `repeat dig forward r0,0,1 done` : if you want to build a tunnel (not stopped by gravel, but can die from drowning)
- * `move to entity me`
+ * `come`
+ * `scome`
  * `repeat do raise chicken then wait 1000 done done`
  * `stop repeat do raise chicken then wait 1000 done done`
  * `repeat look at me done`
- * `repeat shoot nearest reachable mob done` : kill close mobs
- * `repeat shoot me done` : kill you
+ * `repeat shoot entity nearest reachable mob done` : kill close mobs
+ * `repeat shoot entity me done` : kill you
  * `move to nearest reachable position block nearest block log`
- * `follow me`
- * `stop follow me`
+ * `follow entity me`
+ * `stop follow entity me`
  * `get log`
- * `do repeat build shelter then destroy shelter done` : fun
+ * `repeat do build shelter then destroy shelter done done` : fun

@@ -68,7 +68,7 @@ function canFall(pos)
 	return b!=null && (b.type===13 || b.type===12);
 }
 
-function dig(s,u,done)
+function dig_(s,u,done)
 {
 	var pos=stringToPosition(s,u).floored();
 	if(isEmpty(pos))
@@ -91,6 +91,31 @@ function dig(s,u,done)
 		if(canFall(pos.offset(0,1,0))) bot.once("pos_"+pos+"_not_empty",function(){done(false);});
 		else done();
 	};})(pos,done));// because a block can fall
+}
+
+
+function pround(p)
+{
+	return new vec3(round(p.x),round(p.y),round(p.z));
+}
+
+function dig(s,u,done)
+{
+	var pos=stringToPosition(s,u);
+	console.log(pos);
+	if(pos===null)
+	{
+		done();
+		return;
+	}
+	pos=pos.floored();
+	if(isEmpty(pos))
+	{
+		done();
+		return;
+	}
+	console.log("I dig position "+pos);
+	bot.dig({position:pos},20000,function(){done()});
 }
 
 
@@ -189,9 +214,15 @@ function lookAt(s,u,done)
 	done();
 }
 
+function center(p)
+{
+	return p.floored().offset(0.5,0,0.5);
+}
+
 function move(s,u,done)
 {
 	var goalPosition=stringToPosition(s,u);
+	goalPosition=center(goalPosition);
 	bot.lookAt(goalPosition.offset(0,bot.entity.height,0));
 	bot.setControlState('forward', true);
 	var arrive=setInterval((function(goalPosition,done){return function()
@@ -290,10 +321,15 @@ function ifThen(condition,then,u,done)
 	if(stringToPredicate(condition)()) achieve(then,u,done);
 }
 
+function sameBlock(pos1,pos2)
+{
+	return pos1.floored().equals(pos2.floored());
+}
+
 function stringToPredicate(s)
 {
 	var v;
-	if((v=new RegExp("^at (.+)$").exec(s))!=null) return function(pos){return function(){return pos.distanceTo(bot.entity.position)<0.5};}(stringToPosition(v[1]));
+	if((v=new RegExp("^at (.+)$").exec(s))!=null) return function(pos){return function(){return sameBlock(pos,bot.entity.position)};}(stringToPosition(v[1]));
 }
 
 function repeatUntil(taskName,condition,u,done)
@@ -619,6 +655,11 @@ function up(u,done) // change this a bit ?
   }
 }
 
+function nothing(u,done)
+{
+	done();
+}
+
 
 tasks=
 {
@@ -648,21 +689,15 @@ tasks=
 		"build":{action:{f:build}},
 		"craft":{action:{f:craft}},
 		"jump":{action:{f:jump}},
-		"up":{action:{f:up}}
+		"up":{action:{f:up}},
+		"attack":{action:{f:attack}},
+		"nothing":{action:{f:nothing}}
 // 		"avancer":{action:{f:avancer,c:conditionAvancer}},
 };
 
 generated_tasks=
 {
-	"dig forward":function (s,u) 
-	{
-		var p=stringToPosition(s,u);
-		return {action:{f:move},deps:[["dig",[positionToString(p.offset(0,1,0))]],["dig",[s]]]};
-	},
-	"attack":function (s,u)
-	{
-		return {action:{f:attack},deps:[["move to",[s]]]};
-	}
+	// become useless by removing or integrating the dependencies to the syntax
 };
 
 // ou passer à du pur string ? (what ?)
@@ -681,9 +716,17 @@ alias=
 	"build shelter":"do build r-1,0,0 then build r0,0,-1 then build r1,0,0 then build r0,0,1 then build r1,0,1 then build r-1,0,-1 then build r-1,0,1 then build r1,0,-1 then build r-1,1,0 then build r0,1,-1 then build r1,1,0 then build r0,1,1 then build r1,1,1 then build r-1,1,-1 then build r-1,1,1 then build r1,1,-1 then build r-1,2,0 then build r0,2,-1 then build r1,2,0 then build r0,2,1 then build r1,2,1 then build r-1,2,-1 then build r-1,2,1 then build r1,2,-1 then build r0,2,0 done",
 	"destroy shelter":"do dig r-1,0,0 then dig r0,0,-1 then dig r1,0,0 then dig r0,0,1 then dig r1,0,1 then dig r-1,0,-1 then dig r-1,0,1 then dig r1,0,-1 then dig r-1,1,0 then dig r0,1,-1 then dig r1,1,0 then dig r0,1,1 then dig r1,1,1 then dig r-1,1,-1 then dig r-1,1,1 then dig r1,1,-1 then dig r-1,2,0 then dig r0,2,-1 then dig r1,2,0 then dig r0,2,1 then dig r1,2,1 then dig r-1,2,-1 then dig r-1,2,1 then dig r1,2,-1 then dig r0,2,0 done",
 	
-	"attack everymob":"repeat attack nearest reachable mob * done",
+	
+	"attack everymob":"repeat do move to entity nearest reachable mob * then attack nearest reachable mob * done done",
+	"scome":"smove entity me",
 	"come":"move to entity me",
-	"down":"do dig r0,-1,0 then wait 400 done" // could change the wait 400 to something like a when at r0,-1,0 or something
+	"down":"do move r0,0,0 then build r0,-2,0 then dig r0,-1,0 then wait 400 done", // could change the wait 400 to something like a when at r0,-1,0 or something
+	"sup":"do dig r0,2,0 then up done",
+}
+
+function sgn(n)
+{
+	return n>0 ? 1 : -1;
 }
 
 parameterized_alias=
@@ -696,12 +739,45 @@ parameterized_alias=
 	{
 		return "do move to nearest reachable position block nearest block "+s+" then dig block nearest block "+s+" done";//add+" then move to nearest reachable object" when improved
 	}, // do move to nearest reachable position block nearest block log then dig block nearest block log done
+	"sget":function(s,u)
+	{
+		return "do smove block nearest block "+s+" then dig block nearest block "+s+" done";
+	},
 	"follow":function(s,u)
 	{
 		return "repeat do move to "+s+" then wait 2000 done done"// can make it follow with some distance maybe ?
+	},
+// 	"smove":function(s,u)
+// 	{
+// 		var p=stringToPosition(s,u).floored();
+// 		var d=p.minus(bot.entity.position.floored());
+// 		var t="";
+// 		if(d.y!=0) t+="repeat "+(d.y<0 ? "down" : "sup")+" until at r0,"+d.y+",0 done";
+// 		if(d.x!=0) t+=(t!="" ? " then " : "")+"repeat dig forward r"+sgn(d.x)+",0,0 until at r"+d.x+",0,0 done";
+// 		if(d.z!=0) t+=(t!="" ? " then " : "")+"repeat dig forward r0,0,"+sgn(d.z)+" until at r0,0,"+d.z+" done";
+// 		if(t!="") t="do "+t+" done";
+// 		return t;
+// 	},
+	"smove":function(s,u)
+	{
+		var p=stringToPosition(s,u);
+		var s=positionToString(p);
+		return "repeat sumove "+s+" until at "+s+" done";
+	},
+	"dig forward":function (s,u) 
+	{
+		var p=stringToPosition(s,u);
+		return "do dig "+s+" then dig "+positionToString(p.offset(0,1,0))+" then build "+positionToString(p.offset(0,-1,0))+" then move "+s+" done";
+	},
+	"sumove":function(s,u)
+	{
+		var p=stringToPosition(s,u).floored();
+		var d=p.minus(bot.entity.position.floored());
+		if(d.y!=0) return d.y<0 ? "down" : "sup";
+		if(d.x!=0) return "dig forward r"+sgn(d.x)+",0,0";
+		if(d.z!=0) return "dig forward r0,0,"+sgn(d.z);
+		return "nothing";
 	}
-	
-	
 }
 
 // remove this ?
