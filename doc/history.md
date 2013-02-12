@@ -43,3 +43,7 @@
 
  * more syntax (using jison)
  * more commands (moving by building and digging for example)
+
+## 0.0.8
+
+ * fix jison
