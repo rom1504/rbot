@@ -212,7 +212,7 @@ function parse(message,username)
 	return /*replaceAllParameterizedAlias(*/parser.parse(replaceAlias(message,username))/*)*/;
 }
 
-function processMessage(username, message)
+function processMessage(username,message,done)
 {
 	if(username !=bot.username && (username===master || master===undefined))
 	{
@@ -228,7 +228,7 @@ function processMessage(username, message)
 			console.log(error);
 			return;
 		}
-		if(parsedMessage[0] in generated_tasks || parsedMessage[0] in tasks ||parsedMessage[0] in parameterized_alias) achieve(parsedMessage,username,function(){});
+		if(parsedMessage[0] in generated_tasks || parsedMessage[0] in tasks ||parsedMessage[0] in parameterized_alias) achieve(parsedMessage,username,done);
 	}
 }
 

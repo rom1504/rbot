@@ -12,6 +12,9 @@
 "until" return 'until';
 "dig forward" return 'digForward';
 "dig" return 'dig';
+"stop watch" return 'stopWatch';
+"replicate" return 'replicate';
+"watch" return 'watch';
 "sumove" return 'sumove';
 "smove" return 'smove';
 "move to" return 'moveTo';
@@ -92,7 +95,10 @@ exp :
 
 
 task :
-	 'dig' 'S' position  {$$=['dig',[$3]];}
+	  'replicate' {$$=['replicate',[]]},
+	| 'watch' {$$=['watch',[]]},
+	| 'stopWatch' {$$=['stop watch',[]]},
+	| 'dig' 'S' position  {$$=['dig',[$3]];}
 	| 'sumove' 'S' position {$$=['sumove',[$3]];}
 	| 'smove' 'S' position {$$=['smove',[$3]];}
 	| 'moveTo' 'S' position {$$=['move to',[$3]];}

@@ -17,7 +17,7 @@ navigatePlugin(bot);
 var task=require('./task');
 var achieve=require('./achieve');
 
-task.init(bot,vec3,achieve.achieve,achieve.achieveList,mineflayer);
+task.init(bot,vec3,achieve.achieve,achieve.achieveList,achieve.processMessage,mineflayer);
 achieve.init(task.regex,task.generated_tasks,task.tasks,task.parameterized_alias,task.alias,bot,vec3,process.argv[6]);
 
 bot.on('login', function() {
@@ -34,7 +34,7 @@ bot.on('death', function() {
   bot.chat("I died x.x");
 });
 
-bot.on('chat',achieve.processMessage);
+bot.on('chat',function(username,message){achieve.processMessage(username,message,function(){});});
 
 bot.navigate.on('pathFound', function (path) {
   console.log("found path. I can get there in " + path.length + " moves.");

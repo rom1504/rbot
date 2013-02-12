@@ -1,7 +1,8 @@
-var bot,vec3,achieve,achieveList,directions,direction,repeating,blocks,mf;
+var bot,vec3,achieve,achieveList,directions,direction,repeating,blocks,mf,processMessage;
 
-function init(_bot,_vec3,_achieve,_achieveList,_mf)
+function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf)
 {
+	processMessage=_processMessage;
 	mf=_mf;
 	bot=_bot;
 	require('./blockFinder').inject(bot);
@@ -660,14 +661,54 @@ function nothing(u,done)
 	done();
 }
 
+var com;
+var wa;
 
+function watch(u,done)
+{
+	var firstPosition=bot.players[u].entity.position.floored();
+	com="";
+	bot.on('blockUpdate',function(firstPosition){wa=[done,function(oldBlock,newBlock)
+	{
+		if(newBlock==null) return;
+		if(bot.players[u].entity.position.floored().distanceTo(newBlock.position.floored())<5)
+		{
+			var action;
+			if(isBlockEmpty(newBlock)) action="dig";
+			else if(isBlockNotEmpty(newBlock)) action="build";
+			else action="";
+			if(action!="")
+			{
+				var d=newBlock.position.floored().minus(firstPosition);
+				var c=action+" r"+positionToString(d)
+				console.log(c);
+				com+=(com!="" ? " then " : "")+c;
+			}
+		}
+	}];return wa[1];}(firstPosition));
+}
+
+function stopWatch(u,done)
+{
+	bot.removeListener('blockUpdate',wa[1]);
+	wa[0]();
+	com="do "+com+" done";
+	console.log(com);
+	done();
+}
+
+function replicate(u,done)
+{
+	processMessage(u,com,done);
+}
+
+// simplify this ? (string:fonction ?)
 tasks=
 {
-		// va y avoir un pb ici : pas de end list et repeat...
 		"ifThenElse":{action:{f:ifThenElse}},
 		"ifThen":{action:{f:ifThenElse}},
 		"repeatUntil":{action:{f:repeatUntil}},
-		"repeat":{action:{f:repeat}},//priorité avec then
+		"repeat":{action:{f:repeat}},
 		"stopRepeat":{action:{f:stopRepeat}},
 		"taskList":{action:{f:achieveListAux}},
 		"dig":{action:{f:dig}},
@@ -691,7 +732,10 @@ tasks=
 		"jump":{action:{f:jump}},
 		"up":{action:{f:up}},
 		"attack":{action:{f:attack}},
-		"nothing":{action:{f:nothing}}
+		"nothing":{action:{f:nothing}},
+		"watch":{action:{f:watch}},
+		"stop watch":{action:{f:stopWatch}},
+		"replicate":{action:{f:replicate}}
 // 		"avancer":{action:{f:avancer,c:conditionAvancer}},
 };
 
@@ -712,7 +756,7 @@ alias=
 	"z-":"move r0,0,-1",
 	"spiral up":"do dig r0,2,0 then dig r0,1,1 then dig r0,2,1 then move to r0,1,1 then dig r0,2,0 then dig r-1,1,0 then dig r-1,2,0 then move to r-1,1,0 then dig r0,2,0 then dig r0,1,-1 then dig r0,2,-1 then move to r0,1,-1 then dig r0,2,0 then dig r1,1,0 then dig r1,2,0 then move to r1,1,0 done",
 	"spiral down":"do dig r1,1,0 then dig r1,0,0 then dig r1,-1,0 then move to r1,-1,0 then dig r0,0,1 then dig r0,1,1 then dig r0,-1,1 then move to r0,-1,1 then dig r-1,1,0 then dig r-1,0,0 then dig r-1,-1,0 then move to r-1,-1,0 then dig r0,1,-1 then dig r0,0,-1 then dig r0,-1,-1 then move to r0,-1,-1 done",
-	"raise chicken":"do move to nearest reachable object * then equip hand egg then activate item done",
+	"raise chicken":"do move to entity nearest reachable object * then equip hand egg then activate item done",
 	"build shelter":"do build r-1,0,0 then build r0,0,-1 then build r1,0,0 then build r0,0,1 then build r1,0,1 then build r-1,0,-1 then build r-1,0,1 then build r1,0,-1 then build r-1,1,0 then build r0,1,-1 then build r1,1,0 then build r0,1,1 then build r1,1,1 then build r-1,1,-1 then build r-1,1,1 then build r1,1,-1 then build r-1,2,0 then build r0,2,-1 then build r1,2,0 then build r0,2,1 then build r1,2,1 then build r-1,2,-1 then build r-1,2,1 then build r1,2,-1 then build r0,2,0 done",
 	"destroy shelter":"do dig r-1,0,0 then dig r0,0,-1 then dig r1,0,0 then dig r0,0,1 then dig r1,0,1 then dig r-1,0,-1 then dig r-1,0,1 then dig r1,0,-1 then dig r-1,1,0 then dig r0,1,-1 then dig r1,1,0 then dig r0,1,1 then dig r1,1,1 then dig r-1,1,-1 then dig r-1,1,1 then dig r1,1,-1 then dig r-1,2,0 then dig r0,2,-1 then dig r1,2,0 then dig r0,2,1 then dig r1,2,1 then dig r-1,2,-1 then dig r-1,2,1 then dig r1,2,-1 then dig r0,2,0 done",
 	

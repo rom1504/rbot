@@ -2,6 +2,7 @@
 A bot based on mineflayer which can execute task with dependancies
 
 [Youtube Demo of repeat spiral down](http://www.youtube.com/watch?v=UM1ZV5200S0)
+[Youtube Demo of watch,stop watch,replicate](http://www.youtube.com/watch?v=0cQxg9uDnzA)
 
 ## Features
  * dig
@@ -19,7 +20,7 @@ A bot based on mineflayer which can execute task with dependancies
  * dig a tunnel
  * raise chicken
  * move by building and digging
- * building things
+ * building things : watch then replicate
  
 ### Roadmap
 
@@ -48,7 +49,7 @@ First, you need to install [node](http://nodejs.org/) , you might want to read [
  * Follow the Windows instructions from [Obvious/ursa](https://github.com/Obvious/ursa)
  * `npm install -g rbot`
 
-If you download the source via github, you can just run `npm install`
+If you download the source via github, you can run `npm install` then `jison grammar.jison` (the grammar.js file is included in the npm repository but not the git repository)
 
 
 ## Usage
@@ -90,6 +91,9 @@ If you download the source via github, you can just run `npm install`
  * `up` : jump and build under the bot (but doesn't dig the bot above the bot unlike sup)
  * `jump`
  * `nothing`
+ * `watch` : start watching what you are building and digging
+ * `stop watch` : stop watching and save what you did
+ * `replicate` : redo the building and digging you just did (the position of the action are calculated from the position of the bot)
  
  
 #### Alias
