@@ -26,6 +26,5 @@
   },
   "devDependencies": {
     "jison":"~0.4.2"
-  },
-  "scripts":{"postinstall": "jison grammar.jison"}
+  }
 }
