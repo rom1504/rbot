@@ -123,8 +123,8 @@ If you download the source via github, you can run `npm install` then `jison gra
  * `<position>` can be :
   * `rx,y,z` : relative position
   * `x,y,z` : absolute position
-  * `entity <entity>`
-  * `block <block>`
+  * `<entity>`
+  * `<block>`
   * `nearest reachable position <position>`
  * `<block>` can be :
   * `nearest block <nameBlock>`
@@ -157,10 +157,10 @@ If you download the source via github, you can run `npm install` then `jison gra
  * `repeat do raise chicken then wait 1000 done done`
  * `stop repeat do raise chicken then wait 1000 done done`
  * `repeat look at me done`
- * `repeat shoot entity nearest reachable mob done` : kill close mobs
- * `repeat shoot entity me done` : kill you
- * `move to nearest reachable position block nearest block log`
- * `follow entity me`
- * `stop follow entity me`
+ * `repeat shoot nearest reachable mob done` : kill close mobs
+ * `repeat shoot me done` : kill you
+ * `move to nearest reachable position nearest block log`
+ * `follow me`
+ * `stop follow me`
  * `get log`
  * `repeat do build shelter then destroy shelter done done` : fun

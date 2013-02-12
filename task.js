@@ -592,8 +592,8 @@ function stringToPosition(s,u)
 	// could be used, maybe (0.8 not 1.8 ...)
 	var v;
 	if((v=new RegExp("^nearest reachable position (.+)$").exec(s))!=null) return nearestReachablePosition(stringToPosition(v[1]));
-	if((v=new RegExp("^block (.+)$").exec(s))!=null)  {var b;if((b=stringToBlock(v[1]))!=null) return b.position;}
-	if((v=new RegExp("^entity (.+)$").exec(s))!=null) {var e;if((e=stringToEntity(v[1],u))!=null) return e.position;}
+	var b;if((b=stringToBlock(s))!=null) return b.position;
+	var e;if((e=stringToEntity(s,u))!=null) return e.position;
 	if((v=new RegExp("^r(.+)$").exec(s))!=null) return bot.entity.position.plus(simpleStringToPosition(v[1]));
 	return simpleStringToPosition(s);
 }
@@ -756,14 +756,16 @@ alias=
 	"z-":"move r0,0,-1",
 	"spiral up":"do dig r0,2,0 then dig r0,1,1 then dig r0,2,1 then move to r0,1,1 then dig r0,2,0 then dig r-1,1,0 then dig r-1,2,0 then move to r-1,1,0 then dig r0,2,0 then dig r0,1,-1 then dig r0,2,-1 then move to r0,1,-1 then dig r0,2,0 then dig r1,1,0 then dig r1,2,0 then move to r1,1,0 done",
 	"spiral down":"do dig r1,1,0 then dig r1,0,0 then dig r1,-1,0 then move to r1,-1,0 then dig r0,0,1 then dig r0,1,1 then dig r0,-1,1 then move to r0,-1,1 then dig r-1,1,0 then dig r-1,0,0 then dig r-1,-1,0 then move to r-1,-1,0 then dig r0,1,-1 then dig r0,0,-1 then dig r0,-1,-1 then move to r0,-1,-1 done",
-	"raise chicken":"do move to entity nearest reachable object * then equip hand egg then activate item done",
+	"raise chicken":"do move to nearest reachable object * then equip hand egg then activate item done",
+	
 	"build shelter":"do build r-1,0,0 then build r0,0,-1 then build r1,0,0 then build r0,0,1 then build r1,0,1 then build r-1,0,-1 then build r-1,0,1 then build r1,0,-1 then build r-1,1,0 then build r0,1,-1 then build r1,1,0 then build r0,1,1 then build r1,1,1 then build r-1,1,-1 then build r-1,1,1 then build r1,1,-1 then build r-1,2,0 then build r0,2,-1 then build r1,2,0 then build r0,2,1 then build r1,2,1 then build r-1,2,-1 then build r-1,2,1 then build r1,2,-1 then build r0,2,0 done",
+	
 	"destroy shelter":"do dig r-1,0,0 then dig r0,0,-1 then dig r1,0,0 then dig r0,0,1 then dig r1,0,1 then dig r-1,0,-1 then dig r-1,0,1 then dig r1,0,-1 then dig r-1,1,0 then dig r0,1,-1 then dig r1,1,0 then dig r0,1,1 then dig r1,1,1 then dig r-1,1,-1 then dig r-1,1,1 then dig r1,1,-1 then dig r-1,2,0 then dig r0,2,-1 then dig r1,2,0 then dig r0,2,1 then dig r1,2,1 then dig r-1,2,-1 then dig r-1,2,1 then dig r1,2,-1 then dig r0,2,0 done",
 	
 	
-	"attack everymob":"repeat do move to entity nearest reachable mob * then attack nearest reachable mob * done done",
-	"scome":"smove entity me",
-	"come":"move to entity me",
+	"attack everymob":"repeat do move to nearest reachable mob * then attack nearest reachable mob * done done",
+	"scome":"smove me",
+	"come":"move to me",
 	"down":"do move r0,0,0 then build r0,-2,0 then dig r0,-1,0 then wait 400 done", // could change the wait 400 to something like a when at r0,-1,0 or something
 	"sup":"do dig r0,2,0 then up done",
 }
@@ -781,27 +783,16 @@ parameterized_alias=
 	},
 	"get":function(s,u)
 	{
-		return "do move to nearest reachable position block nearest block "+s+" then dig block nearest block "+s+" done";//add+" then move to nearest reachable object" when improved
+		return "do move to nearest reachable position nearest block "+s+" then dig nearest block "+s+" done";//add+" then move to nearest reachable object" when improved
 	}, // do move to nearest reachable position block nearest block log then dig block nearest block log done
 	"sget":function(s,u)
 	{
-		return "do smove block nearest block "+s+" then dig block nearest block "+s+" done";
+		return "do smove nearest block "+s+" then dig nearest block "+s+" done";
 	},
 	"follow":function(s,u)
 	{
 		return "repeat do move to "+s+" then wait 2000 done done"// can make it follow with some distance maybe ?
 	},
-// 	"smove":function(s,u)
-// 	{
-// 		var p=stringToPosition(s,u).floored();
-// 		var d=p.minus(bot.entity.position.floored());
-// 		var t="";
-// 		if(d.y!=0) t+="repeat "+(d.y<0 ? "down" : "sup")+" until at r0,"+d.y+",0 done";
-// 		if(d.x!=0) t+=(t!="" ? " then " : "")+"repeat dig forward r"+sgn(d.x)+",0,0 until at r"+d.x+",0,0 done";
-// 		if(d.z!=0) t+=(t!="" ? " then " : "")+"repeat dig forward r0,0,"+sgn(d.z)+" until at r0,0,"+d.z+" done";
-// 		if(t!="") t="do "+t+" done";
-// 		return t;
-// 	},
 	"smove":function(s,u)
 	{
 		var p=stringToPosition(s,u);

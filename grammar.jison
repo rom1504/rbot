@@ -178,8 +178,8 @@ object :
 	
 position :
 	 'nearestReachablePosition' 'S' position {$$=$1+' '+$3}
-	| 'ent' 'S' entity {$$=$1+' '+$3}
-	| 'bloc' 'S' block {$$=$1+' '+$3}
+	| entity {$$=$1}
+	| block {$$=$1}
 	| 'simplePosition'  {$$=$1}
 ;
 
