@@ -1,8 +1,9 @@
 #rbot
 A bot based on mineflayer which can execute task with dependancies
 
-[Youtube Demo of repeat spiral down](http://www.youtube.com/watch?v=UM1ZV5200S0)
-[Youtube Demo of watch,stop watch,replicate](http://www.youtube.com/watch?v=0cQxg9uDnzA)
+Youtube demos :
+ * [repeat spiral down](http://www.youtube.com/watch?v=UM1ZV5200S0)
+ * [watch,stop watch,replicate](http://www.youtube.com/watch?v=0cQxg9uDnzA)
 
 ## Features
  * dig
