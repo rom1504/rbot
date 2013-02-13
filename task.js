@@ -567,6 +567,7 @@ function stringToEntity(s,u)
 {
 	var v;
 	if(s==="me") s="player "+u;
+	if(s==="bot") s="player "+bot.username;
 	if((v=new RegExp("^player (.+)$").exec(s))!=null)
 	{
 	  if(bot.players[v[1]]===undefined) return null;
@@ -577,6 +578,13 @@ function stringToEntity(s,u)
 	if((v=new RegExp("^nearest reachable mob (.+)$").exec(s))!=null) return nearestReachableEntity(mobs(v[1]));
 	if((v=new RegExp("^nearest reachable object (.+)$").exec(s))!=null) return nearestReachableEntity(objects(v[1]));
 	return null;
+}
+
+function stringToAbsolutePosition(s,u)
+{
+	var b;if((b=stringToBlock(s))!=null) return b.position;
+	var e;if((e=stringToEntity(s,u))!=null) return e.position;
+	return simpleStringToPosition(s);
 }
 
 function stringToPosition(s,u)
@@ -592,10 +600,9 @@ function stringToPosition(s,u)
 	// could be used, maybe (0.8 not 1.8 ...)
 	var v;
 	if((v=new RegExp("^nearest reachable position (.+)$").exec(s))!=null) return nearestReachablePosition(stringToPosition(v[1]));
-	var b;if((b=stringToBlock(s))!=null) return b.position;
-	var e;if((e=stringToEntity(s,u))!=null) return e.position;
+	if((v=new RegExp("^r(.+?)\\+(.+)$").exec(s))!=null) return stringToAbsolutePosition(v[2],u).plus(simpleStringToPosition(v[1]));
 	if((v=new RegExp("^r(.+)$").exec(s))!=null) return bot.entity.position.plus(simpleStringToPosition(v[1]));
-	return simpleStringToPosition(s);
+	return stringToAbsolutePosition(s,u);
 }
 
 function simpleStringToPosition(s)
@@ -696,11 +703,17 @@ function stopWatch(u,done)
 	console.log(com);
 	done();
 }
-
+// rather a parameterized alias ?
 function replicate(u,done)
 {
 	processMessage(u,com,done);
 }
+
+// function print(l,done)
+// {
+// 	// build the a tower and the next tower and at the same time build the previous position
+// 	// then move and do this again
+// }
 
 // simplify this ? (string:fonction ?)
 tasks=
@@ -758,7 +771,7 @@ alias=
 	"spiral down":"do dig r1,1,0 then dig r1,0,0 then dig r1,-1,0 then move to r1,-1,0 then dig r0,0,1 then dig r0,1,1 then dig r0,-1,1 then move to r0,-1,1 then dig r-1,1,0 then dig r-1,0,0 then dig r-1,-1,0 then move to r-1,-1,0 then dig r0,1,-1 then dig r0,0,-1 then dig r0,-1,-1 then move to r0,-1,-1 done",
 	"raise chicken":"do move to nearest reachable object * then equip hand egg then activate item done",
 	
-	"build shelter":"do build r-1,0,0 then build r0,0,-1 then build r1,0,0 then build r0,0,1 then build r1,0,1 then build r-1,0,-1 then build r-1,0,1 then build r1,0,-1 then build r-1,1,0 then build r0,1,-1 then build r1,1,0 then build r0,1,1 then build r1,1,1 then build r-1,1,-1 then build r-1,1,1 then build r1,1,-1 then build r-1,2,0 then build r0,2,-1 then build r1,2,0 then build r0,2,1 then build r1,2,1 then build r-1,2,-1 then build r-1,2,1 then build r1,2,-1 then build r0,2,0 done",
+	"build shelter":"immure bot",
 	
 	"destroy shelter":"do dig r-1,0,0 then dig r0,0,-1 then dig r1,0,0 then dig r0,0,1 then dig r1,0,1 then dig r-1,0,-1 then dig r-1,0,1 then dig r1,0,-1 then dig r-1,1,0 then dig r0,1,-1 then dig r1,1,0 then dig r0,1,1 then dig r1,1,1 then dig r-1,1,-1 then dig r-1,1,1 then dig r1,1,-1 then dig r-1,2,0 then dig r0,2,-1 then dig r1,2,0 then dig r0,2,1 then dig r1,2,1 then dig r-1,2,-1 then dig r-1,2,1 then dig r1,2,-1 then dig r0,2,0 done",
 	
@@ -812,6 +825,10 @@ parameterized_alias=
 		if(d.x!=0) return "dig forward r"+sgn(d.x)+",0,0";
 		if(d.z!=0) return "dig forward r0,0,"+sgn(d.z);
 		return "nothing";
+	},
+	"immure":function(s,u)
+	{
+		return "do build r-1,0,0+"+s+" then build r0,0,-1+"+s+" then build r1,0,0+"+s+" then build r0,0,1+"+s+" then build r1,0,1+"+s+" then build r-1,0,-1+"+s+" then build r-1,0,1+"+s+" then build r1,0,-1+"+s+" then build r-1,1,0+"+s+" then build r0,1,-1+"+s+" then build r1,1,0+"+s+" then build r0,1,1+"+s+" then build r1,1,1+"+s+" then build r-1,1,-1+"+s+" then build r-1,1,1+"+s+" then build r1,1,-1+"+s+" then build r-1,2,0+"+s+" then build r0,2,-1+"+s+" then build r1,2,0+"+s+" then build r0,2,1+"+s+" then build r1,2,1+"+s+" then build r-1,2,-1+"+s+" then build r-1,2,1+"+s+" then build r1,2,-1+"+s+" then build r0,2,0+"+s+" done";
 	}
 }
 

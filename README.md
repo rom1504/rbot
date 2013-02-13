@@ -74,7 +74,7 @@ If you download the source via github, you can run `npm install` then `jison gra
  * `look for entity <entity>`
  * `look for block <block>`
  * `pos <player>` : say the position of the other player if he is not too far away
- * `move to <position>` : use mineflayer-navigate to get to <position>
+ * `move to <position>` : use mineflayer-navigate to get to `<position>`
  * `stop move to`
  * `equip <emplacement> <item>` : equip item at emplacement (for example hand)
  * `unequip <emplacament>` : doesn't work yet
@@ -116,16 +116,20 @@ If you download the source via github, you can run `npm install` then `jison gra
  * `sget <blockName>` : get a block by building and digging
  * `smove <position>` : get to the position by building and digging
  * `sumove <position>` : move of 1 in the direction of the position by building and digging
+ * `immure <position>`
  
 
 
 ### Parameters
  * `<position>` can be :
   * `rx,y,z` : relative position
+  * `<absolute position>`
+  * `rx,y,z+<absolute position>`
+  * `nearest reachable position <position>`
+ * `<absolute position>` can be :
   * `x,y,z` : absolute position
   * `<entity>`
   * `<block>`
-  * `nearest reachable position <position>`
  * `<block>` can be :
   * `nearest block <nameBlock>`
   * `nearest block *: any nearest block`
@@ -139,6 +143,7 @@ If you download the source via github, you can run `npm install` then `jison gra
   * `nearest reachable object <object>`
   * `nearest reachable object *` : any nearest reachable object
   * `me`
+  * `bot`
   * `player <playerName>`
  * `<mob>` can be :
   * `spider`

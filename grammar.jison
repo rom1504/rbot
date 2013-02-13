@@ -23,9 +23,11 @@
 "look for block" return 'lookForBlock';
 "look for entity" return 'lookForEntity';
 "stop move to" return 'stopMoveTo';
+"bot" return 'bot';
 "list" return 'list';
 "toss" return 'toss';
 "equip" return 'equip';
+"immure" return 'immure';
 "unequip" return 'unequip';
 "look at" return 'lookAt';
 "say" return 'say';
@@ -41,6 +43,7 @@
 "sget" return 'sget';
 "get" return 'get';
 "follow" return 'follow';
+"+" return '+';
 "player" return 'player';
 "nearest reachable position" return 'nearestReachablePosition';
 "nearest block" return 'nearestBlock';
@@ -48,14 +51,13 @@
 "nearest object" return 'nearestObject';
 "nearest reachable mob" return 'nearestReachableMob';
 "nearest reachable object" return 'nearestReachableObject';
-"entity" return 'ent';
-"block" return 'bloc';
 "me" return 'me';
 "*" return '*';
 ";" return ';';
 "at" return 'at';
 "up" return 'up';
-"r"?"-"?[0-9]+(?:"."[0-9]+)?",""-"?[0-9]+(?:"."[0-9]+)?",""-"?[0-9]+(?:"."[0-9]+)? return 'simplePosition';
+"r""-"?[0-9]+(?:"."[0-9]+)?",""-"?[0-9]+(?:"."[0-9]+)?",""-"?[0-9]+(?:"."[0-9]+)? return 'rsimplePosition';
+"-"?[0-9]+(?:"."[0-9]+)?",""-"?[0-9]+(?:"."[0-9]+)?",""-"?[0-9]+(?:"."[0-9]+)? return 'simplePosition';
 "." return '.';
 [0-9]+ return 'N'
 [A-Za-z0-9,]+ return 'T';
@@ -65,6 +67,9 @@
 
 
 %start expressions
+
+%left 'T' position
+// %left 'S'
 
 %%
 
@@ -120,6 +125,7 @@ task :
 	| 'craft' 'S' int 'S' item {$$=['craft',[$3,$5]];}
 	| 'jump' {$$=['jump',[]];}
 	| 'digForward' 'S' position  {$$=['dig forward',[$3]];}
+	| 'immure' 'S' position  {$$=['immure',[$3]];}
 	| 'attack' 'S' entity {$$=['attack',[$3]];}
 	| 'shoot' 'S' position {$$=['shoot',[$3]];}
 	| 'get' 'S' simpleBlock {$$=['get',[$3]];}
@@ -128,7 +134,7 @@ task :
 	| 'up' {$$=['up',[]]}
 	| 'nothing' {$$=['nothing',[]]}
  	| 'T' {$$=[$1,[]];}
-// 	| 'T' 'S' 'T' {$$=[$1,[$2]];} // can't work...
+ 	//| 'T' 'S' int {$$=[$1,[$2]];} // can't work...
 ;
 
 
@@ -159,6 +165,7 @@ simplePlayer :
 
 entity :
 	 'me' {$$=$1}
+	| 'bot' {$$=$1}
 	| 'player' 'S' simplePlayer {$$=$1+' '+$3}
 	| 'nearestMob' 'S' mob {$$=$1+' '+$3;}
 	| 'nearestObject' 'S' object {$$=$1+' '+$3;}
@@ -175,12 +182,18 @@ object :
 	 'T' {$$=$1}
 	| '*' {$$=$1}
 ;
-	
-position :
-	 'nearestReachablePosition' 'S' position {$$=$1+' '+$3}
+
+absolutePosition :
 	| entity {$$=$1}
 	| block {$$=$1}
 	| 'simplePosition'  {$$=$1}
+;
+
+position :
+	absolutePosition {$$=$1}
+	| 'rsimplePosition'  {$$=$1}
+	| 'rsimplePosition' '+' absolutePosition {$$=$1+$2+$3}
+	| 'nearestReachablePosition' 'S' position {$$=$1+' '+$3}
 ;
 
 simpleBlock :
