@@ -20,7 +20,7 @@
   },
   "license": "BSD",
   "dependencies": {
-	"mineflayer": "~0.0.26",
+	"mineflayer": "~0.0.28",
     "mineflayer-navigate": "~0.0.8",
     "cloneextend":"~0.0.3"
   },

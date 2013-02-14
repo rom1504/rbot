@@ -20,10 +20,10 @@
 "move to" return 'moveTo';
 "move" return 'move';
 "pos" return 'pos';
-"look for block" return 'lookForBlock';
-"look for entity" return 'lookForEntity';
+"look for" return 'lookFor';
 "stop move to" return 'stopMoveTo';
 "bot" return 'bot';
+"adapted" return 'adapted';
 "list" return 'list';
 "toss" return 'toss';
 "equip" return 'equip';
@@ -49,6 +49,7 @@
 "nearest block" return 'nearestBlock';
 "nearest mob" return 'nearestMob';
 "nearest object" return 'nearestObject';
+"nearest visible mob" return 'nearestVisibleMob';
 "nearest reachable mob" return 'nearestReachableMob';
 "nearest reachable object" return 'nearestReachableObject';
 "me" return 'me';
@@ -109,8 +110,8 @@ task :
 	| 'moveTo' 'S' position {$$=['move to',[$3]];}
 	| 'move' 'S' position {$$=['move',[$3]];}
 	| 'pos' 'S' simplePlayer {$$=['pos',[$3]];}
-	| 'lookForBlock' 'S' block {$$=['look for block',[$3]];}
-	| 'lookForEntity' 'S' entity {$$=['look for entity',[$3]];}
+	| 'lookFor' 'S' block {$$=['look for block',[$3]];}
+	| 'lookFor' 'S' entity {$$=['look for entity',[$3]];}
 	| 'stopMoveTo' {$$=['stop move to',[]];}
 	| 'list' {$$=['list',[]];}
 	| 'toss' 'S' int 'S' item {$$=['toss',[$3,$5]];}
@@ -127,7 +128,7 @@ task :
 	| 'digForward' 'S' position  {$$=['dig forward',[$3]];}
 	| 'immure' 'S' position  {$$=['immure',[$3]];}
 	| 'attack' 'S' entity {$$=['attack',[$3]];}
-	| 'shoot' 'S' position {$$=['shoot',[$3]];}
+	| 'shoot' 'S' entity {$$=['shoot',[$3]];}
 	| 'get' 'S' simpleBlock {$$=['get',[$3]];}
 	| 'sget' 'S' simpleBlock {$$=['sget',[$3]];}
 	| 'follow' 'S' position {$$=['follow',[$3]];}
@@ -169,6 +170,7 @@ entity :
 	| 'player' 'S' simplePlayer {$$=$1+' '+$3}
 	| 'nearestMob' 'S' mob {$$=$1+' '+$3;}
 	| 'nearestObject' 'S' object {$$=$1+' '+$3;}
+	| 'nearestVisibleMob' 'S' mob  {$$=$1+' '+$3;}
 	| 'nearestReachableMob' 'S' mob  {$$=$1+' '+$3;}
 	| 'nearestReachableObject' 'S' object  {$$=$1+' '+$3;}
 ;
@@ -184,6 +186,7 @@ object :
 ;
 
 absolutePosition :
+	| 'adapted' 'S' entity {$$=$1+' '+$3;}
 	| entity {$$=$1}
 	| block {$$=$1}
 	| 'simplePosition'  {$$=$1}

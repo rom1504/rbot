@@ -182,18 +182,20 @@ function craft(amount,name,u,done)
 	if (item == null) bot.chat(wbText + "unknown item: " + name);
 	else
 	{
-		var recipes = bot.recipesFor(item.id, null, 1, craftingTable);
+		var recipes = bot.recipesFor(item.id, null, amount, craftingTable);
 		if (recipes.length)
 		{
 			bot.chat(wbText + "I can make " + item.name);
-			bot.craft(recipes[0], amount, craftingTable, function(err)
+			var numberOfOperation=Math.ceil(amount/recipes[0].count);
+			var newAmount=numberOfOperation*recipes[0].count;
+			bot.craft(recipes[0], numberOfOperation, craftingTable, function(err)
 			{
 				if (err)
 				{
 					bot.chat("error making " + item.name);
 					console.error(err.stack);
 				}
-				else bot.chat("made " + amount + " " + item.name);
+				else bot.chat("made " + newAmount + " " + item.name);
 				done();
 			});
 		}
@@ -210,8 +212,11 @@ function unequip(s,u,done)
 
 function lookAt(s,u,done)
 {
-	var goalPosition=stringToPosition(s,u);
-	if(goalPosition!=null) bot.lookAt(goalPosition.offset(0,bot.entity.height,0));
+	var goalPosition=stringToPosition(s,u,1);
+	if(goalPosition!=null)
+	{
+		bot.lookAt(goalPosition);
+	}
 	done();
 }
 
@@ -351,6 +356,41 @@ function remove(a,e)
 	return a.filter(function(v) { return v == e ? false : true;});
 }
 
+function visiblePosition(a,b)
+{
+	var v=b.minus(a);
+	var t=Math.sqrt(v.x*v.x+v.y*v.y+v.z*v.z);
+	v=v.scaled(1/t);
+	v=v.scaled(1/5);
+	var u=t*5;
+	var na;
+	for(var i=1;i<u;i++)
+	{
+		na=a.plus(v);
+		if(!sameBlock(na,a))
+		{
+			if(isNotEmpty(na)) return false;
+		}
+		a=na;
+	}
+	return true;
+}
+
+function nearestVisibleEntity(entities)
+{
+	var ent;
+	while(1)
+	{
+		ent=nearestEntity(entities);
+		if(!visiblePosition(bot.entity.position.offset(0,bot.entity.height*0.5,0),ent.position))
+		{
+			if(entities.length>1) entities=remove(entities,ent); // to change ?
+			else return null;
+		}
+		else return ent;
+	}
+}
+
 function positionReachable(pos,params)
 {
 	return bot.navigate.findPathSync(pos,params).status === 'success';
@@ -487,6 +527,16 @@ function lookForBlock(s,u,done)
 	done();
 }
 
+// function lookFor(s,u,done)
+// {
+// 	var ent=stringToEntity(s,u);
+// 	if(ent!==null) {bot.chat(s+" is in "+ent.position+(ent.type === 'mob' ? ". It's a "+ent.mobType : (ent.type === 'object' ? ". It's a "+ent.objectType : "")));done();return;}
+// 	var block=stringToBlock(s);
+// 	if(block!==null) {bot.chat(s+" is in "+block.position+". It's a "+block.name);done();return;}
+// 	bot.chat("I can't find "+s);
+// 	done();
+// }
+
 function equip(destination,itemName,u,done)
 {
 	var item = itemByName(itemName);
@@ -576,33 +626,44 @@ function stringToEntity(s,u)
 	if((v=new RegExp("^nearest mob (.+)$").exec(s))!=null) return nearestEntity(mobs(v[1]));
 	if((v=new RegExp("^nearest object (.+)$").exec(s))!=null) return nearestEntity(objects(v[1]));
 	if((v=new RegExp("^nearest reachable mob (.+)$").exec(s))!=null) return nearestReachableEntity(mobs(v[1]));
+	if((v=new RegExp("^nearest visible mob (.+)$").exec(s))!=null) return nearestVisibleEntity(mobs(v[1]));
 	if((v=new RegExp("^nearest reachable object (.+)$").exec(s))!=null) return nearestReachableEntity(objects(v[1]));
 	return null;
 }
 
-function stringToAbsolutePosition(s,u)
+function adapted(entity)
 {
+	var distance = bot.entity.position.distanceTo(entity.position);
+// 	var heightAdjust = entity.height*0.8  - (distance * 0.13)+distance*distance*0.008-distance*distance*distance*0.00003//*+(entity.position.y-bot.entity.position.y)*0.07*/;
+	var heightAdjust = entity.height*0.8  +distance*(0.14+Math.random()/30);
+	return entity.position.offset(0, heightAdjust, 0);
+}
+
+function stringToAbsolutePosition(s,u,head)
+{
+	var v;
+	if((v=new RegExp("^adapted (.+)$").exec(s))!=null)
+	{
+		var entity=stringToEntity(v[1],u);
+		if(entity!=null)
+		{
+			return adapted(entity);
+		}
+		else return null;
+	}
 	var b;if((b=stringToBlock(s))!=null) return b.position;
-	var e;if((e=stringToEntity(s,u))!=null) return e.position;
+	var e;if((e=stringToEntity(s,u))!=null) return head!=null ? e.position.offset(0,e.height,0) : e.position;
 	return simpleStringToPosition(s);
 }
 
-function stringToPosition(s,u)
+function stringToPosition(s,u,head)
 {
-// 	var v;
-// 	if((v=new RegExp("^adapted (.+)$").exec(s))!=null)
-// 	{
-// 		var entity=stringToEntity(v[1]);
-// 		var distance = bot.entity.position.distanceTo(entity.position);
-// 		var heightAdjust = entity.height * 0.8 + (distance * 0.05); wrong formula ?
-// 		return entity.position.offset(0, heightAdjust, 0);
-// 	}
-	// could be used, maybe (0.8 not 1.8 ...)
+	//could be used, maybe (0.8 not 1.8 ...)
 	var v;
 	if((v=new RegExp("^nearest reachable position (.+)$").exec(s))!=null) return nearestReachablePosition(stringToPosition(v[1]));
-	if((v=new RegExp("^r(.+?)\\+(.+)$").exec(s))!=null) return stringToAbsolutePosition(v[2],u).plus(simpleStringToPosition(v[1]));
+	if((v=new RegExp("^r(.+?)\\+(.+)$").exec(s))!=null) return stringToAbsolutePosition(v[2],u,head).plus(simpleStringToPosition(v[1]));
 	if((v=new RegExp("^r(.+)$").exec(s))!=null) return bot.entity.position.plus(simpleStringToPosition(v[1]));
-	return stringToAbsolutePosition(s,u);
+	return stringToAbsolutePosition(s,u,head);
 }
 
 function simpleStringToPosition(s)
@@ -792,7 +853,7 @@ parameterized_alias=
 {
 	"shoot":function(s,u)
 	{
-		return "do look at "+s+" then activate item then wait 1000 then deactivate item done"
+		return "do look at adapted "+s+" then activate item then wait 1000 then deactivate item done"
 	},
 	"get":function(s,u)
 	{

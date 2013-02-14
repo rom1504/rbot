@@ -63,6 +63,14 @@ function reportEndOfTask(parsedTask,done)
 	};
 }
 
+function reportFailOfTask(parsedTask,done)
+{
+	return function()
+	{
+		console.log("I failed task "+parsedTaskToString(parsedTask));
+	};
+}
+
 // à faire plus tard si vraiment nécessaire/utile
 // conditionsToMonitor={};
 // 
@@ -82,7 +90,10 @@ function applyAction(task,parsedTask,done)
 		return function()
 		{
 			var b;
-			task.action.f.apply(this,task.action.p.concat([function(success){if(success!=null && !success) {applyAction(task,parsedTask,done)()} else {reportEndOfTask(parsedTask,done)()}}]));
+			task.action.f.apply(this,task.action.p.concat([function(result){
+				if(result!=null && !result) {applyAction(task,parsedTask,done)()} else {if(result) reportFailOfTask(parsedTask)(); else reportEndOfTask(parsedTask,done)()}
+				
+			}]));
 			// comportement différent mais peut etre interessant :
 // 			var actione=task.action.f.apply(this,task.action.p);
 // 			bot.once(actione,reportEndOfTask(taskName));

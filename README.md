@@ -71,13 +71,13 @@ If you download the source via github, you can run `npm install` then `jison gra
 #### Base commands
  * `dig <position>`
  * `move <position>`
- * `look for entity <entity>`
- * `look for block <block>`
+ * `look for <entity>`
+ * `look for <block>`
  * `pos <player>` : say the position of the other player if he is not too far away
  * `move to <position>` : use mineflayer-navigate to get to `<position>`
  * `stop move to`
  * `equip <emplacement> <item>` : equip item at emplacement (for example hand)
- * `unequip <emplacament>` : doesn't work yet
+ * `unequip <emplacament>`
  * `toss <number> <item>`
  * `list` : list all items of the bot
  * `attack <entity>`
@@ -88,7 +88,7 @@ If you download the source via github, you can run `npm install` then `jison gra
  * `stop raise chicken`
  * `look at <position>`
  * `build <position>` : build at position with the equipped block
- * `craft <number> <item>` : will craft this item if you have the required items : doesn't work yet
+ * `craft <number> <item>` : will craft this item if you have the required items
  * `up` : jump and build under the bot (but doesn't dig the bot above the bot unlike sup)
  * `jump`
  * `nothing`
@@ -103,7 +103,7 @@ If you download the source via github, you can run `npm install` then `jison gra
  * `spiral up` : dig an ascending spiral staircase
  * `spiral down` : dig a descending spiral staircase
  * `raise chicken` : get an egg then throw it
- * `shoot <position>` : if it has a bow and arrows, shoot <position>
+ * `shoot <entity>` : if it has a bow and arrows, shoot `<entity>`
  * `follow <position>` : go to `<position>` every 2 sec
  * `get <nameBlock>` : go to a position next to nearest `<nameBlock>` then dig it
  * `build shelter` : build a very simple shelter with the equipped block (need 25 blocks)
@@ -128,6 +128,7 @@ If you download the source via github, you can run `npm install` then `jison gra
   * `nearest reachable position <position>`
  * `<absolute position>` can be :
   * `x,y,z` : absolute position
+  * `adapted <entity>` : adapted position for shooting with a bow
   * `<entity>`
   * `<block>`
  * `<block>` can be :
@@ -136,6 +137,8 @@ If you download the source via github, you can run `npm install` then `jison gra
  * `<entity>` can be :
   * `nearest mob <mob>`
   * `nearest mob *` : any nearest mob
+  * `nearest visible mob <mob>`
+  * `nearest visible mob *` : any nearest visible mob
   * `nearest reachable mob <mob>`
   * `nearest reachable mob *` : any nearest reachable mob
   * `nearest object <object>`
