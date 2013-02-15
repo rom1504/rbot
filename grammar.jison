@@ -20,6 +20,8 @@
 "move to" return 'moveTo';
 "move" return 'move';
 "pos" return 'pos';
+"tool to break" return 'toolToBreak';
+"item to build" return 'itemToBuild';
 "look for" return 'lookFor';
 "stop move to" return 'stopMoveTo';
 "bot" return 'bot';
@@ -123,7 +125,7 @@ task :
 	| 'activateItem' {$$=['activate item',[]];}
 	| 'deactivateItem' {$$=['deactivate item',[]];}
 	| 'build' 'S' position {$$=['build',[$3]];}
-	| 'craft' 'S' int 'S' item {$$=['craft',[$3,$5]];}
+	| 'craft' 'S' int 'S' simpleItem {$$=['craft',[$3,$5]];}
 	| 'jump' {$$=['jump',[]];}
 	| 'digForward' 'S' position  {$$=['dig forward',[$3]];}
 	| 'immure' 'S' position  {$$=['immure',[$3]];}
@@ -156,8 +158,14 @@ destination :
 	 'T' {$$=$1}
 ;
 
+simpleItem :
+ 'T' {$$=$1}
+;
+ 
 item :
-	 'T' {$$=$1}
+	 simpleItem {$$=$1}
+	| 'toolToBreak' 'S' simpleBlock {$$=$1+' '+$3}
+	| 'itemToBuild' {$$=$1}
 ;
 
 simplePlayer :

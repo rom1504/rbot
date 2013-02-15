@@ -22,15 +22,15 @@ Youtube demos :
  * raise chicken
  * move by building and digging
  * building things : watch then replicate
+ * craft
  
 ### Roadmap
 
  * Doing more complicated things :
-  * crafting things
+  * crafting things : get or craft the needed items
   * getting anywhere even if it's hard (lava, water)
   * building more things
  * Integrate other mineflayer functionnality : 
-  * crafting
   * using chests, dispensers and enchantment tables
   * use vehicle
   * activate block
@@ -77,7 +77,7 @@ If you download the source via github, you can run `npm install` then `jison gra
  * `move to <position>` : use mineflayer-navigate to get to `<position>`
  * `stop move to`
  * `equip <emplacement> <item>` : equip item at emplacement (for example hand)
- * `unequip <emplacament>`
+ * `unequip <emplacement>`
  * `toss <number> <item>`
  * `list` : list all items of the bot
  * `attack <entity>`
@@ -88,7 +88,7 @@ If you download the source via github, you can run `npm install` then `jison gra
  * `stop raise chicken`
  * `look at <position>`
  * `build <position>` : build at position with the equipped block
- * `craft <number> <item>` : will craft this item if you have the required items
+ * `craft <number> <nameItem>` : will craft this item if you have the required items
  * `up` : jump and build under the bot (but doesn't dig the bot above the bot unlike sup)
  * `jump`
  * `nothing`
@@ -121,6 +121,10 @@ If you download the source via github, you can run `npm install` then `jison gra
 
 
 ### Parameters
+ * `<item>` can be :
+  * `item to build`
+  * `tool to break <nameBlock>`
+  * `<nameItem>`
  * `<position>` can be :
   * `rx,y,z` : relative position
   * `<absolute position>`
