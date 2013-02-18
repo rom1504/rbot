@@ -47,3 +47,10 @@
 ## 0.0.8
 
  * fix jison
+
+## 0.0.9
+
+ * add watch, stop watch, replicate
+ * add immure command and + in position
+ * craft and unequip work, add nearest visible mob
+ * add tool to break and item to build
