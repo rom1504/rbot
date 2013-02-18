@@ -69,7 +69,7 @@ function canFall(pos)
 	return b!=null && (b.type===13 || b.type===12);
 }
 
-function dig(s,u,done)
+function dig_(s,u,done)
 {
 	var pos=stringToPosition(s,u)
 	if(pos===null)
@@ -106,10 +106,9 @@ function pround(p)
 	return new vec3(round(p.x),round(p.y),round(p.z));
 }
 
-function dig_(s,u,done)
+function dig(s,u,done)
 {
 	var pos=stringToPosition(s,u);
-	console.log(pos);
 	if(pos===null)
 	{
 		done();
@@ -122,7 +121,37 @@ function dig_(s,u,done)
 		return;
 	}
 	console.log("I dig position "+pos);
-	bot.dig({position:pos},20000,function(){done()});
+	var cf=canFall(pos.offset(0,1,0));
+	bot.dig(bot.blockAt(pos),function(pos,done,cf)
+	{
+		return function()
+		{
+// 			if(cf) bot.once("pos_"+pos+"_not_empty",function(){setTimeout(function(){done(false)},500);});
+			if(cf) setTimeout(function(){done(false)},1000);// ask superjoe about this...
+// 			if(cf) bot.once("pos_"+pos+"_not_empty",function(){setTimeout(function(){done(false)},500);}); // do better ?
+// 			if(cf) done(false);
+			else done(); // sometimes bug...
+		}
+	}(pos,done,cf));
+// 	if(!cf) bot.dig(bot.blockAt(pos),function(){done();});
+// 	else
+// 	{
+// 		bot.dig(bot.blockAt(pos));
+// 		bot.once("pos_"+pos+"_empty",(function (pos,done) {return function() {
+// 		if(canFall(pos.offset(0,1,0))) bot.once("pos_"+pos+"_not_empty",function(){done(false);});
+// 		else done();
+// 		};})(pos,done));// because a block can fall
+// 	}
+// 	bot.dig(bot.blockAt(pos),function(pos,done)
+// 	{
+// 		return function()
+// 		{
+// 			if(canFall(pos.offset(0,1,0))) 
+// 				bot.once("pos_"+pos+"_empty",(function (pos,done) {return function() {bot.once("pos_"+pos+"_not_empty",function(){done(false);});}})(pos,done));
+// 			else done();
+// 		}
+// 	}(pos,done));
+// 	bot.dig(bot.blockAt(pos),function(pos,done){return function(){done(isEmpty(pos));}}(pos,done));
 }
 
 
@@ -138,6 +167,7 @@ function norm(v)
 
 function build(s,u,done)
 {
+	if(bot.heldItem===null) {done(true);return;}
 	var blockPosition=stringToPosition(s,u).floored();
 	var x,y,z,p;
 	var contiguousBlocks=[new vec3(1,0,0),new vec3(-1,0,0),new vec3(0,1,0),new vec3(0,-1,0),new vec3(0,0,-1),new vec3(0,0,1)];
@@ -715,6 +745,8 @@ function achieveListAux(p,u,done)
 
 function up(u,done) // change this a bit ?
 {
+	
+	  if(bot.heldItem===null) {done(true);return;}
   bot.setControlState('jump', true);
   var targetBlock = bot.blockAt(bot.entity.position.offset(0, -1, 0));
   var jumpY = bot.entity.position.y + 1;
