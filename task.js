@@ -130,7 +130,15 @@ function dig(s,u,done)
 			if(cf) setTimeout(function(){done(false)},1000);// ask superjoe about this...
 // 			if(cf) bot.once("pos_"+pos+"_not_empty",function(){setTimeout(function(){done(false)},500);}); // do better ?
 // 			if(cf) done(false);
-			else done(); // sometimes bug...
+// 			else setTimeout(done,300);
+			else if(isNotEmpty(pos)) done(false)
+			else done();
+// 			else check();
+// 			function check()
+// 			{
+// 				if(isNotEmpty(pos)) setTimeout(check,300); // sometimes bug... : this timeout should temporarly fix it
+// 				else done();
+// 			}
 		}
 	}(pos,done,cf));
 // 	if(!cf) bot.dig(bot.blockAt(pos),function(){done();});
@@ -167,8 +175,9 @@ function norm(v)
 
 function build(s,u,done)
 {
-	if(bot.heldItem===null) {done(true);return;}
 	var blockPosition=stringToPosition(s,u).floored();
+	if(isNotEmpty(blockPosition)) {done(); return;}
+	if(bot.heldItem===null) {done(true);return;}
 	var x,y,z,p;
 	var contiguousBlocks=[new vec3(1,0,0),new vec3(-1,0,0),new vec3(0,1,0),new vec3(0,-1,0),new vec3(0,0,-1),new vec3(0,0,1)];
 	for(i in contiguousBlocks)
@@ -177,7 +186,7 @@ function build(s,u,done)
 		if(isNotEmpty(p))
 		{
 			bot.placeBlock({position:p},(new vec3(0,0,0)).minus(contiguousBlocks[i]));
-			done();
+			setTimeout(done,200);
 			return;
 		}
 	}
@@ -209,13 +218,35 @@ function findCraftingTable()
 	}
 }
 
+function closeOf(s)
+{
+	var type=blocks[s].id;
+	var cursor = new vec3();
+	for(cursor.x = bot.entity.position.x - 4; cursor.x < bot.entity.position.x + 4; cursor.x++)
+	{
+		for(cursor.y = bot.entity.position.y - 4; cursor.y < bot.entity.position.y + 4; cursor.y++)
+		{
+			for(cursor.z = bot.entity.position.z - 4; cursor.z < bot.entity.position.z + 4; cursor.z++)
+			{
+				var block = bot.blockAt(cursor);
+				if (block.type === type) return true;
+			}
+		}
+	}
+	return false;
+}
+
 function craft(amount,name,u,done)
 {
 	amount=parseInt(amount);
 	var item=findItemType(name);
 	var craftingTable=findCraftingTable();
 	var wbText = craftingTable ? "with a crafting table, " : "without a crafting table, ";
-	if (item == null) bot.chat(wbText + "unknown item: " + name);
+	if (item == null)
+	{
+		bot.chat(wbText + "unknown item: " + name);
+		done(true);
+	}
 	else
 	{
 		var recipes = bot.recipesFor(item.id, null, amount, craftingTable);
@@ -230,14 +261,21 @@ function craft(amount,name,u,done)
 				{
 					bot.chat("error making " + item.name);
 					console.error(err.stack);
+					done(true);
 				}
-				else bot.chat("made " + newAmount + " " + item.name);
-				done();
+				else
+				{	
+					bot.chat("made " + newAmount + " " + item.name);
+					setTimeout(done,5000);
+				}
 			});
 		}
-		else bot.chat(wbText + "I can't make " + item.name);
+		else
+		{
+			bot.chat(wbText + "I can't make " + item.name);
+			done(true);
+		}
 	}
-	done();
 }
 
 function unequip(s,u,done)
@@ -263,7 +301,7 @@ function center(p)
 
 function move(s,u,done)
 {
-	var goalPosition=stringToPosition(s,u);
+	var goalPosition=stringToPosition(s,u);// floor ?
 	goalPosition=center(goalPosition);
 	bot.lookAt(goalPosition.offset(0,bot.entity.height,0));
 	bot.setControlState('forward', true);
@@ -274,7 +312,7 @@ function move(s,u,done)
 			bot.setControlState('forward', false);
 			clearInterval(arrive);
 			done();// maybe signal an error if the goal position isn't free (same thing for move to)
-		}
+		} else bot.lookAt(goalPosition.offset(0,bot.entity.height,0));
 	}})(goalPosition,done),50);	
 }
 
@@ -361,6 +399,7 @@ function ifThenElse(condition,then,els,u,done)
 function ifThen(condition,then,u,done)
 {
 	if(stringToPredicate(condition)()) achieve(then,u,done);
+	else done();
 }
 
 function sameBlock(pos1,pos2)
@@ -368,10 +407,37 @@ function sameBlock(pos1,pos2)
 	return pos1.floored().equals(pos2.floored());
 }
 
-function stringToPredicate(s)
+function isCraftable(s)
 {
+	return mf.Recipe.find(findItemType(s).id).length!==0;
+}
+
+function stringToPredicate(s)
+{//could be replace by a simple hash table (stringToPosition too)
 	var v;
 	if((v=new RegExp("^at (.+)$").exec(s))!=null) return function(pos){return function(){return sameBlock(pos,bot.entity.position)};}(stringToPosition(v[1]));
+	if((v=new RegExp("^have ([0-9]+) (.+)$").exec(s))!=null)
+	{
+		return function(count,name)
+		{
+			return function()
+			{
+				return numberOfOwnedItems(name)>=count;
+			}
+		}(parseInt(v[1]),v[2]);
+	}
+	if((v=new RegExp("^close of (.+)$").exec(s))!=null) return function(blockName){return function(){return closeOf(blockName);}}(v[1]);
+}
+
+function numberOfOwnedItems(name)
+{
+	var items=bot.inventory.items();
+	var c=0;
+	for(i in items)
+	{
+		if(items[i].name===name) c+=items[i].count;
+	}
+	return c;
 }
 
 function repeatUntil(taskName,condition,u,done)
@@ -585,19 +651,31 @@ function equip(destination,itemName,u,done)
 				console.log("unable to equip " + item.name);
 				console.log(err.stack);
 			}
-			else console.log("equipped " + item.name);
+			else
+			{
+				console.log("equipped " + item.name);
+				
+			}
+			done();
 		});
 	}
-	else console.log("I have no " + itemName);// change this maybe
-	done();
+	else
+	{
+		console.log("I have no " + itemName);// change this maybe
+		done();
+	}
+	
 }
 
 function toss(number,itemName,u,done)
 {
 	var item=stringToItem(itemName);
-	if(item) bot.toss(item.type,null,parseInt(number));
-	else console.log("I have no " + itemName);// change this maybe
-	done();
+	if(item) bot.toss(item.type,null,parseInt(number),function(){done()});
+	else
+	{
+		console.log("I have no " + itemName);// change this maybe
+		done();
+	}
 }
 
 function attack(s,u,done)
@@ -610,10 +688,7 @@ function attack(s,u,done)
 
 function listInventory(u,done)
 {
-	var output = "";
-	bot.inventory.items().forEach(function(item) {
-		output += item.name + ": " + item.count + ", ";
-	});
+	var output=myItems().map(function(a){return a[0]+":"+a[1];}).join(", ");
 	if (output) {
 		bot.chat(output);
 	} else {
@@ -697,8 +772,8 @@ function stringToPosition(s,u,head)
 	//could be used, maybe (0.8 not 1.8 ...)
 	var v;
 	if((v=new RegExp("^nearest reachable position (.+)$").exec(s))!=null) return nearestReachablePosition(stringToPosition(v[1]));
-	if((v=new RegExp("^r(.+?)\\+(.+)$").exec(s))!=null) return stringToAbsolutePosition(v[2],u,head).plus(simpleStringToPosition(v[1]));
-	if((v=new RegExp("^r(.+)$").exec(s))!=null) return bot.entity.position.plus(simpleStringToPosition(v[1]));
+	if((v=new RegExp("^r(.+?)\\+(.+)$").exec(s))!=null) return stringToAbsolutePosition(v[2],u,head).floored().plus(simpleStringToPosition(v[1]));
+	if((v=new RegExp("^r(.+)$").exec(s))!=null) return bot.entity.position.floored().plus(simpleStringToPosition(v[1]));
 	return stringToAbsolutePosition(s,u,head);
 }
 
@@ -746,7 +821,7 @@ function achieveListAux(p,u,done)
 function up(u,done) // change this a bit ?
 {
 	
-	  if(bot.heldItem===null) {done(true);return;}
+	  //if(bot.heldItem===null) {done(true);return;} // replace this with something checking whether the bot has a block to build ?
   bot.setControlState('jump', true);
   var targetBlock = bot.blockAt(bot.entity.position.offset(0, -1, 0));
   var jumpY = bot.entity.position.y + 1;
@@ -754,10 +829,13 @@ function up(u,done) // change this a bit ?
   
   function placeIfHighEnough() {
     if (bot.entity.position.y > jumpY) {
-      bot.placeBlock(targetBlock, vec3(0, 1, 0));
-      bot.setControlState('jump', false);
-      bot.removeListener('move', placeIfHighEnough);
-	  setTimeout(done,400);
+      //bot.placeBlock(targetBlock, vec3(0, 1, 0));
+      //dirty
+	  processMessage(u,"sbuild r0,-1,0",function(){ // this is very wrong, solve it somehow (doesn't take into account the parameter of the callback as in achieve)
+		bot.setControlState('jump', false);
+		bot.removeListener('move', placeIfHighEnough);
+		setTimeout(done,400);// could (should ?) be replaced my something checking whether the bot is low enough/has stopped moving
+	  });
     }
   }
 }
@@ -937,7 +1015,7 @@ function toolToBreak(blockToBreak)
 	var tool = tools[0];
 	if (!tool)
 	{
-		bot.chat("I don't have the tool to break "+blockToBreak.name);
+		console.log("I don't have the tool to break "+blockToBreak.name);
 		return null;
 	}
 	return tool;
@@ -953,7 +1031,7 @@ function itemToBuild()
 	var item = scaffoldingItems[0];
 	if (!item)
 	{
-		bot.chat("I don't have any block to build");
+		console.log("I don't have any block to build");
 		return null;
 	}
 	return item;
@@ -968,6 +1046,31 @@ function stringToItem(s)
 	return itemByName(s);
 }
 
+function neededItemsToCraft(n,s)
+{
+	var id=findItemType(s).id;
+	var r=mf.Recipe.find(id);
+	if(r.length===0) return null;
+	var nd=[],d=r[0].delta;
+	for(i in d)
+	{
+		if(d[i].type!=id)
+		{
+			nd.push({"name":mf.items[d[i].type]===undefined ? mf.blocks[d[i].type].name : mf.items[d[i].type].name,"count":-parseInt(n)*d[i].count});
+		}
+	}
+	return nd;
+}
+
+
+
+function needWorkbench(s)
+{
+	var id=findItemType(s).id;
+	var r=mf.Recipe.find(id);
+	if(r.length===0) return null;
+	return r[0].requiresTable;
+}
 
 // function print(l,done)
 // {
@@ -979,7 +1082,7 @@ function stringToItem(s)
 tasks=
 {
 		"ifThenElse":{action:{f:ifThenElse}},
-		"ifThen":{action:{f:ifThenElse}},
+		"ifThen":{action:{f:ifThen}},
 		"repeatUntil":{action:{f:repeatUntil}},
 		"repeat":{action:{f:repeat}},
 		"stopRepeat":{action:{f:stopRepeat}},
@@ -1027,20 +1130,20 @@ alias=
 	"y-":"move r0,-1,0",
 	"z+":"move r0,0,1",
 	"z-":"move r0,0,-1",
-	"spiral up":"do dig r0,2,0 then dig r0,1,1 then dig r0,2,1 then move to r0,1,1 then dig r0,2,0 then dig r-1,1,0 then dig r-1,2,0 then move to r-1,1,0 then dig r0,2,0 then dig r0,1,-1 then dig r0,2,-1 then move to r0,1,-1 then dig r0,2,0 then dig r1,1,0 then dig r1,2,0 then move to r1,1,0 done",
-	"spiral down":"do dig r1,1,0 then dig r1,0,0 then dig r1,-1,0 then move to r1,-1,0 then dig r0,0,1 then dig r0,1,1 then dig r0,-1,1 then move to r0,-1,1 then dig r-1,1,0 then dig r-1,0,0 then dig r-1,-1,0 then move to r-1,-1,0 then dig r0,1,-1 then dig r0,0,-1 then dig r0,-1,-1 then move to r0,-1,-1 done",
+	"spiral up":"do sdig r0,2,0 then sdig r0,1,1 then sdig r0,2,1 then move to r0,1,1 then sdig r0,2,0 then sdig r-1,1,0 then sdig r-1,2,0 then move to r-1,1,0 then sdig r0,2,0 then sdig r0,1,-1 then sdig r0,2,-1 then move to r0,1,-1 then sdig r0,2,0 then sdig r1,1,0 then sdig r1,2,0 then move to r1,1,0 done",
+	"spiral down":"do sdig r1,1,0 then sdig r1,0,0 then sdig r1,-1,0 then move to r1,-1,0 then sdig r0,0,1 then sdig r0,1,1 then sdig r0,-1,1 then move to r0,-1,1 then sdig r-1,1,0 then sdig r-1,0,0 then sdig r-1,-1,0 then move to r-1,-1,0 then sdig r0,1,-1 then sdig r0,0,-1 then sdig r0,-1,-1 then move to r0,-1,-1 done",
 	"raise chicken":"do move to nearest reachable object * then equip hand egg then activate item done",
 	
 	"build shelter":"immure bot",
 	
-	"destroy shelter":"do dig r-1,0,0 then dig r0,0,-1 then dig r1,0,0 then dig r0,0,1 then dig r1,0,1 then dig r-1,0,-1 then dig r-1,0,1 then dig r1,0,-1 then dig r-1,1,0 then dig r0,1,-1 then dig r1,1,0 then dig r0,1,1 then dig r1,1,1 then dig r-1,1,-1 then dig r-1,1,1 then dig r1,1,-1 then dig r-1,2,0 then dig r0,2,-1 then dig r1,2,0 then dig r0,2,1 then dig r1,2,1 then dig r-1,2,-1 then dig r-1,2,1 then dig r1,2,-1 then dig r0,2,0 done",
+	"destroy shelter":"do sdig r-1,0,0 then sdig r0,0,-1 then sdig r1,0,0 then sdig r0,0,1 then sdig r1,0,1 then sdig r-1,0,-1 then sdig r-1,0,1 then sdig r1,0,-1 then sdig r-1,1,0 then sdig r0,1,-1 then sdig r1,1,0 then sdig r0,1,1 then sdig r1,1,1 then sdig r-1,1,-1 then sdig r-1,1,1 then sdig r1,1,-1 then sdig r-1,2,0 then sdig r0,2,-1 then sdig r1,2,0 then sdig r0,2,1 then sdig r1,2,1 then sdig r-1,2,-1 then sdig r-1,2,1 then sdig r1,2,-1 then sdig r0,2,0 done",
 	
 	
 	"attack everymob":"repeat do move to nearest reachable mob * then attack nearest reachable mob * done done",
 	"scome":"smove me",
 	"come":"move to me",
-	"down":"do move r0,0,0 then build r0,-2,0 then dig r0,-1,0 then wait 400 done", // could change the wait 400 to something like a when at r0,-1,0 or something
-	"sup":"do dig r0,2,0 then up done",
+	"down":"do move r0,0,0 then sbuild r0,-2,0 then sdig r0,-1,0 then wait 400 done", // could change the wait 400 to something like a when at r0,-1,0 or something
+	"sup":"do sdig r0,2,0 then up done",//move r0,0,0 then  : put this back when I understand the pb with do sup then sup done
 }
 
 function sgn(n)
@@ -1048,19 +1151,55 @@ function sgn(n)
 	return n>0 ? 1 : -1;
 }
 
+function myItems()
+{
+	var items={};
+	bot.inventory.items().forEach(function(item) {
+		if(items[item.name]===undefined) items[item.name]=0;
+		items[item.name]+=item.count;
+	});
+	var nitems=[];
+	for(var i in items)
+	{
+		nitems.push([i,items[i]]);
+	}
+	return nitems;
+}
+
+var gss={"stonebrick":"stone","coal":"oreCoal","ingotIron":"oreIron"};
+
 parameterized_alias=
 {
+	"toss everything":function(s,u)
+	{
+		return "do "+myItems().map(function(a){return "toss "+a[1]+" "+a[0]}).join(" then ")+" done";
+	},
+	"sbuild":function(s,u)
+	{
+		return "do equip hand item to build then build "+s+" done"
+	},
+	"sdig":function(s,u)
+	{
+		return "do equip hand tool to break "+bot.blockAt(stringToPosition(s,u)).name+" then dig "+s+" done"
+	},
 	"shoot":function(s,u)
 	{
 		return "do look at adapted "+s+" then activate item then wait 1000 then deactivate item done"
 	},
+	"cget":function(n,s,u)
+	{
+		var gs=s in gss ? gss[s] : s;
+		var m=numberOfOwnedItems(s);
+		var need;
+		return m>=n ? "nothing" : isCraftable(s) ? "do "+neededItemsToCraft(n-m,s).map(function(item){return "cget "+item.count+" "+item.name;}).join(" then ")+" then "+((need=needWorkbench(s)) ? "if close of workbench then nothing else do cget 1 workbench then sdig r0,-1,1 then equip hand workbench then build r0,-1,1 done endif then " : "")+"look at r0,0,0 then craft "+(n-m)+" "+s+(need ? " then sdig r0,-1,1 then sbuild r0,-1,1" : "")+" done" : "repeat sget "+gs+" until have "+n+" "+s+" done";
+	}, // r0,0,1 : change this , problem with the number : try to craft it all when it only need to craft current - demanded : let's do it here, it seems to make sense since I'm going stringToPosition for dig forward : hence the if have could probably be replaced by a js if : I'm going to let the if have be for now, and just do the current - demanded : not using have anymore... : remove it ? actually I'm using it, can't you see ???
 	"get":function(s,u)
 	{
-		return "do move to nearest reachable position nearest block "+s+" then dig nearest block "+s+" done";//add+" then move to nearest reachable object" when improved
+		return "do move to nearest reachable position nearest block "+s+" then sdig nearest block "+s+" done";//add+" then move to nearest reachable object" when improved
 	}, // do move to nearest reachable position block nearest block log then dig block nearest block log done
 	"sget":function(s,u)
 	{
-		return "do smove nearest block "+s+" then dig nearest block "+s+" done";
+		return "do smove nearest block "+s+" then sdig nearest block "+s+" done";
 	},
 	"follow":function(s,u)
 	{
@@ -1075,7 +1214,7 @@ parameterized_alias=
 	"dig forward":function (s,u) 
 	{
 		var p=stringToPosition(s,u);
-		return "do dig "+s+" then dig "+positionToString(p.offset(0,1,0))+" then build "+positionToString(p.offset(0,-1,0))+" then move "+s+" done";
+		return "do sdig "+s+" then sdig "+positionToString(p.offset(0,1,0))+" then sbuild "+positionToString(p.offset(0,-1,0))+" then move "+s+" done";
 	},
 	"sumove":function(s,u)
 	{
@@ -1088,7 +1227,7 @@ parameterized_alias=
 	},
 	"immure":function(s,u)
 	{
-		return "do build r-1,0,0+"+s+" then build r0,0,-1+"+s+" then build r1,0,0+"+s+" then build r0,0,1+"+s+" then build r1,0,1+"+s+" then build r-1,0,-1+"+s+" then build r-1,0,1+"+s+" then build r1,0,-1+"+s+" then build r-1,1,0+"+s+" then build r0,1,-1+"+s+" then build r1,1,0+"+s+" then build r0,1,1+"+s+" then build r1,1,1+"+s+" then build r-1,1,-1+"+s+" then build r-1,1,1+"+s+" then build r1,1,-1+"+s+" then build r-1,2,0+"+s+" then build r0,2,-1+"+s+" then build r1,2,0+"+s+" then build r0,2,1+"+s+" then build r1,2,1+"+s+" then build r-1,2,-1+"+s+" then build r-1,2,1+"+s+" then build r1,2,-1+"+s+" then build r0,2,0+"+s+" done";
+		return "do sbuild r-1,0,0+"+s+" then sbuild r0,0,-1+"+s+" then sbuild r1,0,0+"+s+" then sbuild r0,0,1+"+s+" then sbuild r1,0,1+"+s+" then sbuild r-1,0,-1+"+s+" then sbuild r-1,0,1+"+s+" then sbuild r1,0,-1+"+s+" then sbuild r-1,1,0+"+s+" then sbuild r0,1,-1+"+s+" then sbuild r1,1,0+"+s+" then sbuild r0,1,1+"+s+" then sbuild r1,1,1+"+s+" then sbuild r-1,1,-1+"+s+" then sbuild r-1,1,1+"+s+" then sbuild r1,1,-1+"+s+" then sbuild r-1,2,0+"+s+" then sbuild r0,2,-1+"+s+" then sbuild r1,2,0+"+s+" then sbuild r0,2,1+"+s+" then sbuild r1,2,1+"+s+" then sbuild r-1,2,-1+"+s+" then sbuild r-1,2,1+"+s+" then sbuild r1,2,-1+"+s+" then sbuild r0,2,0+"+s+" done";
 	}
 }
 

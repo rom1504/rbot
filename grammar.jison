@@ -9,9 +9,15 @@
 "done" return 'done';
 "stop repeat" return 'stopRepeat';
 "then" return 'then';
+"toss everything" return 'tossEverything';
+"sbuild" return 'sbuild';
+"sdig" return 'sdig';
 "until" return 'until';
+"close of" return 'closeOf';
 "dig forward" return 'digForward';
 "dig" return 'dig';
+"cget" return 'cget';
+"have" return 'have';
 "stop watch" return 'stopWatch';
 "replicate" return 'replicate';
 "watch" return 'watch';
@@ -64,7 +70,7 @@
 "." return '.';
 [0-9]+ return 'N'
 [A-Za-z0-9,]+ return 'T';
-" "+ return 'S';
+\s+ return 'S';
 <<EOF>> return 'EOF';
 /lex
 
@@ -103,7 +109,11 @@ exp :
 
 
 task :
-	  'replicate' {$$=['replicate',[]]},
+	'tossEverything' {$$=['toss everything',[]]}
+	| 'sdig' 'S' position  {$$=['sdig',[$3]];}
+	| 'sbuild' 'S' position {$$=['sbuild',[$3]];}
+	| 'cget' 'S' int 'S' simpleItem {$$=['cget',[$3,$5]]}
+	| 'replicate' {$$=['replicate',[]]},
 	| 'watch' {$$=['watch',[]]},
 	| 'stopWatch' {$$=['stop watch',[]]},
 	| 'dig' 'S' position  {$$=['dig',[$3]];}
@@ -208,8 +218,12 @@ position :
 ;
 
 simpleBlock :
-	 'T' {$$=$1;}
+	blockName {$$=$1;}
 	| '*' {$$=$1}
+;
+
+blockName :
+	 'T' {$$=$1;}
 ;
 
 block :
@@ -221,7 +235,9 @@ listeE :
 	| exp 'S' 'done' {$$=[$1];}
 ;
 
-condition : 
-	 'at' 'S' position {$$=$1+' '+$3}
+condition :
+	 'closeOf' 'S' blockName {$$=$1+' '+$3}
+	| 'have' 'S' int 'S' simpleItem {$$=$1+' '+$3+' '+$5}
+	| 'at' 'S' position {$$=$1+' '+$3}
 	|'T' {$$=$1}
 ;
