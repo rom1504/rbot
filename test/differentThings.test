@@ -1,1 +1,0 @@
-repeat do repeat do if cond1 then task1 else task2 endif then task2 done until cond2 done then if cond3 then stop repeat task4 done endif done done
