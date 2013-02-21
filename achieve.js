@@ -1,42 +1,15 @@
 var ce = require('cloneextend');
-var parser = require("./grammar").parser;
+var parser = require("./grammar/grammar").parser;
 
 var bot,vec3,generated_tasks,tasks,parameterized_alias,alias,master;
 
-function init(_regex,_generated_tasks,_tasks,_parameterized_alias,_alias,_bot,_vec3,_master) // ou passer simplement task...
+function init(_tasks,_parameterized_alias,_alias,_bot,_vec3,_master) // ou passer simplement task...
 {
 	master=_master;
 	bot=_bot;
 	vec3=_vec3;
-	function replaceRegex(text)
-	{
-		for(var i in _regex)
-		{
-			text=text.replace(i,_regex[i]);
-		}
-		return text;
-	}
-
-	ngenerated_tasks={};
-	for(i in _generated_tasks)
-	{
-		ngenerated_tasks[replaceRegex(i)]=_generated_tasks[i];
-	}
-	generated_tasks=ngenerated_tasks;
-
-	ntasks={};
-	for(i in _tasks)
-	{
-		ntasks[replaceRegex(i)]=_tasks[i];
-	}
-	tasks=ntasks;
-
-	nparameterized_alias={};
-	for(i in _parameterized_alias)
-	{
-		nparameterized_alias[replaceRegex(i)]=_parameterized_alias[i];
-	}
-	parameterized_alias=nparameterized_alias;
+	tasks=_tasks;
+	parameterized_alias=_parameterized_alias;
 	alias=_alias;
 }
 
@@ -71,57 +44,27 @@ function reportFailOfTask(parsedTask,done)
 	};
 }
 
-// à faire plus tard si vraiment nécessaire/utile
-// conditionsToMonitor={};
-// 
-// function monitor()
-// {
-// 	for(i in conditionsToMonitor)
-// 	{
-// 		if(conditionsToMonitor[i]())
-// 		{
-// 			emit(i);
-// 		}
-// 	}
-// }
-
 function applyAction(task,parsedTask,done)
 {
-		return function()
-		{
-			var b;
-			task.action.f.apply(this,task.action.p.concat([function(result){
-				if(result!=null && !result) {applyAction(task,parsedTask,done)()} else {if(result) reportFailOfTask(parsedTask)(); else reportEndOfTask(parsedTask,done)()}
-				
-			}]));
-			// comportement différent mais peut etre interessant :
-// 			var actione=task.action.f.apply(this,task.action.p);
-// 			bot.once(actione,reportEndOfTask(taskName));
-		}
+		var b;
+		task.f.apply(this,task.p.concat([function(result){
+			if(result!=null && !result) {applyAction(task,parsedTask,done);} else {if(result) reportFailOfTask(parsedTask)(); else reportEndOfTask(parsedTask,done)()}
+			
+		}]));
+		
 }
 
 function nameToTask(parsedTask,username)
 {
-// 	taskName=replaceAlias(taskName,username);// seems useless, check it...
-	
 	parsedTask=replaceParameterizedAlias(parsedTask,username);
 	var v;
 	var task;
 	var pars;
-	if(parsedTask[0] in generated_tasks)
-	{
-		pars=ce.clone(parsedTask[1]);
-		pars.push(username);
-		task=generated_tasks[parsedTask[0]].apply(this,pars);
-		task.action.p=task.action.p != undefined ? task.action.p.concat(pars) : pars;
-		return task;
-	}
 	if(parsedTask[0] in tasks)
 	{
 		pars=ce.clone(parsedTask[1]);
 		pars.push(username);
-		task=ce.clone(tasks[parsedTask[0]]);
-		task.action.p=task.action.p != undefined ? task.action.p.concat(pars) : pars
+		task={f:ce.clone(tasks[parsedTask[0]]),p:pars};
 		return task;
 	}
 	return null;
@@ -140,7 +83,6 @@ function achieve(parsedTask,username,done)
 		done();
 		return;
 	}
-		//  	taskName=replaceAlias(taskName,username);//utile ? // bien ?
 	if(task===null)
 	{
 		console.log("Cannot find "+parsedTaskToString(parsedTask));
@@ -148,7 +90,7 @@ function achieve(parsedTask,username,done)
 		return;
 	}
 	console.log("I'm going to achieve task "+parsedTaskToString(parsedTask));
-	achieveList(task.deps!=undefined ? task.deps : [],username,applyAction(task,parsedTask,done));
+	applyAction(task,parsedTask,done);
 }
 
 function listAux(taskNameList,i,username,done)
@@ -227,7 +169,6 @@ function processMessage(username,message,done)
 {
 	if(username !=bot.username && (username===master || master===undefined))
 	{
-// 		message=replaceAlias(message,username);
 		console.log(message);
 		var parsedMessage;
 		try
@@ -239,11 +180,13 @@ function processMessage(username,message,done)
 			console.log(error);
 			return;
 		}
-		if(parsedMessage[0] in generated_tasks || parsedMessage[0] in tasks ||parsedMessage[0] in parameterized_alias) achieve(parsedMessage,username,done);
+		if(parsedMessage[0] in tasks ||parsedMessage[0] in parameterized_alias) achieve(parsedMessage,username,done);
 	}
 }
 
-exports.init=init;
-exports.processMessage=processMessage;
-exports.achieve=achieve;
-exports.achieveList=achieveList;
+module.exports={
+	init:init,
+	processMessage:processMessage,
+	achieve:achieve,
+	achieveList:achieveList
+};

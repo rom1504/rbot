@@ -1,0 +1,1 @@
+node grammar.js test/$1.test
