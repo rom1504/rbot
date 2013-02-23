@@ -1,11 +1,12 @@
-var bot,processMessage,isEmpty,stringTo,directions,direction;
+var bot,processMessage,isEmpty,stringTo,directions,direction,vec3;
 
-function init(_bot,_processMessage,_isEmpty,_stringTo)
+function init(_bot,_processMessage,_isEmpty,_stringTo,_vec3)
 {
 	bot=_bot;
 	processMessage=_processMessage;
 	isEmpty=_isEmpty;
 	stringTo=_stringTo;
+	vec3=_vec3;
 // 	directions=[new vec3(0,0,1),new vec3(0,0,-1),new vec3(1,0,0),new vec3(-1,0,0)];
 // 	direction=directions[0];
 }
@@ -29,13 +30,13 @@ function up(u,done) // change this a bit ?
   
   function placeIfHighEnough() {
     if (bot.entity.position.y > jumpY) {
-      //bot.placeBlock(targetBlock, vec3(0, 1, 0));
+      bot.placeBlock(targetBlock, vec3(0, 1, 0));
       //dirty
-	  processMessage(u,"sbuild r0,-1,0",function(){ // this is very wrong, solve it somehow (doesn't take into account the parameter of the callback as in achieve)
+	  //processMessage(u,"sbuild r0,-1,0",function(){ // this is very wrong, solve it somehow (doesn't take into account the parameter of the callback as in achieve)
 		bot.setControlState('jump', false);
 		bot.removeListener('move', placeIfHighEnough);
 		setTimeout(done,400);// could (should ?) be replaced my something checking whether the bot is low enough/has stopped moving
-	  });
+	 // });
     }
   }
 }
@@ -62,34 +63,40 @@ function isFree(pos)
 
 function move(s,u,done)
 {
-	var goalPosition=stringTo.stringToPosition(s,u);// floor ?
-	goalPosition=center(goalPosition);
-	bot.lookAt(goalPosition.offset(0,bot.entity.height,0));
-	bot.setControlState('forward', true);
-	var arrive=setInterval((function(goalPosition,done){return function()
-	{
-		if(/*scalarProduct(goalPosition.minus(bot.entity.position),d)<0 || */goalPosition.distanceTo(bot.entity.position)<0.3 || !isFree(goalPosition)/*(norm(bot.entity.velocity)<0.01)*/)
+	stringTo.stringToPosition(s,u,null,function(goalPosition){
+		goalPosition=center(goalPosition);
+		bot.lookAt(goalPosition.offset(0,bot.entity.height,0),true);
+		bot.setControlState('forward', true);
+		var arrive=setInterval((function(goalPosition,done){return function()
 		{
-			bot.setControlState('forward', false);
-			clearInterval(arrive);
-			done();// maybe signal an error if the goal position isn't free (same thing for move to)
-		} else bot.lookAt(goalPosition.offset(0,bot.entity.height,0));
-	}})(goalPosition,done),50);	
+			if(/*scalarProduct(goalPosition.minus(bot.entity.position),d)<0 || */goalPosition.distanceTo(bot.entity.position)<0.3 || !isFree(goalPosition)/*(norm(bot.entity.velocity)<0.01)*/)
+			{
+				bot.setControlState('forward', false);
+				clearInterval(arrive);
+				done();// maybe signal an error if the goal position isn't free (same thing for move to)
+			} else bot.lookAt(goalPosition.offset(0,bot.entity.height,0),true);
+		}})(goalPosition,done),50);	
+	});// floor ?
 }
 
 
 function moveTo(s,u,done)
 {
-	var goalPosition=stringTo.stringToPosition(s,u);
-	if(goalPosition!=null && isFree(goalPosition))
-	{
-		if(goalPosition.distanceTo(bot.entity.position)>=1)
+	stringTo.stringToPosition(s,u,null,function(goalPosition){
+		goalPosition=center(goalPosition);
+		if(goalPosition!=null && isFree(goalPosition))
 		{
-			bot.navigate.to(goalPosition);//use callback here ?
-			bot.once("stop",done);
-		}
-		else done();
-	} else done();
+			if(goalPosition.distanceTo(bot.entity.position)>=0.2)
+			{
+				//bot.navigate.to(goalPosition);//use callback here ?
+				var a=bot.navigate.findPathSync(goalPosition,{timeout:5000});
+				console.log(a.status+" "+a.path.length);
+				/*if(a.status==='success') */bot.navigate.walk(a.path,function(){done()});
+				//bot.once("stop",done);
+			}
+			else done();
+		} else done();
+	});
 }
 
 function stopMoveTo(u,done)

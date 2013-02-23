@@ -5,6 +5,7 @@ if(process.argv.length<6 || process.argv.length>7)
 	process.exit(1);
 }
 var mineflayer = require('mineflayer');
+var blockFinderPlugin = require('mineflayer-blockfinder')(mineflayer);
 var navigatePlugin = require('mineflayer-navigate')(mineflayer);
 var vec3 = mineflayer.vec3;
 var bot = mineflayer.createBot({
@@ -14,6 +15,7 @@ var bot = mineflayer.createBot({
 	host:process.argv[2]});
 
 navigatePlugin(bot);
+blockFinderPlugin(bot);
 var task=require('./task');
 var achieve=require('./achieve');
 
@@ -34,7 +36,7 @@ bot.on('death', function() {
   bot.chat("I died x.x");
 });
 
-bot.on('chat',function(username,message){achieve.processMessage(username,message,function(){});});
+bot.on('chat',function(username,message){achieve.processMessage(username,message,function(){bot.chat("I achieved task "+message);});});
 
 bot.navigate.on('pathFound', function (path) {
   console.log("found path. I can get there in " + path.length + " moves.");

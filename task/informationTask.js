@@ -25,10 +25,11 @@ function lookForEntity(s,u,done)
 
 function lookForBlock(s,u,done)
 {
-	var block=stringTo.stringToBlock(s);
-	if(block===null) bot.chat("I can't find "+s);
-	else bot.chat(s+" is in "+block.position+". It's a "+block.name);
-	done();
+	stringTo.stringToBlock(s,function(block){
+		if(block===null) bot.chat("I can't find "+s);
+		else bot.chat(s+" is in "+block.position+". It's a "+block.name);
+		done();
+	});
 }
 
 // function lookFor(s,u,done)

@@ -5,7 +5,7 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf)
 	processMessage=_processMessage;
 	mf=_mf;
 	bot=_bot;
-	require('./blockFinder').inject(bot);
+// 	require('./blockFinder').inject(bot);
 	vec3=_vec3;
 	achieve=_achieve;
 	achieveList=_achieveList;
@@ -37,15 +37,15 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf)
 	stringTo=require('./lib/stringTo');
 	inventory.init(bot);
 	nearest.init(bot,isNotEmpty,blocks,vec3);
-	stringTo.init(bot,inventory,nearest,vec3);
+	stringTo.init(bot,inventory,nearest,vec3,isEmpty,isNotEmpty);
 	
 	
 	syntaxTask=require('./task/syntaxTask');
 	syntaxTask.init(achieve,achieveList,stringTo);
 	moveTask=require('./task/moveTask');
-	moveTask.init(bot,processMessage,isEmpty,stringTo);
+	moveTask.init(bot,processMessage,isEmpty,stringTo,vec3);
 	inventoryTask=require('./task/inventoryTask');
-	inventoryTask.init(bot,stringTo,findItemType,inventory);
+	inventoryTask.init(bot,stringTo,findItemType,inventory,vec3);
 	blockTask=require('./task/blockTask');
 	blockTask.init(bot,stringTo,isNotEmpty,isBlockEmpty,isBlockNotEmpty,isEmpty,vec3);
 	informationTask=require('./task/informationTask');
@@ -115,74 +115,117 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf)
 		"attack everymob":"repeat do move to nearest reachable mob * then attack nearest reachable mob * done done",
 		"scome":"smove me",
 		"come":"move to me",
-		"down":"do move r0,0,0 then sbuild r0,-2,0 then sdig r0,-1,0 then wait 400 done", // could change the wait 400 to something like a when at r0,-1,0 or something
-		"sup":"do sdig r0,2,0 then up done",//move r0,0,0 then  : put this back when I understand the pb with do sup then sup done
+		"down":"do move to r0,0,0 then sbuild r0,-2,0 then sdig r0,-1,0 then wait 400 done", // could change the wait 400 to something like a when at r0,-1,0 or something
+		"sup":"do sdig r0,2,0 then equip hand item to build then up done",//move r0,0,0 then  : put this back when I understand the pb with do sup then sup done
 	};
 	
-	var gss={"stonebrick":"stone","coal":"oreCoal","ingotIron":"oreIron"};
-
+	var gss={"stonebrick":"stone","coal":"oreCoal","ingotIron":"oreIron","diamond":"oreDiamond"};
 
 	// should I put these aliases somewhere else ?
 	parameterized_alias=
 	{
-		"toss everything":function(s,u)
+		"giveEverything":function(p,u,done)
 		{
-			return "do "+inventory.myItems().map(function(a){return "toss "+a[1]+" "+a[0]}).join(" then ")+" done";
+			done("do look at "+p+" then toss everything done");
 		},
-		"sbuild":function(s,u)
+		"give":function(p,n,i,u,done)
 		{
-			return "do equip hand item to build then build "+s+" done"
+			done("do look at "+p+" then toss "+n+" "+i+" done");
 		},
-		"sdig":function(s,u)
+		"toss everything":function(u,done)
 		{
-			return "do equip hand tool to break "+bot.blockAt(stringTo.stringToPosition(s,u)).name+" then dig "+s+" done"
+			done("do "+inventory.myItems().map(function(a){return "toss "+a[1]+" "+a[0]}).join(" then ")+" done");
 		},
-		"shoot":function(s,u)
+		"sbuild":function(s,u,done)
 		{
-			return "do look at adapted "+s+" then activate item then wait 1000 then deactivate item done"
+			done("if is empty "+s+" then do equip hand item to build then build "+s+" done endif");
 		},
-		"cget":function(n,s,u)
+		"sdig":function(s,u,done)
+		{
+			stringTo.stringToPosition(s,u,null,function(pos){
+				var t,p,a=[],x,y,z;
+				var bb=bot.entity.position.floored();
+				var bb2=bb.offset(0,1,0);
+				var u="";
+				if(pos.floored().equals(bb.offset(0,2,0)) && blockTask.canFall(bb.offset(0,3,0)))
+				{
+					u="equip hand tool to break "+bot.blockAt(bb.offset(0,3,0)).name+" then dig "+positionToString(bb.offset(0,3,0))+" then ";
+				}
+				//check for water or lava
+				for(x=-1;x<=1;x++) // can do this better...
+				{
+					for(y=-1;y<=1;y++)
+					{
+						for(z=-1;z<=1;z++)
+						{
+							if((Math.abs(x)+Math.abs(y)+Math.abs(z))==1)
+							{
+								p=pos.offset(x,y,z);
+								if(!(p.equals(bb)) && !(p.equals(bb2)))
+								{
+									t=bot.blockAt(p).type;
+									if(t>=8 && t<=11) a.push("sbuild "+positionToString(p));
+								}
+							}
+						}
+					}
+				}
+				var b=a.join(" then ");
+				b=b=="" ? b : b+" then ";
+				done("if is not empty "+s+" then do "+u+" "+b+" equip hand tool to break "+bot.blockAt(pos).name+" then dig "+s+" done endif");
+			});
+			
+		},
+		"shoot":function(s,u,done)
+		{
+			done("do look at adapted "+s+" then activate item then wait 1000 then deactivate item done");
+		},
+		"cget":function(n,s,u,done)
 		{
 			var gs=s in gss ? gss[s] : s;
 			var m=inventory.numberOfOwnedItems(s);
 			var need;
-			return m>=n ? "nothing" : isCraftable(s) ? "do "+neededItemsToCraft(n-m,s).map(function(item){return "cget "+item.count+" "+item.name;}).join(" then ")+" then "+((need=needWorkbench(s)) ? "if close of workbench then nothing else do cget 1 workbench then sdig r0,-1,1 then equip hand workbench then build r0,-1,1 done endif then " : "")+"look at r0,0,0 then craft "+(n-m)+" "+s+(need ? " then sdig r0,-1,1 then sbuild r0,-1,1" : "")+" done" : "repeat sget "+gs+" until have "+n+" "+s+" done";
+			done(m>=n ? "nothing" : isCraftable(s) ? "do "+neededItemsToCraft(n-m,s).map(function(item){return "cget "+item.count+" "+item.name;}).join(" then ")+" then "+((need=needWorkbench(s)) ? "if close of workbench then nothing else do cget 1 workbench then sdig r0,0,1 then sbuild r0,-1,1 then equip hand workbench then build r0,0,1 done endif then " : "")+"look at r0,0,0 then craft "+(n-m)+" "+s+(need ? " then sdig r0,0,1" : "")+" done" : "repeat sget "+gs+" until have "+n+" "+s+" done");
 		}, // r0,0,1 : change this , problem with the number : try to craft it all when it only need to craft current - demanded : let's do it here, it seems to make sense since I'm going stringTo.stringToPosition for dig forward : hence the if have could probably be replaced by a js if : I'm going to let the if have be for now, and just do the current - demanded : not using have anymore... : remove it ? actually I'm using it, can't you see ???
-		"get":function(s,u)
+		"get":function(s,u,done)
 		{
-			return "do move to nearest reachable position nearest block "+s+" then sdig nearest block "+s+" done";//add+" then move to nearest reachable object" when improved
+			done("do move to nearest reachable position nearest block "+s+" then sdig nearest block "+s+" done");//add+" then move to nearest reachable object" when improved
 		}, // do move to nearest reachable position block nearest block log then dig block nearest block log done
-		"sget":function(s,u)
+		"sget":function(s,u,done)
 		{
-			return "do smove nearest block "+s+" then sdig nearest block "+s+" done";
+			done("do smove nearest block "+s+" then sdig nearest block "+s+" done");
 		},
-		"follow":function(s,u)
+		"follow":function(s,u,done)
 		{
-			return "repeat do move to "+s+" then wait 2000 done done"// can make it follow with some distance maybe ?
+			done("repeat do move to "+s+" then wait 2000 done done");// can make it follow with some distance maybe ?
 		},
-		"smove":function(s,u)
+		"smove":function(s,u,done)
 		{
-			var p=stringTo.stringToPosition(s,u);
-			var s=positionToString(p);
-			return "repeat sumove "+s+" until at "+s+" done";
+			stringTo.stringToPosition(s,u,null,function(p){ // change ?
+				var s=positionToString(p);
+				done("repeat sumove "+s+" until at "+s+" done");
+			});
 		},
-		"dig forward":function (s,u) 
+		"dig forward":function (s,u,done) 
 		{
-			var p=stringTo.stringToPosition(s,u);
-			return "do sdig "+s+" then sdig "+positionToString(p.offset(0,1,0))+" then sbuild "+positionToString(p.offset(0,-1,0))+" then move "+s+" done";
+			stringTo.stringToPosition(s,u,null,function(p){
+				done("do sdig "+s+" then sdig "+positionToString(p.offset(0,1,0))+" then sbuild "+positionToString(p.offset(0,-1,0))+" then move to "+s+" done");
+			});
 		},
-		"sumove":function(s,u)
+		"sumove":function(s,u,done)
 		{
-			var p=stringTo.stringToPosition(s,u).floored();
-			var d=p.minus(bot.entity.position.floored());
-			if(d.y!=0) return d.y<0 ? "down" : "sup";
-			if(d.x!=0) return "dig forward r"+sgn(d.x)+",0,0";
-			if(d.z!=0) return "dig forward r0,0,"+sgn(d.z);
-			return "nothing";
+			stringTo.stringToPosition(s,u,null,function(p){
+				p=p.floored();
+				var d=p.minus(bot.entity.position.floored());
+				if(d.y!=0) done(d.y<0 ? "down" : "sup");
+				else if(d.x!=0) done("dig forward r"+sgn(d.x)+",0,0");
+				else if(d.z!=0) done("dig forward r0,0,"+sgn(d.z));
+				else done("nothing");
+			});
 		},
-		"immure":function(s,u)
+		"immure":function(s,u,done)
 		{
-			return "do sbuild r-1,0,0+"+s+" then sbuild r0,0,-1+"+s+" then sbuild r1,0,0+"+s+" then sbuild r0,0,1+"+s+" then sbuild r1,0,1+"+s+" then sbuild r-1,0,-1+"+s+" then sbuild r-1,0,1+"+s+" then sbuild r1,0,-1+"+s+" then sbuild r-1,1,0+"+s+" then sbuild r0,1,-1+"+s+" then sbuild r1,1,0+"+s+" then sbuild r0,1,1+"+s+" then sbuild r1,1,1+"+s+" then sbuild r-1,1,-1+"+s+" then sbuild r-1,1,1+"+s+" then sbuild r1,1,-1+"+s+" then sbuild r-1,2,0+"+s+" then sbuild r0,2,-1+"+s+" then sbuild r1,2,0+"+s+" then sbuild r0,2,1+"+s+" then sbuild r1,2,1+"+s+" then sbuild r-1,2,-1+"+s+" then sbuild r-1,2,1+"+s+" then sbuild r1,2,-1+"+s+" then sbuild r0,2,0+"+s+" done";
+			done("do sbuild r-1,0,0+"+s+" then sbuild r0,0,-1+"+s+" then sbuild r1,0,0+"+s+" then sbuild r0,0,1+"+s+" then sbuild r1,0,1+"+s+" then sbuild r-1,0,-1+"+s+" then sbuild r-1,0,1+"+s+" then sbuild r1,0,-1+"+s+" then sbuild r-1,1,0+"+s+" then sbuild r0,1,-1+"+s+" then sbuild r1,1,0+"+s+" then sbuild r0,1,1+"+s+" then sbuild r1,1,1+"+s+" then sbuild r-1,1,-1+"+s+" then sbuild r-1,1,1+"+s+" then sbuild r1,1,-1+"+s+" then sbuild r-1,2,0+"+s+" then sbuild r0,2,-1+"+s+" then sbuild r1,2,0+"+s+" then sbuild r0,2,1+"+s+" then sbuild r1,2,1+"+s+" then sbuild r-1,2,-1+"+s+" then sbuild r-1,2,1+"+s+" then sbuild r1,2,-1+"+s+" then sbuild r0,2,0+"+s+" done");
 		}
 	};
 	all_task.tasks=tasks;
@@ -228,12 +271,13 @@ function findItemType(name)
 
 function lookAt(s,u,done)
 {
-	var goalPosition=stringTo.stringToPosition(s,u,1);
-	if(goalPosition!=null)
-	{
-		bot.lookAt(goalPosition);
-	}
-	done();
+	stringTo.stringToPosition(s,u,1,function(goalPosition){	
+		if(goalPosition!=null)
+		{
+			bot.lookAt(goalPosition,true);
+		}
+		done();
+	});
 }
 
 
@@ -258,6 +302,7 @@ function neededItemsToCraft(n,s)
 {
 	var id=findItemType(s).id;
 	var r=mf.Recipe.find(id);
+	n=Math.ceil(n/r[0].count);
 	if(r.length===0) return null;
 	var nd=[],d=r[0].delta;
 	for(i in d)

@@ -54,43 +54,44 @@ function applyAction(task,parsedTask,done)
 		
 }
 
-function nameToTask(parsedTask,username)
+function nameToTask(parsedTask,username,done)
 {
-	parsedTask=replaceParameterizedAlias(parsedTask,username);
-	var v;
-	var task;
-	var pars;
-	if(parsedTask[0] in tasks)
-	{
-		pars=ce.clone(parsedTask[1]);
-		pars.push(username);
-		task={f:ce.clone(tasks[parsedTask[0]]),p:pars};
-		return task;
-	}
-	return null;
+	replaceParameterizedAlias(parsedTask,username,function(parsedTask){
+		var v;
+		var task;
+		var pars;
+		if(parsedTask[0] in tasks)
+		{
+			pars=ce.clone(parsedTask[1]);
+			pars.push(username);
+			task={f:ce.clone(tasks[parsedTask[0]]),p:pars};
+			done(task);
+		}
+		else done(null);
+	});
 }
 
 function achieve(parsedTask,username,done)
 {
-	var task;
 	try
 	{
-		task=nameToTask(parsedTask,username);
+		nameToTask(parsedTask,username,function(task){
+			if(task===null)
+			{
+				console.log("Cannot find "+parsedTaskToString(parsedTask));
+				done();
+				return;
+			}
+			console.log("I'm going to achieve task "+parsedTaskToString(parsedTask));
+			applyAction(task,parsedTask,done);
+		});
 	}
 	catch(error)
 	{
-		console.log(error);
-		done();
+		console.log(error.stack);
+		done(true);
 		return;
 	}
-	if(task===null)
-	{
-		console.log("Cannot find "+parsedTaskToString(parsedTask));
-		done();
-		return;
-	}
-	console.log("I'm going to achieve task "+parsedTaskToString(parsedTask));
-	applyAction(task,parsedTask,done);
 }
 
 function listAux(taskNameList,i,username,done)
@@ -148,16 +149,19 @@ function replaceAlias(message,username)
 // 	return mapParsedMessage(parsedMessage,function(username){return function(parsedMessage){replaceParameterizedAlias(parsedMessage,username)};}(username));
 // }
 
-function replaceParameterizedAlias(parsedMessage,username)
+function replaceParameterizedAlias(parsedMessage,username,done)
 {
 	if(parsedMessage[0] in parameterized_alias)
 	{
 		var pars=ce.clone(parsedMessage[1]);
 		pars.push(username);
+		pars.push(function(replaced){
+			replaceParameterizedAlias(parse(replaced,username),username,done);
+		});
+		parameterized_alias[parsedMessage[0]].apply(this,pars);
 // 			console.log(pars);
-		return replaceParameterizedAlias(parse(parameterized_alias[parsedMessage[0]].apply(this,pars),username));
 	}
-	else return parsedMessage;
+	else done(parsedMessage);
 }
 
 function parse(message,username)
@@ -177,7 +181,7 @@ function processMessage(username,message,done)
 		}
 		catch(error)
 		{
-			console.log(error);
+			console.log(error.stack);
 			return;
 		}
 		if(parsedMessage[0] in tasks ||parsedMessage[0] in parameterized_alias) achieve(parsedMessage,username,done);

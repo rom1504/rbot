@@ -9,7 +9,11 @@
 "done" return 'done';
 "stop repeat" return 'stopRepeat';
 "then" return 'then';
+"give" return 'give';
 "toss everything" return 'tossEverything';
+"everything" return 'everything';
+"is empty" return 'isEmpty';
+"is not empty" return 'isNotEmpty';
 "sbuild" return 'sbuild';
 "sdig" return 'sdig';
 "until" return 'until';
@@ -109,7 +113,9 @@ exp :
 
 
 task :
-	'tossEverything' {$$=['toss everything',[]]}
+	'give' 'S' position 'S' int 'S' item {$$=['give',[$3,$5,$7]]} // would be possible to generalize ( an expression quantity : everything or 'int' 'S' item )
+	| 'give' 'S' position 'S' 'everything' {$$=['giveEverything',[$3]]}
+	|'tossEverything' {$$=['toss everything',[]]}
 	| 'sdig' 'S' position  {$$=['sdig',[$3]];}
 	| 'sbuild' 'S' position {$$=['sbuild',[$3]];}
 	| 'cget' 'S' int 'S' simpleItem {$$=['cget',[$3,$5]]}
@@ -236,7 +242,9 @@ listeE :
 ;
 
 condition :
-	 'closeOf' 'S' blockName {$$=$1+' '+$3}
+	'isEmpty' 'S' position {$$=$1+' '+$3}
+	| 'isNotEmpty' 'S' position {$$=$1+' '+$3}
+	| 'closeOf' 'S' blockName {$$=$1+' '+$3}
 	| 'have' 'S' int 'S' simpleItem {$$=$1+' '+$3+' '+$5}
 	| 'at' 'S' position {$$=$1+' '+$3}
 	|'T' {$$=$1}

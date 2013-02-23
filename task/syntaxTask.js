@@ -11,7 +11,7 @@ function init(_achieve,_achieveList,_stringTo)
 
 function repeatAux(taskName,over,username,done)
 {
-	if(!over()) achieve(taskName,username,(function(taskName,over,username,done){return function() {setTimeout(repeatAux,100,taskName,over,username,done);}})(taskName,over,username,done));
+	if(!over()) achieve(taskName,username,(function(taskName,over,username,done){return function(status) {if(status==true) done(true); else setTimeout(repeatAux,100,taskName,over,username,done);}})(taskName,over,username,done));
 	else done();
 }
 
@@ -29,19 +29,25 @@ function stopRepeat(taskName,u,done)
 
 function ifThenElse(condition,then,els,u,done)
 {
-	if(stringTo.stringToPredicate(condition)()) achieve(then,u,done);
-	else achieve(els,u,done);
+	stringTo.stringToPredicate(condition,u,function(pred){
+		if(pred()) achieve(then,u,done);
+		else achieve(els,u,done);
+	});
 }
 
 function ifThen(condition,then,u,done)
 {
-	if(stringTo.stringToPredicate(condition)()) achieve(then,u,done);
-	else done();
+	stringTo.stringToPredicate(condition,u,function(pred){
+		if(pred()) achieve(then,u,done);
+		else done();
+	});
 }
 
 function repeatUntil(taskName,condition,u,done)
 {
-	repeatAux(taskName,stringTo.stringToPredicate(condition),u,done);
+	stringTo.stringToPredicate(condition,u,function(pred){
+		repeatAux(taskName,pred,u,done);
+	});
 }
 
 function achieveListAux(p,u,done)
@@ -63,6 +69,7 @@ function wait(s,u,done)
 module.exports={
 	repeat:repeat,
 	stopRepeat:stopRepeat,
+	ifThen:ifThen,
 	ifThenElse:ifThenElse,
 	repeatUntil:repeatUntil,
 	achieveListAux:achieveListAux,

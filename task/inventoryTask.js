@@ -1,11 +1,12 @@
-var bot,stringTo,findItemType,inventory;
+var bot,stringTo,findItemType,inventory,vec3;
 
-function init(_bot,_stringTo,_findItemType,_inventory)
+function init(_bot,_stringTo,_findItemType,_inventory,_vec3)
 {
 	bot=_bot;
 	stringTo=_stringTo;
 	findItemType=_findItemType;
 	inventory=_inventory;
+	vec3=_vec3;
 }
 
 
@@ -24,8 +25,8 @@ function listInventory(u,done)
 
 function toss(number,itemName,u,done)
 {
-	var item=stringTo.stringToItem(itemName);
-	if(item) bot.toss(item.type,null,parseInt(number),function(){done()});
+	var item=findItemType(itemName);
+	if(item) bot.toss(item.id,null,parseInt(number),function(){done()});
 	else
 	{
 		console.log("I have no " + itemName);// change this maybe
@@ -37,29 +38,32 @@ function toss(number,itemName,u,done)
 function equip(destination,itemName,u,done)
 {
 	var item = stringTo.stringToItem(itemName);
-	if (item)
+	if (item!=null && item!=true)
 	{
 		bot.equip(item, destination, function(err) 
 		{
 			if (err)
 			{
 				console.log("unable to equip " + item.name);
-				console.log(err.stack);
+				//console.log(err.stack);
+				setTimeout(function(){done(false);},200);
 			}
 			else
 			{
 				console.log("equipped " + item.name);
-				
+				setTimeout(done,200);	
 			}
-			done();
 		});
 	}
-	else
+	else if(item==null)
 	{
-		console.log("I have no " + itemName);// change this maybe
+		console.log("I have no " + itemName);// change this maybe : yes : it should be fixed by : either it's a block you can break by hand, either go get a block... (and if it's to build : careful you might die... : figure a way out)
 		done();
 	}
-	
+	else if(item==true) // already equipped
+	{
+		done();
+	}	
 }
 
 
@@ -115,7 +119,8 @@ function craft(amount,name,u,done)
 				else
 				{	
 					bot.chat("made " + newAmount + " " + item.name);
-					setTimeout(done,5000);
+// 					setTimeout(done,5000); // for the bukkit tossing after crafting bug
+					setTimeout(done,500);
 				}
 			});
 		}

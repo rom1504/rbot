@@ -1,5 +1,5 @@
 #rbot
-A bot based on mineflayer which can execute task with dependancies
+A minecraft bot that can do many things
 
 Youtube demos :
  * [repeat spiral down](http://www.youtube.com/watch?v=UM1ZV5200S0)
@@ -78,7 +78,7 @@ If you download the source via github, you can run `npm install` then `cd gramma
  * `stop move to`
  * `equip <emplacement> <item>` : equip item at emplacement (for example hand)
  * `unequip <emplacement>`
- * `toss <number> <item>`
+ * `toss <number> <nameItem>`
  * `toss everything`
  * `list` : list all items of the bot
  * `attack <entity>`
@@ -119,6 +119,8 @@ If you download the source via github, you can run `npm install` then `cd gramma
  * `sumove <position>` : move of 1 in the direction of the position by building and digging
  * `immure <position>`
  * `cget <number> <nameItem>` : get the item using sget and craft commands
+ * `give <position> <number> <item>`
+ * `give <position> everything`
  
 
 
