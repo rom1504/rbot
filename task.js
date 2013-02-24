@@ -35,9 +35,9 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf)
 	inventory=require('./lib/inventory');
 	nearest=require('./lib/nearest');
 	stringTo=require('./lib/stringTo');
-	inventory.init(bot);
+	inventory.init(bot,mf.materials);
 	nearest.init(bot,isNotEmpty,blocks,vec3);
-	stringTo.init(bot,inventory,nearest,vec3,isEmpty,isNotEmpty);
+	stringTo.init(bot,inventory,nearest,vec3,isEmpty,isNotEmpty,blocks);
 	
 	
 	syntaxTask=require('./task/syntaxTask');
