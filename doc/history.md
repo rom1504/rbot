@@ -54,3 +54,9 @@
  * add immure command and + in position
  * craft and unequip work, add nearest visible mob
  * add tool to break and item to build
+
+## 0.0.10
+
+ * add cget command
+ * add give command
+ * a lot of reorganizing of the code
