@@ -7,6 +7,7 @@ if(process.argv.length<6 || process.argv.length>7)
 var mineflayer = require('mineflayer');
 var blockFinderPlugin = require('mineflayer-blockfinder')(mineflayer);
 var navigatePlugin = require('mineflayer-navigate')(mineflayer);
+var navigate2Plugin = require('./avoidBedrock.js')(mineflayer);
 var vec3 = mineflayer.vec3;
 var bot = mineflayer.createBot({
 	username: process.argv[4],
@@ -15,6 +16,7 @@ var bot = mineflayer.createBot({
 	host:process.argv[2]});
 
 navigatePlugin(bot);
+navigate2Plugin(bot);
 blockFinderPlugin(bot);
 var task=require('./task');
 var achieve=require('./achieve');
@@ -36,7 +38,7 @@ bot.on('death', function() {
   bot.chat("I died x.x");
 });
 
-bot.on('chat',function(username,message){achieve.processMessage(username,message,function(){bot.chat("I achieved task "+message);});});
+bot.on('chat',function(username,message){achieve.processMessage(message,username,function(){bot.chat("I achieved task "+message);});});
 
 bot.navigate.on('pathFound', function (path) {
   console.log("found path. I can get there in " + path.length + " moves.");

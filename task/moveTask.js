@@ -1,10 +1,11 @@
 var bot,processMessage,isEmpty,stringTo,directions,direction,vec3;
 
-function init(_bot,_processMessage,_isEmpty,_stringTo,_vec3)
+function init(_bot,_processMessage,_isEmpty,_stringTo,_vec3,_isNotEmpty)
 {
 	bot=_bot;
 	processMessage=_processMessage;
 	isEmpty=_isEmpty;
+	isNotEmpty=_isNotEmpty;
 	stringTo=_stringTo;
 	vec3=_vec3;
 // 	directions=[new vec3(0,0,1),new vec3(0,0,-1),new vec3(1,0,0),new vec3(-1,0,0)];
@@ -21,7 +22,7 @@ function jump(u,done)
 
 function up(u,done) // change this a bit ?
 {
-	
+	if(isNotEmpty(bot.entity.position.offset(0, 2, 0))) {done(true);return;}
 	  //if(bot.heldItem===null) {done(true);return;} // replace this with something checking whether the bot has a block to build ?
   bot.setControlState('jump', true);
   var targetBlock = bot.blockAt(bot.entity.position.offset(0, -1, 0));

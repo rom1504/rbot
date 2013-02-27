@@ -76,12 +76,13 @@ function dig(s,u,done)
 			return function()
 			{
 	// 			if(cf) bot.once("pos_"+pos+"_not_empty",function(){setTimeout(function(){done(false)},500);});
-				if(cf) setTimeout(function(){done(false)},1500);// ask superjoe about this...
+				//if(cf) setTimeout(function(){done(false)},1500);// ask superjoe about this...
 	// 			if(cf) bot.once("pos_"+pos+"_not_empty",function(){setTimeout(function(){done(false)},500);}); // do better ?
 	// 			if(cf) done(false);
 	// 			else setTimeout(done,300);
-				else if(isNotEmpty(pos)) done(false);
-				else done();
+				//else if(isNotEmpty(pos)) done(false);
+				//else done();
+				done();
 	// 			else check();
 	// 			function check()
 	// 			{
@@ -127,7 +128,8 @@ function build(s,u,done)
 			if(isNotEmpty(p))
 			{
 				bot.placeBlock({position:p},(new vec3(0,0,0)).minus(contiguousBlocks[i]));
-				setTimeout(done,200);
+				//setTimeout(done,200);
+				done();
 				return;
 			}
 		}
@@ -173,7 +175,7 @@ function stopWatch(u,done)
 // rather a parameterized alias ?
 function replicate(u,done)
 {
-	processMessage(u,com,done);
+	processMessage(com,u,done);
 }
 
 module.exports={

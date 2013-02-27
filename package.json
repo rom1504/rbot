@@ -23,7 +23,8 @@
 	"mineflayer": "~0.0.35",
     "mineflayer-navigate": "~0.0.8",
     "cloneextend":"~0.0.3",
-    "mineflayer-blockfinder":"~0.0.5"
+    "mineflayer-blockfinder":"~0.0.5",
+    "a-star":"~0.1.0"
   },
   "devDependencies": {
     "jison":"~0.4.2"

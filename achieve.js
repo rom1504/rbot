@@ -169,7 +169,7 @@ function parse(message,username)
 	return /*replaceAllParameterizedAlias(*/parser.parse(replaceAlias(message,username))/*)*/;
 }
 
-function processMessage(username,message,done)
+function processMessage(message,username,done)
 {
 	if(username !=bot.username && (username===master || master===undefined))
 	{

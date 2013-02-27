@@ -10,6 +10,7 @@
 "stop repeat" return 'stopRepeat';
 "then" return 'then';
 "give" return 'give';
+"ssdig" return 'ssdig';
 "toss everything" return 'tossEverything';
 "everything" return 'everything';
 "is empty" return 'isEmpty';
@@ -25,6 +26,7 @@
 "stop watch" return 'stopWatch';
 "replicate" return 'replicate';
 "watch" return 'watch';
+"ssumove" return 'sumove';
 "sumove" return 'sumove';
 "smove" return 'smove';
 "move to" return 'moveTo';
@@ -122,7 +124,9 @@ task :
 	| 'replicate' {$$=['replicate',[]]},
 	| 'watch' {$$=['watch',[]]},
 	| 'stopWatch' {$$=['stop watch',[]]},
+	| 'ssdig' 'S' position  {$$=['ssdig',[$3]];}
 	| 'dig' 'S' position  {$$=['dig',[$3]];}
+	| 'ssumove' 'S' position {$$=['ssumove',[$3]];}
 	| 'sumove' 'S' position {$$=['sumove',[$3]];}
 	| 'smove' 'S' position {$$=['smove',[$3]];}
 	| 'moveTo' 'S' position {$$=['move to',[$3]];}

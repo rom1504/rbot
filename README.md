@@ -115,12 +115,15 @@ If you download the source via github, you can run `npm install` then `cd gramma
  * `down` : move down of one block
  * `sup` : move up of one block
  * `sget <blockName>` : get a block by building and digging
- * `smove <position>` : get to the position by building and digging
+ * `smove <position>` : `repeat ssumove <position> until at <position> done` : if the position is too far ssumove can't calculate it because it doesn't know the blocks that far
+ * `ssumove <position>` : get to the position by building and digging using a-star to avoid bedrock
  * `sumove <position>` : move of 1 in the direction of the position by building and digging
  * `immure <position>`
  * `cget <number> <nameItem>` : get the item using sget and craft commands
  * `give <position> <number> <item>`
  * `give <position> everything`
+ * `sdig <position>` : repeat ssdig until it's done
+ * `ssdig <position>` : dig safely
  
 
 
@@ -165,6 +168,8 @@ If you download the source via github, you can run `npm install` then `cd gramma
   * `at <position>`
   * `have <number> <nameItem>`
   * `close of <blockName>`
+  * `<position> is empty`
+  * `<position> is not empty`
 
 ### Interesting use of commands
  * `repeat spiral down done` : build a spiral staircase from y=64 to y=0

@@ -43,7 +43,7 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf)
 	syntaxTask=require('./task/syntaxTask');
 	syntaxTask.init(achieve,achieveList,stringTo);
 	moveTask=require('./task/moveTask');
-	moveTask.init(bot,processMessage,isEmpty,stringTo,vec3);
+	moveTask.init(bot,processMessage,isEmpty,stringTo,vec3,isNotEmpty);
 	inventoryTask=require('./task/inventoryTask');
 	inventoryTask.init(bot,stringTo,findItemType,inventory,vec3);
 	blockTask=require('./task/blockTask');
@@ -143,38 +143,50 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf)
 		"sdig":function(s,u,done)
 		{
 			stringTo.stringToPosition(s,u,null,function(pos){
+				console.log(s);
+				done("repeat do ssdig "+s+(blockTask.canFall(pos.offset(0,1,0)) ? " then wait 1500" : "")+" done until  is empty "+s+" done"); // empty != air !!
+			});
+		},
+		"ssdig":function(s,u,done)
+		{
+			stringTo.stringToPosition(s,u,null,function(pos){
 				var t,p,a=[],x,y,z;
 				var bb=bot.entity.position.floored();
 				var bb2=bb.offset(0,1,0);
 				var u="";
 				if(pos.floored().equals(bb.offset(0,2,0)) && blockTask.canFall(bb.offset(0,3,0)))
 				{
-					u="equip hand tool to break "+bot.blockAt(bb.offset(0,3,0)).name+" then dig "+positionToString(bb.offset(0,3,0))+" then ";
+					u="repeat do equip hand tool to break "+bot.blockAt(bb.offset(0,3,0)).name+" then dig "+positionToString(bb.offset(0,3,0))+(blockTask.canFall(bb.offset(0,4,0)) ? " then wait 1500" : "")+" done until is empty "+positionToString(bb.offset(0,3,0))+" done then ";
 				}
-				//check for water or lava
-				for(x=-1;x<=1;x++) // can do this better...
+				function makeSafe(bb,bb2,pos,a)
 				{
-					for(y=-1;y<=1;y++)
+					//check for water or lava
+					for(x=-1;x<=1;x++) // can do this better...
 					{
-						for(z=-1;z<=1;z++)
+						for(y=-1;y<=1;y++)
 						{
-							if((Math.abs(x)+Math.abs(y)+Math.abs(z))==1)
+							for(z=-1;z<=1;z++)
 							{
-								p=pos.offset(x,y,z);
-								if(!(p.equals(bb)) && !(p.equals(bb2)))
+								if((Math.abs(x)+Math.abs(y)+Math.abs(z))==1)
 								{
-									t=bot.blockAt(p).type;
-									if(t>=8 && t<=11) a.push("sbuild "+positionToString(p));
+									p=pos.offset(x,y,z);
+									if(!(p.equals(bb)) && !(p.equals(bb2)))
+									{
+										t=bot.blockAt(p).type;
+										if(t>=8 && t<=11) a.push("sbuild "+positionToString(p));
+									}
 								}
 							}
 						}
 					}
 				}
+				makeSafe(bb,bb2,pos,a);
+				if(blockTask.canFall(pos.offset(0,1,0))) makeSafe(bb,bb2,pos.offset(0,1,0),a);
+				//if(blockTask.canFall(pos.offset(0,2,0))) makeSafe(bb,bb2,pos.offset(0,2,0),a);  // cannot make this recursive because he can't build very high but a column of 2 is common
 				var b=a.join(" then ");
 				b=b=="" ? b : b+" then ";
 				done("if is not empty "+s+" then do "+u+" "+b+" equip hand tool to break "+bot.blockAt(pos).name+" then dig "+s+" done endif");
 			});
-			
 		},
 		"shoot":function(s,u,done)
 		{
@@ -201,10 +213,10 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf)
 		},
 		"smove":function(s,u,done)
 		{
-			stringTo.stringToPosition(s,u,null,function(p){ // change ?
-				var s=positionToString(p);
-				done("repeat sumove "+s+" until at "+s+" done");
-			});
+ 			stringTo.stringToPosition(s,u,null,function(p){ // change ?
+ 				var s=positionToString(p);
+ 				done("repeat ssumove "+s+" until at "+s+" done");
+ 			});
 		},
 		"dig forward":function (s,u,done) 
 		{
@@ -212,14 +224,25 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf)
 				done("do sdig "+s+" then sdig "+positionToString(p.offset(0,1,0))+" then sbuild "+positionToString(p.offset(0,-1,0))+" then move to "+s+" done");
 			});
 		},
-		"sumove":function(s,u,done)
+		"ssumove":function(s,u,done)
 		{
 			stringTo.stringToPosition(s,u,null,function(p){
+				var s=positionToString(p);
+				var path=bot.navigate2.findPathSync(p).path;
+				var t=path.map(function(p2){return "sumove "+positionToString(p2);}).join(" then ");
+				done("do "+t+" done");
+			});
+		},
+		"sumove":function(s,u,done)
+		{
+			// not enough, have to use A* to find a path...
+			stringTo.stringToPosition(s,u,null,function(p){
 				p=p.floored();
-				var d=p.minus(bot.entity.position.floored());
-				if(d.y!=0) done(d.y<0 ? "down" : "sup");
-				else if(d.x!=0) done("dig forward r"+sgn(d.x)+",0,0");
-				else if(d.z!=0) done("dig forward r0,0,"+sgn(d.z));
+				var bb=bot.entity.position.floored();
+				var d=p.minus(bb);
+				if(d.y!=0 && isNotBedrock(bb.offset(0,sgn(d.y),0))) done(d.y<0 ? "down" : "sup");
+				else if(d.x!=0 && isNotBedrock(bb.offset(sgn(d.x),0,0)) && isNotBedrock(bb.offset(sgn(d.x),1,0))) done("dig forward r"+sgn(d.x)+",0,0");
+				else if(d.z!=0 && isNotBedrock(bb.offset(0,0,sgn(d.z))) && isNotBedrock(bb.offset(0,1,sgn(d.z)))) done("dig forward r0,0,"+sgn(d.z));
 				else done("nothing");
 			});
 		},
@@ -233,6 +256,11 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf)
 	all_task.parameterized_alias=parameterized_alias;
 }
 
+function isNotBedrock(pos)
+{
+	var b=bot.blockAt(pos);
+	return b!=null && b.type!=7;
+}
 
 
 function isEmpty(pos)
