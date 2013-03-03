@@ -1,1 +1,1 @@
-["taskList",[[["move to",["nearest reachable object *"]],["jump",[]]]]]
+["taskList",[["taskList",[["exp",["move to",[["position","nearest reachable object *"]]]],["exp",["jump",[]]]]]]]

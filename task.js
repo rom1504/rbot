@@ -1,7 +1,8 @@
-var bot,vec3,achieve,achieveList,blocks,mf,processMessage,inventory,stringTo,nearest,syntaxTask,moveTask,inventoryTask,blockTask,informationTask,tasks,alias,parameterized_alias,all_task={};
+var bot,vec3,achieve,achieveList,blocks,mf,processMessage,inventory,stringTo,nearest,syntaxTask,moveTask,inventoryTask,blockTask,informationTask,tasks,alias,parameterized_alias,giveUser,async,all_task={};
 
-function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf)
+function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf,_async)
 {
+	async=_async;
 	processMessage=_processMessage;
 	mf=_mf;
 	bot=_bot;
@@ -37,7 +38,7 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf)
 	stringTo=require('./lib/stringTo');
 	inventory.init(bot,mf.materials);
 	nearest.init(bot,isNotEmpty,blocks,vec3);
-	stringTo.init(bot,inventory,nearest,vec3,isEmpty,isNotEmpty,blocks);
+	stringTo.init(bot,inventory,nearest,vec3,isEmpty,isNotEmpty,blocks,async);
 	
 	
 	syntaxTask=require('./task/syntaxTask');
@@ -47,10 +48,10 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf)
 	inventoryTask=require('./task/inventoryTask');
 	inventoryTask.init(bot,stringTo,findItemType,inventory,vec3);
 	blockTask=require('./task/blockTask');
-	blockTask.init(bot,stringTo,isNotEmpty,isBlockEmpty,isBlockNotEmpty,isEmpty,vec3);
+	blockTask.init(bot,stringTo,isNotEmpty,isBlockEmpty,isBlockNotEmpty,isEmpty,vec3,positionToString,processMessage);
 	informationTask=require('./task/informationTask');
 	informationTask.init(bot,stringTo);
-	
+	giveUser=["ifThenElse","ifThen","repeatUntil","repeat","taskList","replicate"];
 	tasks=
 	{
 			"ifThenElse":syntaxTask.ifThenElse,
@@ -92,7 +93,10 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf)
 			"say":informationTask.say,
 			
 			"attack":attack,
-			"look at":lookAt
+			"look at":lookAt,
+			
+			
+// 			"achieve":achieveCondition
 	};
 // ou passer à du pur string ? (what ?)
 	alias=
@@ -134,7 +138,8 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf)
 		},
 		"toss everything":function(u,done)
 		{
-			done("do "+inventory.myItems().map(function(a){return "toss "+a[1]+" "+a[0]}).join(" then ")+" done");
+			var l=inventory.myItems().map(function(a){return "toss "+a[1]+" "+a[0]}).join(" then ");
+			done(l=="" ? "nothing" : "do "+l+" done");
 		},
 		"sbuild":function(s,u,done)
 		{
@@ -235,7 +240,6 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf)
 		},
 		"sumove":function(s,u,done)
 		{
-			// not enough, have to use A* to find a path...
 			stringTo.stringToPosition(s,u,null,function(p){
 				p=p.floored();
 				var bb=bot.entity.position.floored();
@@ -243,6 +247,9 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf)
 				if(d.y!=0 && isNotBedrock(bb.offset(0,sgn(d.y),0))) done(d.y<0 ? "down" : "sup");
 				else if(d.x!=0 && isNotBedrock(bb.offset(sgn(d.x),0,0)) && isNotBedrock(bb.offset(sgn(d.x),1,0))) done("dig forward r"+sgn(d.x)+",0,0");
 				else if(d.z!=0 && isNotBedrock(bb.offset(0,0,sgn(d.z))) && isNotBedrock(bb.offset(0,1,sgn(d.z)))) done("dig forward r0,0,"+sgn(d.z));
+// 				if(d.y!=0) done(d.y<0 ? "down" : "sup");
+// 				else if(d.x!=0) done("dig forward r"+sgn(d.x)+",0,0");
+// 				else if(d.z!=0) done("dig forward r0,0,"+sgn(d.z));
 				else done("nothing");
 			});
 		},
@@ -252,8 +259,10 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf)
 		}
 	};
 	all_task.tasks=tasks;
+	all_task.giveUser=giveUser;
 	all_task.alias=alias;
 	all_task.parameterized_alias=parameterized_alias;
+	all_task.stringTo=stringTo;
 }
 
 function isNotBedrock(pos)
@@ -297,15 +306,19 @@ function findItemType(name)
 	return null;
 }
 
-function lookAt(s,u,done)
+// need the name here in order to do the association
+// function achieveCondition(pred,u,done)
+// {
+// 	if(pred())
+// }
+
+function lookAt(goalPosition,done)
 {
-	stringTo.stringToPosition(s,u,1,function(goalPosition){	
-		if(goalPosition!=null)
-		{
-			bot.lookAt(goalPosition,true);
-		}
-		done();
-	});
+	if(goalPosition!=null)
+	{
+		bot.lookAt(goalPosition,true);
+	}
+	done();
 }
 
 
@@ -314,9 +327,8 @@ function isCraftable(s)
 	return mf.Recipe.find(findItemType(s).id).length!==0;
 }
 
-function attack(s,u,done)
+function attack(ent,done)
 {
-	var ent=stringTo.stringToEntity(s,u);
 	if(ent!=null) bot.attack(ent);
 	done();
 }

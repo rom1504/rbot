@@ -1,1 +1,1 @@
-["taskList",[[["move to",["nearest reachable object *"]],["equip",["hand","egg"]],["activate item",[]]]]]
+["taskList",[["taskList",[["exp",["move to",[["position","nearest reachable object *"]]]],["exp",["equip",[["destination","hand"],["item","egg"]]]],["exp",["activate item",[]]]]]]]

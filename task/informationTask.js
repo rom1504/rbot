@@ -6,7 +6,7 @@ function init(_bot,_stringTo)
 	stringTo=_stringTo;
 }
 
-function pos(player,u,done)
+function pos(player,done)
 {
 	if(bot.players[player].entity!=undefined) bot.chat(player+" is in "+bot.players[player].entity.position);
 	else bot.chat(player+" is too far.");
@@ -15,21 +15,18 @@ function pos(player,u,done)
 
 
 
-function lookForEntity(s,u,done)
+function lookForEntity(ent,done)
 {
-	var ent=stringTo.stringToEntity(s,u);
 	if(ent===null) bot.chat("I can't find "+s);
 	else bot.chat(s+" is in "+ent.position+(ent.type === 'mob' ? ". It's a "+ent.mobType : (ent.type === 'object' ? ". It's a "+ent.objectType : "")));
 	done();
 }
 
-function lookForBlock(s,u,done)
+function lookForBlock(block,done)
 {
-	stringTo.stringToBlock(s,function(block){
-		if(block===null) bot.chat("I can't find "+s);
-		else bot.chat(s+" is in "+block.position+". It's a "+block.name);
-		done();
-	});
+	if(block===null) bot.chat("I can't find "+s);
+	else bot.chat(s+" is in "+block.position+". It's a "+block.name);
+	done();
 }
 
 // function lookFor(s,u,done)
@@ -43,9 +40,9 @@ function lookForBlock(s,u,done)
 // }
 
 
-function say(s,u,done)
+function say(message,done)
 {
-	bot.chat(s);
+	bot.chat(message);
 	done();
 }
 

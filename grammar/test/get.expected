@@ -1,1 +1,1 @@
-["taskList",[[["move to",["nearest reachable position nearest block log"]],["dig",["nearest block log"]]]]]
+["taskList",[["taskList",[["exp",["move to",[["position","nearest reachable position nearest block log"]]]],["exp",["dig",[["position","nearest block log"]]]]]]]]

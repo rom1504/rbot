@@ -93,9 +93,9 @@ If you download the source via github, you can run `npm install` then `cd gramma
  * `up` : jump and build under the bot (but doesn't dig the bot above the bot unlike sup)
  * `jump`
  * `nothing`
- * `watch` : start watching what you are building and digging
- * `stop watch` : stop watching and save what you did
- * `replicate` : redo the building and digging you just did (the position of the action are calculated from the position of the bot)
+ * `watch <entity>` : start watching what `<entity>` is building and digging
+ * `stop watch` : stop watching and save what has been done
+ * `replicate` : redo the building and digging that has just been done (the position of the action are calculated from the position of the bot)
  
  
 #### Alias

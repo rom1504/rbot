@@ -1,1 +1,1 @@
-["say",["hello, my name is rbot"]]
+["say",[["message","hello, my name is rbot"]]]

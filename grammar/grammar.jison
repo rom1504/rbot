@@ -26,7 +26,7 @@
 "stop watch" return 'stopWatch';
 "replicate" return 'replicate';
 "watch" return 'watch';
-"ssumove" return 'sumove';
+"ssumove" return 'ssumove';
 "sumove" return 'sumove';
 "smove" return 'smove';
 "move to" return 'moveTo';
@@ -99,18 +99,18 @@ expressions : exp EOF
 		if(t.constructor == Array) return arrayToString(t);
 		if(t.constructor == String) return '"'+t+'"';
 	}
-	console.log(taskToString($1)); return $1;	
+	console.log(taskToString($1[1])); return $1[1];	
 }
 ;
 
 exp :
-	'if' 'S' condition 'S' 'then' 'S' exp 'S' 'else' 'S' exp 'S' 'endif' {$$=['ifThenElse',[$3,$7,$11]];}
-	| 'if' 'S' condition 'S' 'then' 'S' exp 'S' 'endif' {$$=['ifThen',[$3,$7]];}
-	| 'repeat' 'S' exp 'S' 'until' 'S' condition 'S' 'done' {$$=['repeatUntil',[$3,$7]];}
-	| 'repeat' 'S' exp 'S' 'done' {$$=['repeat',[$3]];}
-	| 'stopRepeat' 'S' exp 'S' 'done' {$$=['stopRepeat',[$3]];}
-	| 'do' 'S' listeE  {$$=['taskList',[$3]];}
-	| task {$$=$1} // needs a separator...
+	'if' 'S' condition 'S' 'then' 'S' exp 'S' 'else' 'S' exp 'S' 'endif' {$$=['exp',['ifThenElse',[$3,$7,$11]]];}
+	| 'if' 'S' condition 'S' 'then' 'S' exp 'S' 'endif' {$$=['exp',['ifThen',[$3,$7]]];}
+	| 'repeat' 'S' exp 'S' 'until' 'S' condition 'S' 'done' {$$=['exp',['repeatUntil',[$3,$7]]];}
+	| 'repeat' 'S' exp 'S' 'done' {$$=['exp',['repeat',[$3]]];}
+	| 'stopRepeat' 'S' exp 'S' 'done' {$$=['exp',['stopRepeat',[$3]]];}
+	| 'do' 'S' listeE  {$$=['exp',['taskList',[['taskList',$3]]]];}
+	| task {$$=['exp',$1]} // needs a separator...
 ;
 
 
@@ -122,7 +122,7 @@ task :
 	| 'sbuild' 'S' position {$$=['sbuild',[$3]];}
 	| 'cget' 'S' int 'S' simpleItem {$$=['cget',[$3,$5]]}
 	| 'replicate' {$$=['replicate',[]]},
-	| 'watch' {$$=['watch',[]]},
+	| 'watch' 'S' entity {$$=['watch',[$3]]},
 	| 'stopWatch' {$$=['stop watch',[]]},
 	| 'ssdig' 'S' position  {$$=['ssdig',[$3]];}
 	| 'dig' 'S' position  {$$=['dig',[$3]];}
@@ -136,11 +136,11 @@ task :
 	| 'lookFor' 'S' entity {$$=['look for entity',[$3]];}
 	| 'stopMoveTo' {$$=['stop move to',[]];}
 	| 'list' {$$=['list',[]];}
-	| 'toss' 'S' int 'S' item {$$=['toss',[$3,$5]];}
+	| 'toss' 'S' int 'S' simpleItem {$$=['toss',[$3,$5]];}
 	| 'equip' 'S' destination 'S' item {$$=['equip',[$3,$5]];}
 	| 'unequip' 'S' item {$$=['unequip',[$3]];}
 	| 'lookAt' 'S' position {$$=['look at',[$3]];}
-	| 'say' 'S' message {$$=['say',[$3]];}
+	| 'say' 'S' message {$$=['say',[['message',$3]]];}
 	| 'wait' 'S' int {$$=['wait',[$3]];}
 	| 'activateItem' {$$=['activate item',[]];}
 	| 'deactivateItem' {$$=['deactivate item',[]];}
@@ -163,7 +163,7 @@ task :
 
 
 int:
-	'N' {$$=$1}
+	'N' {$$=['int',$1]}
 ;
 
 
@@ -175,32 +175,32 @@ message :
 ;
 
 destination :
-	 'T' {$$=$1}
+	 'T' {$$=['destination',$1]}
 ;
 
 simpleItem :
- 'T' {$$=$1}
+ 'T' {$$=['simpleItem',$1]}
 ;
  
 item :
-	 simpleItem {$$=$1}
-	| 'toolToBreak' 'S' simpleBlock {$$=$1+' '+$3}
-	| 'itemToBuild' {$$=$1}
+	 simpleItem {$$=['item',$1[1]]}
+	| 'toolToBreak' 'S' simpleBlock {$$=['item',$1+' '+$3[1]]}
+	| 'itemToBuild' {$$=['item',$1]}
 ;
 
 simplePlayer :
-	 'T' {$$=$1}
+	 'T' {$$=['simplePlayer',$1]}
 ;
 
 entity :
-	 'me' {$$=$1}
-	| 'bot' {$$=$1}
-	| 'player' 'S' simplePlayer {$$=$1+' '+$3}
-	| 'nearestMob' 'S' mob {$$=$1+' '+$3;}
-	| 'nearestObject' 'S' object {$$=$1+' '+$3;}
-	| 'nearestVisibleMob' 'S' mob  {$$=$1+' '+$3;}
-	| 'nearestReachableMob' 'S' mob  {$$=$1+' '+$3;}
-	| 'nearestReachableObject' 'S' object  {$$=$1+' '+$3;}
+	 'me' {$$=['entity',$1]}
+	| 'bot' {$$=['entity',$1]}
+	| 'player' 'S' simplePlayer {$$=['entity',$1+' '+$3[1]]}
+	| 'nearestMob' 'S' mob {$$=['entity',$1+' '+$3]}
+	| 'nearestObject' 'S' object {$$=['entity',$1+' '+$3]}
+	| 'nearestVisibleMob' 'S' mob  {$$=['entity',$1+' '+$3]}
+	| 'nearestReachableMob' 'S' mob  {$$=['entity',$1+' '+$3]}
+	| 'nearestReachableObject' 'S' object  {$$=['entity',$1+' '+$3]}
 ;
 
 mob :
@@ -214,42 +214,42 @@ object :
 ;
 
 absolutePosition :
-	| 'adapted' 'S' entity {$$=$1+' '+$3;}
-	| entity {$$=$1}
-	| block {$$=$1}
+	| 'adapted' 'S' entity {$$=$1+' '+$3[1];}
+	| entity {$$=$1[1]}
+	| block {$$=$1[1]}
 	| 'simplePosition'  {$$=$1}
 ;
 
 position :
-	absolutePosition {$$=$1}
-	| 'rsimplePosition'  {$$=$1}
-	| 'rsimplePosition' '+' absolutePosition {$$=$1+$2+$3}
-	| 'nearestReachablePosition' 'S' position {$$=$1+' '+$3}
+	absolutePosition {$$=['position',$1]}
+	| 'rsimplePosition'  {$$=['position',$1]}
+	| 'rsimplePosition' '+' absolutePosition {$$=['position',$1+$2+$3]}
+	| 'nearestReachablePosition' 'S' position {$$=['position',$1+' '+$3[1]]}
 ;
 
 simpleBlock :
-	blockName {$$=$1;}
-	| '*' {$$=$1}
+	blockName {$$=['simpleBlock',$1[1]]}
+	| '*' {$$=['simpleBlock',$1]}
 ;
 
 blockName :
-	 'T' {$$=$1;}
+	 'T' {$$=['blockName',$1]}
 ;
 
 block :
-	 'nearestBlock' 'S' simpleBlock {$$=$1+' '+$3;}
+	 'nearestBlock' 'S' simpleBlock {$$=['block',$1+' '+$3[1]]}
 ;
 
 listeE :
 	exp 'S' 'then' 'S' listeE	{$5.unshift($1);$$=$5}
-	| exp 'S' 'done' {$$=[$1];}
+	| exp 'S' 'done' {$$=[$1]}
 ;
 
 condition :
-	'isEmpty' 'S' position {$$=$1+' '+$3}
-	| 'isNotEmpty' 'S' position {$$=$1+' '+$3}
-	| 'closeOf' 'S' blockName {$$=$1+' '+$3}
-	| 'have' 'S' int 'S' simpleItem {$$=$1+' '+$3+' '+$5}
-	| 'at' 'S' position {$$=$1+' '+$3}
-	|'T' {$$=$1}
+	'isEmpty' 'S' position {$$=['condition',[$1,[$3]]]}
+	| 'isNotEmpty' 'S' position {$$=['condition',[$1,[$3]]]}
+	| 'closeOf' 'S' blockName {$$=['condition',[$1,[$3]]]}
+	| 'have' 'S' int 'S' simpleItem {$$=['condition',[$1,[$3,$5]]]}
+	| 'at' 'S' position {$$=['condition',[$1,[$3]]]}
+	|'T' {$$=['condition',[$1,[]]]}
 ;

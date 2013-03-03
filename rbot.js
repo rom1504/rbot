@@ -8,6 +8,7 @@ var mineflayer = require('mineflayer');
 var blockFinderPlugin = require('mineflayer-blockfinder')(mineflayer);
 var navigatePlugin = require('mineflayer-navigate')(mineflayer);
 var navigate2Plugin = require('./avoidBedrock.js')(mineflayer);
+var async=require('async');
 var vec3 = mineflayer.vec3;
 var bot = mineflayer.createBot({
 	username: process.argv[4],
@@ -21,8 +22,8 @@ blockFinderPlugin(bot);
 var task=require('./task');
 var achieve=require('./achieve');
 
-task.init(bot,vec3,achieve.achieve,achieve.achieveList,achieve.processMessage,mineflayer);
-achieve.init(task.all_task.tasks,task.all_task.parameterized_alias,task.all_task.alias,bot,vec3,process.argv[6]);
+task.init(bot,vec3,achieve.achieve,achieve.achieveList,achieve.processMessage,mineflayer,async);
+achieve.init(task.all_task.tasks,task.all_task.giveUser,task.all_task.parameterized_alias,task.all_task.alias,task.all_task.stringTo,bot,vec3,process.argv[6]);
 
 bot.on('login', function() {
   console.log("I logged in.");

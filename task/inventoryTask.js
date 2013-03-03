@@ -10,7 +10,7 @@ function init(_bot,_stringTo,_findItemType,_inventory,_vec3)
 }
 
 
-function listInventory(u,done)
+function listInventory(done)
 {
 	var output=inventory.myItems().map(function(a){return a[0]+":"+a[1];}).join(", ");
 	if (output) {
@@ -23,10 +23,10 @@ function listInventory(u,done)
 
 
 
-function toss(number,itemName,u,done)
+function toss(number,itemName,done)
 {
 	var item=findItemType(itemName);
-	if(item) bot.toss(item.id,null,parseInt(number),function(){done()});
+	if(item) bot.toss(item.id,null,number,function(){done()});
 	else
 	{
 		console.log("I have no " + itemName);// change this maybe
@@ -35,9 +35,8 @@ function toss(number,itemName,u,done)
 }
 
 
-function equip(destination,itemName,u,done)
+function equip(destination,item,done)
 {
-	var item = stringTo.stringToItem(itemName);
 	if (item!=null && item!=true)
 	{
 		bot.equip(item, destination, function(err) 
@@ -67,9 +66,9 @@ function equip(destination,itemName,u,done)
 }
 
 
-function unequip(s,u,done)
+function unequip(destination,done)
 {
-	bot.unequip(s);
+	bot.unequip(destination);
 	done();
 }
 
@@ -89,9 +88,8 @@ function findCraftingTable()
 	}
 }
 
-function craft(amount,name,u,done)
+function craft(amount,name,done)
 {
-	amount=parseInt(amount);
 	var item=findItemType(name);
 	var craftingTable=findCraftingTable();
 	var wbText = craftingTable ? "with a crafting table, " : "without a crafting table, ";
@@ -134,13 +132,13 @@ function craft(amount,name,u,done)
 
 
 
-function activateItem(u,done)
+function activateItem(done)
 {
 	bot.activateItem();
 	done();
 }
 
-function deactivateItem(u,done)
+function deactivateItem(done)
 {
 	bot.deactivateItem();
 	done();

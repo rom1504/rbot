@@ -1,9 +1,9 @@
 var ce = require('cloneextend');
 var parser = require("./grammar/grammar").parser;
 
-var bot,vec3,generated_tasks,tasks,parameterized_alias,alias,master;
+var bot,vec3,generated_tasks,tasks,parameterized_alias,alias,master,stringTo,giveUser;
 
-function init(_tasks,_parameterized_alias,_alias,_bot,_vec3,_master) // ou passer simplement task...
+function init(_tasks,_giveUser,_parameterized_alias,_alias,_stringTo,_bot,_vec3,_master) // ou passer simplement task...
 {
 	master=_master;
 	bot=_bot;
@@ -11,6 +11,8 @@ function init(_tasks,_parameterized_alias,_alias,_bot,_vec3,_master) // ou passe
 	tasks=_tasks;
 	parameterized_alias=_parameterized_alias;
 	alias=_alias;
+	stringTo=_stringTo;
+	giveUser=_giveUser;
 }
 
 function parsedTaskToString(parsedTask)
@@ -44,14 +46,14 @@ function reportFailOfTask(parsedTask,done)
 	};
 }
 
-function applyAction(task,parsedTask,done)
+function applyAction(task,username,parsedTask,done)
 {
 		var b;
-		task.f.apply(this,task.p.concat([function(result){
-			if(result!=null && !result) {applyAction(task,parsedTask,done);} else {if(result) reportFailOfTask(parsedTask)(); else reportEndOfTask(parsedTask,done)()}
-			
-		}]));
-		
+		stringTo.stringTo(task.p,parsedTask[0]=="look at" ? 1 : null,username,function(pars){
+			task.f.apply(this,pars.concat(giveUser.indexOf(parsedTask[0])!=-1 ? [username] : []).concat([function(result){
+				if(result!=null && !result) {applyAction(task,username,parsedTask,done);} else {if(result) reportFailOfTask(parsedTask)(); else reportEndOfTask(parsedTask,done)()}
+			}]));
+		});
 }
 
 function nameToTask(parsedTask,username,done)
@@ -63,11 +65,10 @@ function nameToTask(parsedTask,username,done)
 		if(parsedTask[0] in tasks)
 		{
 			pars=ce.clone(parsedTask[1]);
-			pars.push(username);
 			task={f:ce.clone(tasks[parsedTask[0]]),p:pars};
-			done(task);
+			done(task,parsedTask);
 		}
-		else done(null);
+		else done(null,parsedTask);
 	});
 }
 
@@ -75,15 +76,15 @@ function achieve(parsedTask,username,done)
 {
 	try
 	{
-		nameToTask(parsedTask,username,function(task){
+		nameToTask(parsedTask,username,function(task,parsedTask){
 			if(task===null)
 			{
 				console.log("Cannot find "+parsedTaskToString(parsedTask));
-				done();
+				done(true);// think how to use this...
 				return;
 			}
 			console.log("I'm going to achieve task "+parsedTaskToString(parsedTask));
-			applyAction(task,parsedTask,done);
+			applyAction(task,username,parsedTask,done);
 		});
 	}
 	catch(error)
@@ -96,7 +97,7 @@ function achieve(parsedTask,username,done)
 
 function listAux(taskNameList,i,username,done)
 {
-	if(i<taskNameList.length) achieve(taskNameList[i],username,(function(taskNameList,i,username,done) {
+	if(i<taskNameList.length) achieve(taskNameList[i][1],username,(function(taskNameList,i,username,done) {
 		return function() {listAux(taskNameList,i+1,username,done)};
 	})(taskNameList,i,username,done));
 	else done();
@@ -108,7 +109,7 @@ function achieveList(taskNameList,username,done)
 }
 
 //reecriture (systeme suppose confluent et fortement terminal)
-function replaceAlias(message,username)
+function replaceAlias(message)
 {
 	var changed=1;
 	while(changed)
@@ -153,10 +154,11 @@ function replaceParameterizedAlias(parsedMessage,username,done)
 {
 	if(parsedMessage[0] in parameterized_alias)
 	{
-		var pars=ce.clone(parsedMessage[1]);
+		var pars=ce.clone(parsedMessage[1]); // how can I use stringTo ? (removing parameterized alias ?) seems like I don't want to use it
+		pars=pars.map(function(par){return par[1];});
 		pars.push(username);
 		pars.push(function(replaced){
-			replaceParameterizedAlias(parse(replaced,username),username,done);
+			replaceParameterizedAlias(parse(replaced),username,done);
 		});
 		parameterized_alias[parsedMessage[0]].apply(this,pars);
 // 			console.log(pars);
@@ -164,9 +166,9 @@ function replaceParameterizedAlias(parsedMessage,username,done)
 	else done(parsedMessage);
 }
 
-function parse(message,username)
+function parse(message)
 {
-	return /*replaceAllParameterizedAlias(*/parser.parse(replaceAlias(message,username))/*)*/;
+	return /*replaceAllParameterizedAlias(*/parser.parse(replaceAlias(message))/*)*/;
 }
 
 function processMessage(message,username,done)
@@ -177,7 +179,7 @@ function processMessage(message,username,done)
 		var parsedMessage;
 		try
 		{
-			parsedMessage=parse(message,username);
+			parsedMessage=parse(message);
 		}
 		catch(error)
 		{

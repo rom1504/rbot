@@ -26,33 +26,27 @@ function repeat(taskName,username,done)
 	repeatAux(taskName,function(){return !repeating;},username,done);
 }
 
-function stopRepeat(taskName,u,done)
+function stopRepeat(taskName,done)
 {
 	repeating=false;
 	done();
 }
 
-function ifThenElse(condition,then,els,u,done)
+function ifThenElse(pred,then,els,u,done)
 {
-	stringTo.stringToPredicate(condition,u,function(pred){
-		if(pred()) achieve(then,u,done);
-		else achieve(els,u,done);
-	});
+	if(pred()) achieve(then,u,done);
+	else achieve(els,u,done);
 }
 
-function ifThen(condition,then,u,done)
+function ifThen(pred,then,u,done)
 {
-	stringTo.stringToPredicate(condition,u,function(pred){
-		if(pred()) achieve(then,u,done);
-		else done();
-	});
+	if(pred()) achieve(then,u,done);
+	else done();
 }
 
-function repeatUntil(taskName,condition,u,done)
+function repeatUntil(taskName,pred,u,done)
 {
-	stringTo.stringToPredicate(condition,u,function(pred){
-		repeatAux(taskName,pred,u,done);
-	});
+	repeatAux(taskName,pred,u,done);
 }
 
 function achieveListAux(p,u,done)
@@ -60,14 +54,13 @@ function achieveListAux(p,u,done)
 	achieveList(p,u,done);
 }
 
-function nothing(u,done)
+function nothing(done)
 {
 	done();
 }
 
-function wait(s,u,done)
+function wait(time,done)
 {
-	var time=parseInt(s);
 	setTimeout(done,time);
 }
 
