@@ -82,24 +82,33 @@ function move(goalPosition,done)
 function moveTo(goalPosition,done)
 {
 	goalPosition=center(goalPosition);
-	if(goalPosition!=null && isFree(goalPosition))
+	if(goalPosition!=null /*&& isFree(goalPosition)*/)
 	{
 		if(goalPosition.distanceTo(bot.entity.position)>=0.2)
 		{
 			//bot.navigate.to(goalPosition);//use callback here ?
 			var a=bot.navigate.findPathSync(goalPosition,{timeout:5000});
 			console.log(a.status+" "+a.path.length);
-			/*if(a.status==='success') */bot.navigate.walk(a.path,function(){done()});
+			if(a.path.length<=1) done();
+			else if(a.status==='success') bot.navigate.walk(a.path,function(){done()});
+			else if(a.status==='noPath') done(true);
+			else bot.navigate.walk(a.path,function(){moveTo(goalPosition,done);});
 			//bot.once("stop",done);
 		}
 		else done();
-	} else done();
+	} else done(true);
 }
 
 function stopMoveTo(done)
 {
 	bot.navigate.stop();
 	done();
+}
+
+function tcc(done)
+{
+	bot.entity.position=center(bot.entity.position);
+	setTimeout(done,200);
 }
 
 
@@ -137,5 +146,6 @@ module.exports={
 		move:move,
 		moveTo:moveTo,
 		stopMoveTo:stopMoveTo,
+		tcc:tcc,
 		init:init
 };

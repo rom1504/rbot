@@ -17,15 +17,15 @@ function pos(player,done)
 
 function lookForEntity(ent,done)
 {
-	if(ent===null) bot.chat("I can't find "+s);
-	else bot.chat(s+" is in "+ent.position+(ent.type === 'mob' ? ". It's a "+ent.mobType : (ent.type === 'object' ? ". It's a "+ent.objectType : "")));
+	if(ent===null) bot.chat("I can't find it");
+	else bot.chat("It is in "+ent.position+(ent.type === 'mob' ? ". It's a "+ent.mobType : (ent.type === 'object' ? ". It's a "+ent.objectType : "")));
 	done();
 }
 
 function lookForBlock(block,done)
 {
-	if(block===null) bot.chat("I can't find "+s);
-	else bot.chat(s+" is in "+block.position+". It's a "+block.name);
+	if(block===null) bot.chat("I can't find it");
+	else bot.chat("It is in "+block.position+". It's a "+block.name);
 	done();
 }
 

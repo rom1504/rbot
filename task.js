@@ -68,6 +68,7 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf,_async)
 			"stop move to":moveTask.stopMoveTo,
 			"jump":moveTask.jump,
 			"up":moveTask.up,
+			"tcc":moveTask.tcc,
 	// 		"avancer":avancer,c:conditionAvancer,
 			
 			
@@ -107,8 +108,10 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf,_async)
 		"y-":"move r0,-1,0",
 		"z+":"move r0,0,1",
 		"z-":"move r0,0,-1",
-		"spiral up":"do sdig r0,2,0 then sdig r0,1,1 then sdig r0,2,1 then move to r0,1,1 then sdig r0,2,0 then sdig r-1,1,0 then sdig r-1,2,0 then move to r-1,1,0 then sdig r0,2,0 then sdig r0,1,-1 then sdig r0,2,-1 then move to r0,1,-1 then sdig r0,2,0 then sdig r1,1,0 then sdig r1,2,0 then move to r1,1,0 done",
-		"spiral down":"do sdig r1,1,0 then sdig r1,0,0 then sdig r1,-1,0 then move to r1,-1,0 then sdig r0,0,1 then sdig r0,1,1 then sdig r0,-1,1 then move to r0,-1,1 then sdig r-1,1,0 then sdig r-1,0,0 then sdig r-1,-1,0 then move to r-1,-1,0 then sdig r0,1,-1 then sdig r0,0,-1 then sdig r0,-1,-1 then move to r0,-1,-1 done",
+// 		"spiral up":"do sdig r0,2,0 then sdig r0,1,1 then sdig r0,2,1 then move to r0,1,1 then sdig r0,2,0 then sdig r-1,1,0 then sdig r-1,2,0 then move to r-1,1,0 then sdig r0,2,0 then sdig r0,1,-1 then sdig r0,2,-1 then move to r0,1,-1 then sdig r0,2,0 then sdig r1,1,0 then sdig r1,2,0 then move to r1,1,0 done",
+		"spiral up":"do smove r0,1,1 then smove r-1,1,0 then smove r0,1,-1 then smove r1,1,0 done",
+// 		"spiral down":"do sdig r1,1,0 then sdig r1,0,0 then sdig r1,-1,0 then move to r1,-1,0 then sdig r0,0,1 then sdig r0,1,1 then sdig r0,-1,1 then move to r0,-1,1 then sdig r-1,1,0 then sdig r-1,0,0 then sdig r-1,-1,0 then move to r-1,-1,0 then sdig r0,1,-1 then sdig r0,0,-1 then sdig r0,-1,-1 then move to r0,-1,-1 done",
+		"spiral down":"do smove r1,-1,0 then smove r0,-1,1 then smove r-1,-1,0 then smove r0,-1,-1 done",
 		"raise chicken":"do move to nearest reachable object * then equip hand egg then activate item done",
 		
 		"build shelter":"immure bot",
@@ -119,8 +122,8 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf,_async)
 		"attack everymob":"repeat do move to nearest reachable mob * then attack nearest reachable mob * done done",
 		"scome":"smove me",
 		"come":"move to me",
-		"down":"do move to r0,0,0 then sbuild r0,-2,0 then sdig r0,-1,0 then wait 400 done", // could change the wait 400 to something like a when at r0,-1,0 or something
-		"sup":"do sdig r0,2,0 then equip hand item to build then up done",//move r0,0,0 then  : put this back when I understand the pb with do sup then sup done
+		"down":"do tcc then sbuild r0,-2,0 then sdig r0,-1,0 then wait 400 done", // could change the wait 400 to something like a when at r0,-1,0 or something
+		"sup":"do tcc then sdig r0,2,0 then equip hand item to build then up done",
 	};
 	
 	var gss={"stonebrick":"stone","coal":"oreCoal","ingotIron":"oreIron","diamond":"oreDiamond"};
@@ -151,7 +154,12 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf,_async)
 				console.log(s);
 				done("repeat do ssdig "+s+(blockTask.canFall(pos.offset(0,1,0)) ? " then wait 1500" : "")+" done until  is empty "+s+" done"); // empty != air !!
 			});
-		},
+		}/*,
+		"scraft":function(n,i,u,done)
+		{
+			done("repeat craft "+n+" "+i+" until have "+n+" "+i+" done");
+		},*/
+		,
 		"ssdig":function(s,u,done)
 		{
 			stringTo.stringToPosition(s,u,null,function(pos){
@@ -177,8 +185,12 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf,_async)
 									p=pos.offset(x,y,z);
 									if(!(p.equals(bb)) && !(p.equals(bb2)))
 									{
-										t=bot.blockAt(p).type;
-										if(t>=8 && t<=11) a.push("sbuild "+positionToString(p));
+										var e=bot.blockAt(p);
+										if(e!=null)
+										{
+											t=e.type;
+											if(t>=8 && t<=11) a.push("sbuild "+positionToString(p));
+										}
 									}
 								}
 							}
@@ -202,7 +214,8 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf,_async)
 			var gs=s in gss ? gss[s] : s;
 			var m=inventory.numberOfOwnedItems(s);
 			var need;
-			done(m>=n ? "nothing" : isCraftable(s) ? "do "+neededItemsToCraft(n-m,s).map(function(item){return "cget "+item.count+" "+item.name;}).join(" then ")+" then "+((need=needWorkbench(s)) ? "if close of workbench then nothing else do cget 1 workbench then sdig r0,0,1 then sbuild r0,-1,1 then equip hand workbench then build r0,0,1 done endif then " : "")+"look at r0,0,0 then craft "+(n-m)+" "+s+(need ? " then sdig r0,0,1" : "")+" done" : "repeat sget "+gs+" until have "+n+" "+s+" done");
+			function gn(item){return neededItemsToCraft(n-m,s).map(function(item){return "cget "+item.count+" "+item.name;}).join(" then ")}
+			done(m>=n ? "nothing" : isCraftable(s) ? "do "+gn(item)+" then "+((need=needWorkbench(s)) ? "if close of workbench then nothing else do cget 1 workbench then "+gn(item)+" then sdig r0,0,1 then sbuild r0,-1,1 then equip hand workbench then build r0,0,1 done endif then " : "")+"look at r0,0,0 then craft "+(n-m)+" "+s+(need ? " then sdig r0,0,1" : "")+" done" : "repeat sget "+gs+" until have "+n+" "+s+" done");
 		}, // r0,0,1 : change this , problem with the number : try to craft it all when it only need to craft current - demanded : let's do it here, it seems to make sense since I'm going stringTo.stringToPosition for dig forward : hence the if have could probably be replaced by a js if : I'm going to let the if have be for now, and just do the current - demanded : not using have anymore... : remove it ? actually I'm using it, can't you see ???
 		"get":function(s,u,done)
 		{
@@ -229,11 +242,19 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf,_async)
 				done("do sdig "+s+" then sdig "+positionToString(p.offset(0,1,0))+" then sbuild "+positionToString(p.offset(0,-1,0))+" then move to "+s+" done");
 			});
 		},
+// 		"tunnel":function (s,u,done) 
+// 		{
+// 			stringTo.stringToPosition(s,u,null,function(p){
+// 				done("do sdig "+s+" then sdig "+positionToString(p.offset(0,1,0))+" then sbuild "+positionToString(p.offset(0,-1,0))+" then sbuild "+positionToString(p.offset(,2,0))+" then move to "+s+" done");
+// 			});
+// 		},
 		"ssumove":function(s,u,done)
 		{
 			stringTo.stringToPosition(s,u,null,function(p){
 				var s=positionToString(p);
-				var path=bot.navigate2.findPathSync(p).path;
+				var r=bot.navigate2.findPathSync(p);
+				var path=r.path;// cannot fail : should be able to fail... : maybe with a break, failed or stop task ?
+				console.log(r);
 				var t=path.map(function(p2){return "sumove "+positionToString(p2);}).join(" then ");
 				done("do "+t+" done");
 			});
@@ -256,6 +277,17 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf,_async)
 		"immure":function(s,u,done)
 		{
 			done("do sbuild r-1,0,0+"+s+" then sbuild r0,0,-1+"+s+" then sbuild r1,0,0+"+s+" then sbuild r0,0,1+"+s+" then sbuild r1,0,1+"+s+" then sbuild r-1,0,-1+"+s+" then sbuild r-1,0,1+"+s+" then sbuild r1,0,-1+"+s+" then sbuild r-1,1,0+"+s+" then sbuild r0,1,-1+"+s+" then sbuild r1,1,0+"+s+" then sbuild r0,1,1+"+s+" then sbuild r1,1,1+"+s+" then sbuild r-1,1,-1+"+s+" then sbuild r-1,1,1+"+s+" then sbuild r1,1,-1+"+s+" then sbuild r-1,2,0+"+s+" then sbuild r0,2,-1+"+s+" then sbuild r1,2,0+"+s+" then sbuild r0,2,1+"+s+" then sbuild r1,2,1+"+s+" then sbuild r-1,2,-1+"+s+" then sbuild r-1,2,1+"+s+" then sbuild r1,2,-1+"+s+" then sbuild r0,2,0+"+s+" done");
+		},
+		"achieve":function(c,u,done)
+		{
+			var impliedActions={
+				"at":function(p){return "smove "+p;},
+				"have":function(n,o){return "cget "+n+" "+o},
+				"close of":function(b){return "smove nearest block "+b},
+				"is empty":function(p){return "sdig "+p},
+				"is not empty":function(p){return "sbuild "+p}
+			};
+			done("repeat do "+impliedActions[c[0]].apply(this,c[1].map(function(par){return par[1]}))+" then wait 500 done until "+c[0]+" "+c[1].map(function(par){return par[1]}).join(" ")+" done");
 		}
 	};
 	all_task.tasks=tasks;
@@ -306,11 +338,6 @@ function findItemType(name)
 	return null;
 }
 
-// need the name here in order to do the association
-// function achieveCondition(pred,u,done)
-// {
-// 	if(pred())
-// }
 
 function lookAt(goalPosition,done)
 {

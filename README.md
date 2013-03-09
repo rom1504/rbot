@@ -124,6 +124,7 @@ If you download the source via github, you can run `npm install` then `cd gramma
  * `give <position> everything`
  * `sdig <position>` : repeat ssdig until it's done
  * `ssdig <position>` : dig safely
+ * `achieve <condition>` : achieve `<condition>` using the related action
  
 
 

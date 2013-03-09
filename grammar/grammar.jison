@@ -26,6 +26,7 @@
 "stop watch" return 'stopWatch';
 "replicate" return 'replicate';
 "watch" return 'watch';
+"achieve" return 'achieve';
 "ssumove" return 'ssumove';
 "sumove" return 'sumove';
 "smove" return 'smove';
@@ -44,6 +45,8 @@
 "immure" return 'immure';
 "unequip" return 'unequip';
 "look at" return 'lookAt';
+"tcc" return 'tcc';
+//"scraft" return 'scraft';
 "say" return 'say';
 "wait" return 'wait';
 "activate item" return 'activateItem';
@@ -115,7 +118,9 @@ exp :
 
 
 task :
-	'give' 'S' position 'S' int 'S' item {$$=['give',[$3,$5,$7]]} // would be possible to generalize ( an expression quantity : everything or 'int' 'S' item )
+	'achieve' 'S' condition {$$=['achieve',[$3]]}
+	| 'tcc'  {$$=['tcc',[]];}
+	| 'give' 'S' position 'S' int 'S' item {$$=['give',[$3,$5,$7]]} // would be possible to generalize ( an expression quantity : everything or 'int' 'S' item )
 	| 'give' 'S' position 'S' 'everything' {$$=['giveEverything',[$3]]}
 	|'tossEverything' {$$=['toss everything',[]]}
 	| 'sdig' 'S' position  {$$=['sdig',[$3]];}
@@ -145,6 +150,7 @@ task :
 	| 'activateItem' {$$=['activate item',[]];}
 	| 'deactivateItem' {$$=['deactivate item',[]];}
 	| 'build' 'S' position {$$=['build',[$3]];}
+	//| 'scraft' 'S' int 'S' simpleItem {$$=['scraft',[$3,$5]];}
 	| 'craft' 'S' int 'S' simpleItem {$$=['craft',[$3,$5]];}
 	| 'jump' {$$=['jump',[]];}
 	| 'digForward' 'S' position  {$$=['dig forward',[$3]];}

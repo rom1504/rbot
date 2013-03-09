@@ -39,7 +39,7 @@ bot.on('death', function() {
   bot.chat("I died x.x");
 });
 
-bot.on('chat',function(username,message){achieve.processMessage(message,username,function(){bot.chat("I achieved task "+message);});});
+bot.on('chat',function(username,message){achieve.processMessage(message,username,function(err){if(!err) bot.chat("I "+(!err ? "achieved" : "failed")+" task "+message);});});
 
 bot.navigate.on('pathFound', function (path) {
   console.log("found path. I can get there in " + path.length + " moves.");

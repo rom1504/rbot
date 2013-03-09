@@ -38,6 +38,7 @@ function inject(bot) {
     var heuristic = createHeuristicFn(end);
 
     var start = bot.entity.position.floored();
+	console.log(start);
     var tooFar = false;
     if (start.distanceTo(end) > tooFarThreshold) {
       // Too far to calculate reliably. Return 'tooFar' and a path to walk
@@ -68,7 +69,7 @@ function inject(bot) {
 	var p=node.point;
 	var result=[];
 	if(risSafe(p,0,-1,0)) result.push(p.offset(0,-1,0));
-	if(risSafe(p,0,3,0)) result.push(p.offset(0,1,0));
+	if(risSafe(p,0,2,0)) result.push(p.offset(0,1,0));
 	if(risSafe(p,1,0,0) && risSafe(p,1,1,0)) result.push(p.offset(1,0,0));
 	if(risSafe(p,-1,0,0) && risSafe(p,-1,1,0)) result.push(p.offset(-1,0,0));
 	if(risSafe(p,0,0,1) && risSafe(p,0,1,1)) result.push(p.offset(0,0,1));

@@ -56,7 +56,7 @@ function equip(destination,item,done)
 	}
 	else if(item==null)
 	{
-		console.log("I have no " + itemName);// change this maybe : yes : it should be fixed by : either it's a block you can break by hand, either go get a block... (and if it's to build : careful you might die... : figure a way out)
+		console.log("I have no such item");// change this maybe : yes : it should be fixed by : either it's a block you can break by hand, either go get a block... (and if it's to build : careful you might die... : figure a way out)
 		done();
 	}
 	else if(item==true) // already equipped
@@ -112,20 +112,20 @@ function craft(amount,name,done)
 				{
 					bot.chat("error making " + item.name);
 					console.error(err.stack);
-					done(true);
+					setTimeout(done,5000);
 				}
 				else
 				{	
 					bot.chat("made " + newAmount + " " + item.name);
 // 					setTimeout(done,5000); // for the bukkit tossing after crafting bug
-					setTimeout(done,500);
+					setTimeout(done,5000);
 				}
 			});
 		}
 		else
 		{
 			bot.chat(wbText + "I can't make " + item.name);
-			done(true);
+			setTimeout(done,5000);
 		}
 	}
 }
