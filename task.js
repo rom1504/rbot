@@ -152,14 +152,9 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf,_async)
 		{
 			stringTo.stringToPosition(s,u,null,function(pos){
 				console.log(s);
-				done("repeat do ssdig "+s+(blockTask.canFall(pos.offset(0,1,0)) ? " then wait 1500" : "")+" done until  is empty "+s+" done"); // empty != air !!
+				done("repeat do ssdig "+s+(blockTask.canFall(pos.offset(0,1,0)) ? " then wait 1500" : "")+" done until is empty "+s+" done"); // empty != air !!
 			});
-		}/*,
-		"scraft":function(n,i,u,done)
-		{
-			done("repeat craft "+n+" "+i+" until have "+n+" "+i+" done");
-		},*/
-		,
+		},
 		"ssdig":function(s,u,done)
 		{
 			stringTo.stringToPosition(s,u,null,function(pos){

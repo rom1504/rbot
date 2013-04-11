@@ -20,14 +20,14 @@
   },
   "license": "BSD",
   "dependencies": {
-	"mineflayer": "~0.0.35",
+    "mineflayer": "~0.1.0",
     "mineflayer-navigate": "~0.0.8",
-    "cloneextend":"~0.0.3",
-    "mineflayer-blockfinder":"~0.0.5",
-    "a-star":"~0.1.0",
-    "async":"~0.2.5"
+    "cloneextend": "~0.0.3",
+    "mineflayer-blockfinder": "~0.0.5",
+    "a-star": "~0.1.0",
+    "async": "~0.2.5"
   },
   "devDependencies": {
-    "jison":"~0.4.2"
+    "jison": "~0.4.2"
   }
 }
