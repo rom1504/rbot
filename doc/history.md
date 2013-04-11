@@ -60,3 +60,10 @@
  * add cget command
  * add give command
  * a lot of reorganizing of the code
+
+## 0.0.11
+
+ * able to avoid bedrock
+ * refactoring
+ * achieve condition command
+ * upgrade to new version of mineflayer hence new version of minecraft
