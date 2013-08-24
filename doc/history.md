@@ -67,3 +67,8 @@
  * refactoring
  * achieve condition command
  * upgrade to new version of mineflayer hence new version of minecraft
+ 
+## 0.1.0
+
+ * upgrade to version 1.0.0 of mineflayer
+ * handle minecraft 1.6.2 servers
