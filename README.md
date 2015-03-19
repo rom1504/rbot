@@ -1,5 +1,7 @@
 #rbot
-A minecraft bot that can do many things
+A minecraft bot that can do many things.
+
+Support minecraft 1.8
 
 Youtube demos :
  * [repeat spiral down](http://www.youtube.com/watch?v=UM1ZV5200S0)

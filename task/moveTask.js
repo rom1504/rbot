@@ -8,8 +8,6 @@ function init(_bot,_processMessage,_isEmpty,_stringTo,_vec3,_isNotEmpty)
 	isNotEmpty=_isNotEmpty;
 	stringTo=_stringTo;
 	vec3=_vec3;
-// 	directions=[new vec3(0,0,1),new vec3(0,0,-1),new vec3(1,0,0),new vec3(-1,0,0)];
-// 	direction=directions[0];
 }
 
 
@@ -36,7 +34,7 @@ function up(done) // change this a bit ?
 	  //processMessage(u,"sbuild r0,-1,0",function(){ // this is very wrong, solve it somehow (doesn't take into account the parameter of the callback as in achieve)
 		bot.setControlState('jump', false);
 		bot.removeListener('move', placeIfHighEnough);
-		setTimeout(done,400);// could (should ?) be replaced my something checking whether the bot is low enough/has stopped moving
+		done();
 	 // });
     }
   }
@@ -108,37 +106,8 @@ function stopMoveTo(done)
 function tcc(done)
 {
 	bot.entity.position=center(bot.entity.position);
-	setTimeout(done,200);
+    done();
 }
-
-
-
-
-// function chercherDirection()
-// {
-// 	var i;
-// 	while(1)
-// 	{
-// 		i=Math.floor(Math.random()*4);
-// 		if(isFree(i)) {return i;}
-// 	}
-// 	return directions[i];
-// }
-// 
-// function conditionAvancer(dejaEssaye)
-// {
-// 	return false;
-// }
-// 
-// function avancer()
-// {
-// 	if(!isFree(direction))
-// 	{
-// 		direction=chercherDirection();
-// 	}
-// 	e=move(direction.x,direction.y,direction.z);
-// 	return e;
-// }
 
 module.exports={
 		jump:jump,

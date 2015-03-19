@@ -129,27 +129,6 @@ function replaceAlias(message)
 	return message;
 }
 
-// function mapParsedMessage(parsedMessage,fun)
-// {
-// 	if(parsedMessage[0]==="taskList") for(i in parsedMessage[1]) parsedMessage[1][i]=mapParsedMessage(parsedMessage[1][i],fun);
-// 	else if(parsedMessage[0]==="repeat") parsedMessage[1][0]=mapParsedMessage(parsedMessage[1][0],fun);
-// 	else if(parsedMessage[0]==="repeatUntil") parsedMessage[1][0]=mapParsedMessage(parsedMessage[1][0],fun);
-// 	else if(parsedMessage[0]==="ifThen") parsedMessage[1][1]=mapParsedMessage(parsedMessage[1][1],fun);
-// 	else if(parsedMessage[0]==="ifThenElse")
-// 	{
-// 		parsedMessage[1][1]=mapParsedMessage(parsedMessage[1][1],fun);
-// 		parsedMessage[1][2]=mapParsedMessage(parsedMessage[1][2],fun);
-// 	}
-// 	else if(parsedMessage[0]==="stopRepeat") parsedMessage[1][0]=mapParsedMessage(parsedMessage[1][0],fun);
-// 	else parsedMessage=fun(parsedMessage);
-// 	return parsedMessage;
-// }
-// 
-// function replaceAllParameterizedAlias(parsedMessage,username)
-// {
-// 	return mapParsedMessage(parsedMessage,function(username){return function(parsedMessage){replaceParameterizedAlias(parsedMessage,username)};}(username));
-// }
-
 function replaceParameterizedAlias(parsedMessage,username,done)
 {
 	if(parsedMessage[0] in parameterized_alias)
@@ -168,7 +147,7 @@ function replaceParameterizedAlias(parsedMessage,username,done)
 
 function parse(message)
 {
-	return /*replaceAllParameterizedAlias(*/parser.parse(replaceAlias(message))/*)*/;
+	return parser.parse(replaceAlias(message));
 }
 
 function processMessage(message,username,done)

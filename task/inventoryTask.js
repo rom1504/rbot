@@ -50,7 +50,7 @@ function equip(destination,item,done)
 			else
 			{
 				console.log("equipped " + item.name);
-				setTimeout(done,200);	
+				setTimeout(done,200);
 			}
 		});
 	}
@@ -117,15 +117,14 @@ function craft(amount,name,done)
 				else
 				{	
 					bot.chat("made " + newAmount + " " + item.name);
-// 					setTimeout(done,5000); // for the bukkit tossing after crafting bug
-					setTimeout(done,5000);
+                    done();
 				}
 			});
 		}
 		else
 		{
 			bot.chat(wbText + "I can't make " + item.name);
-			setTimeout(done,5000);
+			done();
 		}
 	}
 }
