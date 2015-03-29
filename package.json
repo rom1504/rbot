@@ -20,10 +20,10 @@
   },
   "license": "BSD",
   "dependencies": {
-    "mineflayer": "git://github.com/andrewrk/mineflayer.git#17065d20b71ebd51b665e04be092dd607951f6b5",
+    "mineflayer": "git://github.com/andrewrk/mineflayer.git#master",
     "mineflayer-navigate": "~0.0.8",
     "cloneextend": "~0.0.3",
-    "mineflayer-blockfinder": "~0.0.5",
+    "mineflayer-blockfinder": "git://github.com/rom1504/mineflayer-blockfinder.git#fix_recursion",
     "a-star": "~0.1.0",
     "async": "~0.2.5"
   },

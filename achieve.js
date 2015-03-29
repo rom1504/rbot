@@ -84,7 +84,7 @@ function achieve(parsedTask,username,done)
 				return;
 			}
 			console.log("I'm going to achieve task "+parsedTaskToString(parsedTask));
-			applyAction(task,username,parsedTask,done);
+			setImmediate(function(){applyAction(task,username,parsedTask,done)});
 		});
 	}
 	catch(error)
@@ -97,10 +97,12 @@ function achieve(parsedTask,username,done)
 
 function listAux(taskNameList,i,username,done)
 {
-	if(i<taskNameList.length) achieve(taskNameList[i][1],username,(function(taskNameList,i,username,done) {
-		return function() {listAux(taskNameList,i+1,username,done)};
-	})(taskNameList,i,username,done));
-	else done();
+	if(i<taskNameList.length) setImmediate(function(){achieve(taskNameList[i][1],username,(function(taskNameList,i,username,done) {
+		return function() {
+			setImmediate(function(){listAux(taskNameList,i+1,username,done);});
+		};
+	})(taskNameList,i,username,done))});
+	else setImmediate(done());
 }
 
 function achieveList(taskNameList,username,done)

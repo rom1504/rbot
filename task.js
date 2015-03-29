@@ -109,7 +109,9 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf,_async)
 		"z+":"move r0,0,1",
 		"z-":"move r0,0,-1",
 // 		"spiral up":"do sdig r0,2,0 then sdig r0,1,1 then sdig r0,2,1 then move to r0,1,1 then sdig r0,2,0 then sdig r-1,1,0 then sdig r-1,2,0 then move to r-1,1,0 then sdig r0,2,0 then sdig r0,1,-1 then sdig r0,2,-1 then move to r0,1,-1 then sdig r0,2,0 then sdig r1,1,0 then sdig r1,2,0 then move to r1,1,0 done",
-		"spiral up":"do smove r0,1,1 then smove r-1,1,0 then smove r0,1,-1 then smove r1,1,0 done",
+		//"spiral up":"do sdig r0,2,0 then sdig r0,3,0 then smove r0,1,1 then sdig r0,2,0 then sdig r0,3,0 then smove r-1,1,0 then sdig r0,2,0 then sdig r0,3,0 then smove r0,1,-1 then sdig r0,2,0 then sdig r0,3,0 then smove r1,1,0 done",
+        "spiral up":"do smove r0,1,1 then sdig r0,-2,0 then smove r-1,1,0 then sdig r0,-2,0  then smove r0,1,-1 then sdig r0,-2,0  then smove r1,1,0 then sdig r0,-2,0  done",
+
 // 		"spiral down":"do sdig r1,1,0 then sdig r1,0,0 then sdig r1,-1,0 then move to r1,-1,0 then sdig r0,0,1 then sdig r0,1,1 then sdig r0,-1,1 then move to r0,-1,1 then sdig r-1,1,0 then sdig r-1,0,0 then sdig r-1,-1,0 then move to r-1,-1,0 then sdig r0,1,-1 then sdig r0,0,-1 then sdig r0,-1,-1 then move to r0,-1,-1 done",
 		"spiral down":"do smove r1,-1,0 then smove r0,-1,1 then smove r-1,-1,0 then smove r0,-1,-1 done",
 		"raise chicken":"do move to nearest reachable object * then equip hand egg then activate item done",
@@ -151,7 +153,6 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf,_async)
 		"sdig":function(s,u,done)
 		{
 			stringTo.stringToPosition(s,u,null,function(pos){
-				console.log(s);
 				done("repeat do ssdig "+s+(blockTask.canFall(pos.offset(0,1,0)) ? " then wait 1500" : "")+" done until is empty "+s+" done"); // empty != air !!
 			});
 		},
@@ -209,8 +210,21 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf,_async)
 			var gs=s in gss ? gss[s] : s;
 			var m=inventory.numberOfOwnedItems(s);
 			var need;
-			function gn(item){return neededItemsToCraft(n-m,s).map(function(item){return "cget "+item.count+" "+item.name;}).join(" then ")}
-			done(m>=n ? "nothing" : isCraftable(s) ? "do "+gn(item)+" then "+((need=needWorkbench(s)) ? "if close of workbench then nothing else do cget 1 workbench then "+gn(item)+" then sdig r0,0,1 then sbuild r0,-1,1 then equip hand workbench then build r0,0,1 done endif then " : "")+"look at r0,0,0 then craft "+(n-m)+" "+s+(need ? " then sdig r0,0,1" : "")+" done" : "repeat sget "+gs+" until have "+n+" "+s+" done");
+			function gn(item){
+				return neededItemsToCraft(n-m,s)
+					.map(function(item){
+						return "cget "+item.count+" "+item.name;
+					})
+					.join(" then ")
+			}
+			done(m>=n ?
+				"nothing" :
+				isCraftable(s) ?
+				"do "+gn(item)+" then "+((need=needWorkbench(s)) ?
+				"if close of workbench then nothing else do cget 1 workbench then "+gn(item)+
+				" then sdig r0,0,1 then sbuild r0,-1,1 then equip hand workbench then build r0,0,1 done endif then " : "")+
+				"look at r0,0,0 then craft "+(n-m)+" "+s+(need ?
+					" then sdig r0,0,1" : "")+" done" : "repeat sget "+gs+" until have "+n+" "+s+" done");
 		}, // r0,0,1 : change this , problem with the number : try to craft it all when it only need to craft current - demanded : let's do it here, it seems to make sense since I'm going stringTo.stringToPosition for dig forward : hence the if have could probably be replaced by a js if : I'm going to let the if have be for now, and just do the current - demanded : not using have anymore... : remove it ? actually I'm using it, can't you see ???
 		"get":function(s,u,done)
 		{
@@ -364,14 +378,23 @@ function neededItemsToCraft(n,s)
 {
 	var id=findItemType(s).id;
 	var r=mf.Recipe.find(id);
-	n=Math.ceil(n/r[0].count);
+	n=Math.ceil(n/r[0].result.count);
 	if(r.length===0) return null;
 	var nd=[],d=r[0].delta;
+	console.log(d);
 	for(i in d)
 	{
-		if(d[i].type!=id)
+		if(d[i].id!=id)
 		{
-			nd.push({"name":mf.items[d[i].type]===undefined ? mf.blocks[d[i].type].name : mf.items[d[i].type].name,"count":-parseInt(n)*d[i].count});
+			//console.log("d id"+d[i].id);
+			//console.log(mf.items[d[i].id].name);
+			nd.push({
+				"name":
+					mf.items[d[i].id]===undefined ?
+					mf.blocks[d[i].id].name :
+					mf.items[d[i].id].name,
+				"count":-parseInt(n)*d[i].count
+			});
 		}
 	}
 	return nd;

@@ -11,13 +11,17 @@ function init(_achieve,_achieveList,_stringTo)
 
 function repeatAux(taskName,over,username,done)
 {
-	if(!over()) achieve(taskName,username,(function(taskName,over,username,done){return function(status) {
-		if(status==true) done(true); 
-		//else setTimeout(repeatAux,100,taskName,over,username,done);
-		else repeatAux(taskName,over,username,done);
-		
-	}})(taskName,over,username,done));
-	else done();
+  setImmediate(function() {
+    if (!over()) achieve(taskName, username, (function (taskName, over, username, done) {
+      return function (status) {
+        if (status == true) done(true);
+        //else setTimeout(repeatAux,100,taskName,over,username,done);
+        else repeatAux(taskName, over, username, done);
+
+      }
+    })(taskName, over, username, done));
+    else done();
+  });
 }
 
 function repeat(taskName,username,done)

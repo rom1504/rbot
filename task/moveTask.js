@@ -34,7 +34,7 @@ function up(done) // change this a bit ?
 	  //processMessage(u,"sbuild r0,-1,0",function(){ // this is very wrong, solve it somehow (doesn't take into account the parameter of the callback as in achieve)
 		bot.setControlState('jump', false);
 		bot.removeListener('move', placeIfHighEnough);
-		done();
+        setTimeout(done,400);// could (should ?) be replaced my something checking whether the bot is low enough/has stopped moving
 	 // });
     }
   }
@@ -106,7 +106,7 @@ function stopMoveTo(done)
 function tcc(done)
 {
 	bot.entity.position=center(bot.entity.position);
-    done();
+    setTimeout(done,200);
 }
 
 module.exports={

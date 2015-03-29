@@ -104,8 +104,8 @@ function craft(amount,name,done)
 		if (recipes.length)
 		{
 			bot.chat(wbText + "I can make " + item.name);
-			var numberOfOperation=Math.ceil(amount/recipes[0].count);
-			var newAmount=numberOfOperation*recipes[0].count;
+			var numberOfOperation=Math.ceil(amount/recipes[0].result.count);
+			var newAmount=numberOfOperation*recipes[0].result.count;
 			bot.craft(recipes[0], numberOfOperation, craftingTable, function(err)
 			{
 				if (err)
@@ -117,7 +117,7 @@ function craft(amount,name,done)
 				else
 				{	
 					bot.chat("made " + newAmount + " " + item.name);
-                    done();
+					done();
 				}
 			});
 		}
