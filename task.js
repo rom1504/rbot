@@ -165,7 +165,9 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf,_async)
 				var u="";
 				if(pos.floored().equals(bb.offset(0,2,0)) && blockTask.canFall(bb.offset(0,3,0)))
 				{
-					u="repeat do equip hand tool to break "+bot.blockAt(bb.offset(0,3,0)).name+" then dig "+positionToString(bb.offset(0,3,0))+(blockTask.canFall(bb.offset(0,4,0)) ? " then wait 1500" : "")+" done until is empty "+positionToString(bb.offset(0,3,0))+" done then ";
+					u="repeat do equip hand tool to break "+bot.blockAt(bb.offset(0,3,0)).name+" then dig "+
+					positionToString(bb.offset(0,3,0))+(blockTask.canFall(bb.offset(0,4,0)) ? " then wait 1500" : "")+
+					" done until is empty "+positionToString(bb.offset(0,3,0))+" done then ";
 				}
 				function makeSafe(bb,bb2,pos,a)
 				{
@@ -195,7 +197,8 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf,_async)
 				}
 				makeSafe(bb,bb2,pos,a);
 				if(blockTask.canFall(pos.offset(0,1,0))) makeSafe(bb,bb2,pos.offset(0,1,0),a);
-				//if(blockTask.canFall(pos.offset(0,2,0))) makeSafe(bb,bb2,pos.offset(0,2,0),a);  // cannot make this recursive because he can't build very high but a column of 2 is common
+				//if(blockTask.canFall(pos.offset(0,2,0))) makeSafe(bb,bb2,pos.offset(0,2,0),a);
+				// cannot make this recursive because he can't build very high but a column of 2 is common
 				var b=a.join(" then ");
 				b=b=="" ? b : b+" then ";
 				done("if is not empty "+s+" then do "+u+" "+b+" equip hand tool to break "+bot.blockAt(pos).name+" then dig "+s+" done endif");
