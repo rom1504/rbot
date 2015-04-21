@@ -55,7 +55,7 @@ First, you need to install [node](http://nodejs.org/) , you might want to read [
  * Follow the Windows instructions from [Obvious/ursa](https://github.com/Obvious/ursa)
  * `npm install -g rbot`
 
-If you download the source via github, you can run `npm install` then `cd grammar && jison grammar.jison` (the grammar.js file is included in the npm repository but not the git repository)
+If you download the source via github, you can run `npm install`
 
 
 ## Usage
