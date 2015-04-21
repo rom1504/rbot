@@ -1,4 +1,7 @@
 #rbot
+
+[![NPM version](https://badge.fury.io/js/rbot.png)](http://badge.fury.io/js/rbot)
+
 A minecraft bot that can do many things.
 
 Support minecraft 1.8
