@@ -18,9 +18,12 @@
   "author": {
     "name": "Romain Beaumont"
   },
+  "scripts": {
+    "prepublish": "cd grammar && jison grammar.jison"
+  },
   "license": "BSD",
   "dependencies": {
-    "mineflayer": "git://github.com/andrewrk/mineflayer.git#master",
+    "mineflayer": "~1.1.0",
     "mineflayer-navigate": "~0.0.8",
     "cloneextend": "~0.0.3",
     "mineflayer-blockfinder": "git://github.com/rom1504/mineflayer-blockfinder.git#fix_recursion",

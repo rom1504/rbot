@@ -22,9 +22,9 @@ function up(done) // change this a bit ?
 {
 	if(isNotEmpty(bot.entity.position.offset(0, 2, 0))) {done(true);return;}
 	  //if(bot.heldItem===null) {done(true);return;} // replace this with something checking whether the bot has a block to build ?
-  bot.setControlState('jump', true);
   var targetBlock = bot.blockAt(bot.entity.position.offset(0, -1, 0));
   var jumpY = bot.entity.position.y + 1;
+	bot.setControlState('jump', true);
   bot.on('move', placeIfHighEnough);
   
   function placeIfHighEnough() {
