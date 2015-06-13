@@ -14,7 +14,9 @@ var bot = mineflayer.createBot({
 	username: process.argv[4],
 	verbose: true,
 	port:parseInt(process.argv[3]),
-	host:process.argv[2]});
+	host:process.argv[2],
+	password:process.argv[5]
+});
 
 navigatePlugin(bot);
 navigate2Plugin(bot);
@@ -27,7 +29,6 @@ achieve.init(task.all_task.tasks,task.all_task.giveUser,task.all_task.parameteri
 
 bot.on('login', function() {
   console.log("I logged in.");
-  bot.chat("/login "+process.argv[5]);
   console.log("settings", bot.settings);
 });
 
