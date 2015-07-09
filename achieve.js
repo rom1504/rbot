@@ -102,7 +102,10 @@ function listAux(taskNameList,i,username,done)
 			setImmediate(function(){listAux(taskNameList,i+1,username,done);});
 		};
 	})(taskNameList,i,username,done))});
-	else setImmediate(done());
+	else { 
+		var carefulDone=done(); 
+		if (carefulDone != undefined) setImmediate (carefulDone);
+	}
 }
 
 function achieveList(taskNameList,username,done)
