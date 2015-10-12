@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-if(process.argv.length<6 || process.argv.length>7)
+if(process.argv.length<5 || process.argv.length>7)
 {
-	console.log("Usage : rbot <host> <port> <name> <password> [<master>]");
+	console.log("Usage : rbot <host> <port> <name> [<password>] [<master>]");
 	process.exit(1);
 }
 var mineflayer = require('mineflayer');
