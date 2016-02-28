@@ -78,3 +78,7 @@
  * upgrade to version 1.1.0 of mineflayer
  * handle minecraft 1.8.3 servers
  * a few fix related to mineflayer new version and node new version
+ 
+## 0.2.1
+
+ * support online mode
