@@ -82,3 +82,8 @@
 ## 0.2.1
 
  * support online mode
+
+## 0.2.2
+
+ * update deps
+ * some fixes
