@@ -21,14 +21,14 @@
   "scripts": {
     "prepublish": "cd grammar && jison grammar.jison"
   },
-  "license": "BSD",
+  "license": "MIT",
   "dependencies": {
-    "mineflayer": "~1.1.0",
-    "mineflayer-navigate": "~0.0.8",
-    "cloneextend": "~0.0.3",
-    "mineflayer-blockfinder": "git://github.com/rom1504/mineflayer-blockfinder.git#fix_recursion",
     "a-star": "~0.1.0",
-    "async": "~0.2.5"
+    "async": "^1.5.2",
+    "cloneextend": "~0.0.3",
+    "mineflayer": "^1.7.3",
+    "mineflayer-blockfinder": "git://github.com/rom1504/mineflayer-blockfinder.git#fix_recursion",
+    "mineflayer-navigate": "~0.0.8"
   },
   "devDependencies": {
     "jison": "~0.4.2"
