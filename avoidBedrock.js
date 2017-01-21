@@ -15,7 +15,7 @@ var DEFAULT_END_RADIUS = 0.1;
 var TOO_FAR_THRESHOLD = 150;
 
 function init(mineflayer) {
-  vec3 = mineflayer.vec3;
+  vec3 = require('vec3');
   return inject;
 }
 

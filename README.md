@@ -4,7 +4,7 @@
 
 A minecraft bot that can do many things.
 
-Support minecraft 1.8
+Supports minecraft 1.11.2
 
 Youtube demos :
  * [repeat spiral down](http://www.youtube.com/watch?v=UM1ZV5200S0)

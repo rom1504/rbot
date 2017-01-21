@@ -9,7 +9,7 @@ var blockFinderPlugin = require('mineflayer-blockfinder')(mineflayer);
 var navigatePlugin = require('mineflayer-navigate')(mineflayer);
 var navigate2Plugin = require('./avoidBedrock.js')(mineflayer);
 var async=require('async');
-var vec3 = mineflayer.vec3;
+var vec3 = require('vec3');
 var bot = mineflayer.createBot({
 	username: process.argv[4],
 	verbose: true,
