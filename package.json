@@ -27,7 +27,7 @@
     "async": "^1.5.2",
     "cloneextend": "~0.0.3",
     "mineflayer": "^2.0.0",
-    "mineflayer-blockfinder": "git://github.com/rom1504/mineflayer-blockfinder.git#require_vec3",
+    "mineflayer-blockfinder": "0.0.7",
     "mineflayer-navigate": "rom1504/mineflayer-navigate#update_vec3",
     "vec3": "^0.1.3"
   },
