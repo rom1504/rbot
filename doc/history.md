@@ -87,3 +87,7 @@
 
  * update deps
  * some fixes
+ 
+## 0.2.3
+
+ * update to mineflayer 2
