@@ -91,3 +91,9 @@
 ## 0.2.3
 
  * update to mineflayer 2
+
+
+## 0.2.4
+
+ * fix blockfinder dep
+ 
