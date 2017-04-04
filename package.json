@@ -28,7 +28,7 @@
     "cloneextend": "~0.0.3",
     "mineflayer": "^2.0.0",
     "mineflayer-blockfinder": "0.0.7",
-    "mineflayer-navigate": "rom1504/mineflayer-navigate#update_vec3",
+    "mineflayer-navigate": "0.0.10",
     "vec3": "^0.1.3"
   },
   "devDependencies": {
