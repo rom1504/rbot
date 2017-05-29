@@ -1,4 +1,4 @@
-#rbot
+# rbot
 
 [![NPM version](https://badge.fury.io/js/rbot.png)](http://badge.fury.io/js/rbot)
 
@@ -46,21 +46,20 @@ Youtube demos :
 
 First, you need to install [node](http://nodejs.org/) , you might want to read [this](https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager)
 
-### Linux / OSX
-
  * `npm install -g rbot`
  
-### Windows
-
- * Follow the Windows instructions from [Obvious/ursa](https://github.com/Obvious/ursa)
- * `npm install -g rbot`
-
-If you download the source via github, you can run `npm install`
+ or 
+ 
+ * git clone https://github.com/rom1504/rbot.git
+ * cd rbot
+ * npm install
 
 
 ## Usage
  * If you specify a master the bot will only obey to him
  * `rbot <host> <port> <name> <password> [<master>]`
+ 
+ If you cloned the repo, run `node rbot.js` instead.
 
 
 ### Commands
