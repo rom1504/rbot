@@ -97,3 +97,6 @@
 
  * fix blockfinder dep
  
+## 0.2.5
+
+ * uses upstream mineflayer navigate
