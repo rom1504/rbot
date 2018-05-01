@@ -29,6 +29,10 @@ achieve.init(task.all_task.tasks,task.all_task.giveUser,task.all_task.parameteri
 });
 
 
+bot.on('error',(err) => {
+  console.log(err);
+});
+
 bot.on('login', function() {
   console.log("I logged in.");
   console.log("settings", bot.settings);

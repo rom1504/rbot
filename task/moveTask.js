@@ -30,12 +30,13 @@ function up(done) // change this a bit ?
   
   function placeIfHighEnough() {
     if (bot.entity.position.y > jumpY) {
-      bot.placeBlock(targetBlock, new Vec3(0, 1, 0));
+      bot.placeBlock(targetBlock, new Vec3(0, 1, 0),() => {
+        setTimeout(done,400);// could (should ?) be replaced my something checking whether the bot is low enough/has stopped moving
+      });
       //dirty
 	  //processMessage(u,"sbuild r0,-1,0",function(){ // this is very wrong, solve it somehow (doesn't take into account the parameter of the callback as in achieve)
 		bot.setControlState('jump', false);
 		bot.removeListener('move', placeIfHighEnough);
-        setTimeout(done,400);// could (should ?) be replaced my something checking whether the bot is low enough/has stopped moving
 	 // });
     }
   }
