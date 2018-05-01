@@ -56,9 +56,7 @@ function build(blockPosition,done)
 		p=blockPosition.plus(contiguousBlocks[i]);
 		if(isNotEmpty(p))
 		{
-			bot.placeBlock({position:p},(new Vec3(0,0,0)).minus(contiguousBlocks[i]));
-			//setTimeout(done,200);
-			done();
+			bot.placeBlock({position:p},(new Vec3(0,0,0)).minus(contiguousBlocks[i]),done);
 			return;
 		}
 	}
