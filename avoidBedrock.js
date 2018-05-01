@@ -1,21 +1,17 @@
-var aStar = require('a-star');
+const aStar = require('a-star');
 
 module.exports = init;
 
-// instantiated from init
-var vec3;
-
-var MONITOR_INTERVAL = 40;
-var WATER_THRESHOLD = 20;
-var DEFAULT_TIMEOUT = 10 * 1000; // 10 seconds
-var DEFAULT_END_RADIUS = 0.1;
+const MONITOR_INTERVAL = 40;
+const WATER_THRESHOLD = 20;
+const DEFAULT_TIMEOUT = 10 * 1000; // 10 seconds
+const DEFAULT_END_RADIUS = 0.1;
 
 // if the distance is more than this number, navigator will opt to simply
 // head in the correct direction and recalculate upon getting closer
-var TOO_FAR_THRESHOLD = 150;
+const TOO_FAR_THRESHOLD = 150;
 
-function init(mineflayer) {
-  vec3 = require('vec3');
+function init() {
   return inject;
 }
 

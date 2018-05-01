@@ -1,13 +1,14 @@
-var bot,processMessage,isEmpty,stringTo,directions,direction,vec3;
+const Vec3 = require('vec3').Vec3;
 
-function init(_bot,_processMessage,_isEmpty,_stringTo,_vec3,_isNotEmpty)
+let bot,processMessage,isEmpty,stringTo,directions,direction;
+
+function init(_bot,_processMessage,_isEmpty,_stringTo,_isNotEmpty)
 {
 	bot=_bot;
 	processMessage=_processMessage;
 	isEmpty=_isEmpty;
 	isNotEmpty=_isNotEmpty;
 	stringTo=_stringTo;
-	vec3=_vec3;
 }
 
 
@@ -29,7 +30,7 @@ function up(done) // change this a bit ?
   
   function placeIfHighEnough() {
     if (bot.entity.position.y > jumpY) {
-      bot.placeBlock(targetBlock, vec3(0, 1, 0));
+      bot.placeBlock(targetBlock, new Vec3(0, 1, 0));
       //dirty
 	  //processMessage(u,"sbuild r0,-1,0",function(){ // this is very wrong, solve it somehow (doesn't take into account the parameter of the callback as in achieve)
 		bot.setControlState('jump', false);

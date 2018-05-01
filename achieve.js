@@ -1,13 +1,12 @@
-var ce = require('cloneextend');
-var parser = require("./grammar/grammar").parser;
+let ce = require('cloneextend');
+let parser = require("./grammar/grammar").parser;
 
-var bot, vec3, generated_tasks, tasks, parameterized_alias, alias, master, stringTo, giveUser;
+let bot, tasks, parameterized_alias, alias, master, stringTo, giveUser;
 
-function init(_tasks, _giveUser, _parameterized_alias, _alias, _stringTo, _bot, _vec3, _master) // ou passer simplement task...
+function init(_tasks, _giveUser, _parameterized_alias, _alias, _stringTo, _bot, _master) // ou passer simplement task...
 {
   master = _master;
   bot = _bot;
-  vec3 = _vec3;
   tasks = _tasks;
   parameterized_alias = _parameterized_alias;
   alias = _alias;
@@ -21,8 +20,8 @@ function parsedTaskToString(parsedTask) {
   }
 
   function taskToString(t) {
-    if (t.constructor == Array) return arrayToString(t);
-    if (t.constructor == String) return '"' + t + '"';
+    if (t.constructor === Array) return arrayToString(t);
+    if (t.constructor === String) return '"' + t + '"';
   }
 
   return (taskToString(parsedTask));
@@ -85,7 +84,6 @@ function achieve(parsedTask, username, done) {
   catch (error) {
     console.log(error.stack);
     done(true);
-    return;
   }
 }
 
@@ -113,7 +111,7 @@ function replaceAlias(message) {
     changed = 0;
     for (var alia in alias) {
       var newM = message.replace(alia, alias[alia]);
-      if (newM != message) {
+      if (newM !== message) {
         message = newM;
         changed = 1;
         continue; // sure ?
@@ -125,7 +123,7 @@ function replaceAlias(message) {
 
 function replaceParameterizedAlias(parsedMessage, username, done) {
   if (parsedMessage[0] in parameterized_alias) {
-    var pars = ce.clone(parsedMessage[1]); // how can I use stringTo ? (removing parameterized alias ?) seems like I don't want to use it
+    let pars = ce.clone(parsedMessage[1]); // how can I use stringTo ? (removing parameterized alias ?) seems like I don't want to use it
     pars = pars.map(function (par) {
       return par[1];
     });
@@ -144,9 +142,9 @@ function parse(message) {
 }
 
 function processMessage(message, username, done) {
-  if (username != bot.username && (username === master || master === undefined)) {
+  if (username !== bot.username && (username === master || master === undefined)) {
     console.log(message);
-    var parsedMessage;
+    let parsedMessage;
     try {
       parsedMessage = parse(message);
     }

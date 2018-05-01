@@ -1,6 +1,8 @@
-var bot,stringTo,isNotEmpty,isBlockEmpty,isBlockNotEmpty,isEmpty,vec3,processMessage,positionToString;
+const Vec3 = require('vec3').Vec3;
 
-function init(_bot,_stringTo,_isNotEmpty,_isBlockEmpty,_isBlockNotEmpty,_isEmpty,_vec3,_positionToString,_processMessage)
+let bot,stringTo,isNotEmpty,isBlockEmpty,isBlockNotEmpty,isEmpty,processMessage,positionToString;
+
+function init(_bot,_stringTo,_isNotEmpty,_isBlockEmpty,_isBlockNotEmpty,_isEmpty,_positionToString,_processMessage)
 {
 	bot=_bot;
 	stringTo=_stringTo;
@@ -8,7 +10,6 @@ function init(_bot,_stringTo,_isNotEmpty,_isBlockEmpty,_isBlockNotEmpty,_isEmpty
 	isBlockEmpty=_isBlockEmpty;
 	isBlockNotEmpty=_isBlockNotEmpty;
 	isEmpty=_isEmpty;
-	vec3=_vec3;
 	positionToString=_positionToString;
 	processMessage=_processMessage;
 }
@@ -49,13 +50,13 @@ function build(blockPosition,done)
 	if(isNotEmpty(blockPosition)) {done(); return;}
 	if(bot.heldItem===null) {done(true);return;}
 	var x,y,z,p;
-	var contiguousBlocks=[new vec3(1,0,0),new vec3(-1,0,0),new vec3(0,1,0),new vec3(0,-1,0),new vec3(0,0,-1),new vec3(0,0,1)];
+	var contiguousBlocks=[new Vec3(1,0,0),new Vec3(-1,0,0),new Vec3(0,1,0),new Vec3(0,-1,0),new Vec3(0,0,-1),new Vec3(0,0,1)];
 	for(i in contiguousBlocks)
 	{
 		p=blockPosition.plus(contiguousBlocks[i]);
 		if(isNotEmpty(p))
 		{
-			bot.placeBlock({position:p},(new vec3(0,0,0)).minus(contiguousBlocks[i]));
+			bot.placeBlock({position:p},(new Vec3(0,0,0)).minus(contiguousBlocks[i]));
 			//setTimeout(done,200);
 			done();
 			return;

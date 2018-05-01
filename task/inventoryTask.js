@@ -1,12 +1,13 @@
-var bot,stringTo,findItemType,inventory,vec3;
+const Vec3 = require('vec3').Vec3;
 
-function init(_bot,_stringTo,_findItemType,_inventory,_vec3)
+let bot,stringTo,findItemType,inventory;
+
+function init(_bot,_stringTo,_findItemType,_inventory)
 {
 	bot=_bot;
 	stringTo=_stringTo;
 	findItemType=_findItemType;
 	inventory=_inventory;
-	vec3=_vec3;
 }
 
 
@@ -74,14 +75,14 @@ function unequip(destination,done)
 
 function findCraftingTable()
 {
-	var cursor = new vec3();
+	const cursor = new Vec3();
 	for(cursor.x = bot.entity.position.x - 4; cursor.x < bot.entity.position.x + 4; cursor.x++)
 	{
 		for(cursor.y = bot.entity.position.y - 4; cursor.y < bot.entity.position.y + 4; cursor.y++)
 		{
 			for(cursor.z = bot.entity.position.z - 4; cursor.z < bot.entity.position.z + 4; cursor.z++)
 			{
-				var block = bot.blockAt(cursor);
+				const block = bot.blockAt(cursor);
 				if (block.type === 58) return block;
 			}
 		}

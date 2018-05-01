@@ -9,7 +9,6 @@ var blockFinderPlugin = require('mineflayer-blockfinder')(mineflayer);
 var navigatePlugin = require('mineflayer-navigate')(mineflayer);
 var navigate2Plugin = require('./avoidBedrock.js')(mineflayer);
 var async=require('async');
-var vec3 = require('vec3');
 var bot = mineflayer.createBot({
 	username: process.argv[4],
 	verbose: true,
@@ -20,12 +19,15 @@ var bot = mineflayer.createBot({
 
 navigatePlugin(bot);
 navigate2Plugin(bot);
-blockFinderPlugin(bot);
+bot.loadPlugin(blockFinderPlugin);
 var task=require('./task');
 var achieve=require('./achieve');
 
-task.init(bot,vec3,achieve.achieve,achieve.achieveList,achieve.processMessage,mineflayer,async);
-achieve.init(task.all_task.tasks,task.all_task.giveUser,task.all_task.parameterized_alias,task.all_task.alias,task.all_task.stringTo,bot,vec3,process.argv[6]);
+bot.loadPlugin(() => {
+  task.init(bot,achieve.achieve,achieve.achieveList,achieve.processMessage,async);
+achieve.init(task.all_task.tasks,task.all_task.giveUser,task.all_task.parameterized_alias,task.all_task.alias,task.all_task.stringTo,bot,process.argv[6]);
+});
+
 
 bot.on('login', function() {
   console.log("I logged in.");
@@ -54,7 +56,7 @@ bot.on('health', function() {
 });
 
 bot.on('playerJoined', function(player) {
-  console.log("hello, " + player.username + "! welmove to the server.");
+  console.log("hello, " + player.username + "! welcome to the server.");
 });
 bot.on('playerLeft', function(player) {
   console.log("bye " + player.username);

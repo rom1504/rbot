@@ -1,13 +1,34 @@
-var bot,vec3,achieve,achieveList,blocks,mf,processMessage,inventory,stringTo,nearest,syntaxTask,moveTask,inventoryTask,blockTask,informationTask,tasks,alias,parameterized_alias,giveUser,async,all_task={};
+const Vec3 = require('vec3').Vec3;
 
-function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf,_async)
+let bot;
+let achieve;
+let achieveList;
+let blocks;
+let items;
+let processMessage;
+let inventory;
+let stringTo;
+let nearest;
+let syntaxTask;
+let moveTask;
+let inventoryTask;
+let blockTask;
+let informationTask;
+let tasks;
+let alias;
+let parameterized_alias;
+let giveUser;
+let async;
+let all_task={};
+let materials;
+let Recipe;
+
+function init(_bot,_achieve,_achieveList,_processMessage,_async)
 {
+  bot=_bot;
+  const mcData = require('minecraft-data')(bot.version);
 	async=_async;
 	processMessage=_processMessage;
-	mf=_mf;
-	bot=_bot;
-// 	require('./blockFinder').inject(bot);
-	vec3=_vec3;
 	achieve=_achieve;
 	achieveList=_achieveList;
 	bot.on('blockUpdate',function(oldBlock,newBlock){
@@ -19,36 +40,27 @@ function init(_bot,_vec3,_achieve,_achieveList,_processMessage,_mf,_async)
 	});
 	bot.navigate.on("stop",function(){bot.emit("stop");});
 	bot.navigate.on("cannotFind",function(){bot.emit("stop");});
-	var block;
-	blocks={};
-	for(i in mf.blocks)
-	{
-		block=mf.blocks[i];
-		blocks[block.name]=block;
-	}
-	var item;
-	items={};
-	for(i in mf.items)
-	{
-		item=mf.items[i];
-		items[item.name]=item;
-	}
+
+  blocks = mcData.blocksByName;
+	items = mcData.itemsByName;
+	materials = mcData.materials;
+	Recipe = require('prismarine-recipe')(bot.version);
 	inventory=require('./lib/inventory');
 	nearest=require('./lib/nearest');
 	stringTo=require('./lib/stringTo');
-	inventory.init(bot,mf.materials);
-	nearest.init(bot,isNotEmpty,blocks,vec3);
-	stringTo.init(bot,inventory,nearest,vec3,isEmpty,isNotEmpty,blocks,async);
+	inventory.init(bot,materials);
+	nearest.init(bot,isNotEmpty,blocks);
+	stringTo.init(bot,inventory,nearest,isEmpty,isNotEmpty,blocks,async);
 	
 	
 	syntaxTask=require('./task/syntaxTask');
 	syntaxTask.init(achieve,achieveList,stringTo);
 	moveTask=require('./task/moveTask');
-	moveTask.init(bot,processMessage,isEmpty,stringTo,vec3,isNotEmpty);
+	moveTask.init(bot,processMessage,isEmpty,stringTo,isNotEmpty);
 	inventoryTask=require('./task/inventoryTask');
-	inventoryTask.init(bot,stringTo,findItemType,inventory,vec3);
+	inventoryTask.init(bot,stringTo,findItemType,inventory);
 	blockTask=require('./task/blockTask');
-	blockTask.init(bot,stringTo,isNotEmpty,isBlockEmpty,isBlockNotEmpty,isEmpty,vec3,positionToString,processMessage);
+	blockTask.init(bot,stringTo,isNotEmpty,isBlockEmpty,isBlockNotEmpty,isEmpty,positionToString,processMessage);
 	informationTask=require('./task/informationTask');
 	informationTask.init(bot,stringTo);
 	giveUser=["ifThenElse","ifThen","repeatUntil","repeat","taskList","replicate"];
@@ -339,14 +351,14 @@ function isBlockNotEmpty(b)
 
 function pround(p)
 {
-	return new vec3(round(p.x),round(p.y),round(p.z));
+	return new Vec3(round(p.x),round(p.y),round(p.z));
 }
 
 function findItemType(name)
 {
 	var id;
-	if((id=items[name])!=undefined) return id;
-	if((id=blocks[name])!=undefined) return id;
+	if((id=items[name]) !== undefined) return id;
+	if((id=blocks[name]) !== undefined) return id;
 	return null;
 }
 
@@ -363,7 +375,7 @@ function lookAt(goalPosition,done)
 
 function isCraftable(s)
 {
-	return mf.Recipe.find(findItemType(s).id).length!==0;
+	return Recipe.find(findItemType(s).id).length!==0;
 }
 
 function attack(ent,done)
@@ -380,22 +392,22 @@ function positionToString(p)
 function neededItemsToCraft(n,s)
 {
 	var id=findItemType(s).id;
-	var r=mf.Recipe.find(id);
+	var r=Recipe.find(id);
 	n=Math.ceil(n/r[0].result.count);
 	if(r.length===0) return null;
 	var nd=[],d=r[0].delta;
 	console.log(d);
 	for(i in d)
 	{
-		if(d[i].id!=id)
+		if(d[i].id !== id)
 		{
 			//console.log("d id"+d[i].id);
-			//console.log(mf.items[d[i].id].name);
+			//console.log(items[d[i].id].name);
 			nd.push({
 				"name":
-					mf.items[d[i].id]===undefined ?
-					mf.blocks[d[i].id].name :
-					mf.items[d[i].id].name,
+					items[d[i].id]===undefined ?
+					blocks[d[i].id].name :
+					items[d[i].id].name,
 				"count":-parseInt(n)*d[i].count
 			});
 		}
@@ -406,7 +418,7 @@ function neededItemsToCraft(n,s)
 function needWorkbench(s)
 {
 	var id=findItemType(s).id;
-	var r=mf.Recipe.find(id);
+	var r=Recipe.find(id);
 	if(r.length===0) return null;
 	return r[0].requiresTable;
 }
