@@ -23,22 +23,27 @@ function up(done) // change this a bit ?
 {
 	if(isNotEmpty(bot.entity.position.offset(0, 2, 0))) {done(true);return;}
 	  //if(bot.heldItem===null) {done(true);return;} // replace this with something checking whether the bot has a block to build ?
-  var targetBlock = bot.blockAt(bot.entity.position.offset(0, -1, 0));
-  var jumpY = bot.entity.position.y + 1;
+  const targetBlock = bot.blockAt(bot.entity.position.offset(0, -1, 0));
+  const jumpY = bot.entity.position.y + 1;
 	bot.setControlState('jump', true);
-  bot.on('move', placeIfHighEnough);
+  //bot.on('move', placeIfHighEnough);
+  setTimeout(place, 400);
   
   function placeIfHighEnough() {
     if (bot.entity.position.y > jumpY) {
-      bot.placeBlock(targetBlock, new Vec3(0, 1, 0),() => {
-        setTimeout(done,400);// could (should ?) be replaced my something checking whether the bot is low enough/has stopped moving
-      });
-      //dirty
-	  //processMessage(u,"sbuild r0,-1,0",function(){ // this is very wrong, solve it somehow (doesn't take into account the parameter of the callback as in achieve)
-		bot.setControlState('jump', false);
-		bot.removeListener('move', placeIfHighEnough);
-	 // });
+      place();
     }
+  }
+
+  function place() {
+    bot.placeBlock(targetBlock, new Vec3(0, 1, 0),() => {
+      setTimeout(done,400);// could (should ?) be replaced my something checking whether the bot is low enough/has stopped moving
+    });
+    //dirty
+    //processMessage(u,"sbuild r0,-1,0",function(){ // this is very wrong, solve it somehow (doesn't take into account the parameter of the callback as in achieve)
+    bot.setControlState('jump', false);
+    bot.removeListener('move', placeIfHighEnough);
+    // });
   }
 }
 

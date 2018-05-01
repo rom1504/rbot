@@ -53,8 +53,8 @@ function init(_bot,_achieve,_achieveList,_processMessage,_async)
 	nearest=require('./lib/nearest');
 	stringTo=require('./lib/stringTo');
 	inventory.init(bot,materials);
-	nearest.init(bot,isNotEmpty,blocks);
-	stringTo.init(bot,inventory,nearest,isEmpty,isNotEmpty,blocks,async);
+	nearest.init(bot,isNotEmpty,blocksByName);
+	stringTo.init(bot,inventory,nearest,isEmpty,isNotEmpty,blocksByName,async);
 	
 	
 	syntaxTask=require('./task/syntaxTask');
