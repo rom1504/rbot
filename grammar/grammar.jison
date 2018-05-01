@@ -78,7 +78,7 @@
 "-"?[0-9]+(?:"."[0-9]+)?",""-"?[0-9]+(?:"."[0-9]+)?",""-"?[0-9]+(?:"."[0-9]+)? return 'simplePosition';
 "." return '.';
 [0-9]+ return 'N'
-[A-Za-z0-9,]+ return 'T';
+[A-Za-z0-9,_]+ return 'T';
 \s+ return 'S';
 <<EOF>> return 'EOF';
 /lex

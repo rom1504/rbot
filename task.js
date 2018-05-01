@@ -5,6 +5,8 @@ let achieve;
 let achieveList;
 let blocks;
 let items;
+let blocksByName;
+let itemsByName;
 let processMessage;
 let inventory;
 let stringTo;
@@ -41,10 +43,12 @@ function init(_bot,_achieve,_achieveList,_processMessage,_async)
 	bot.navigate.on("stop",function(){bot.emit("stop");});
 	bot.navigate.on("cannotFind",function(){bot.emit("stop");});
 
-  blocks = mcData.blocksByName;
-	items = mcData.itemsByName;
+  blocks = mcData.blocks;
+	items = mcData.items;
+  blocksByName = mcData.blocksByName;
+  itemsByName = mcData.itemsByName;
 	materials = mcData.materials;
-	Recipe = require('prismarine-recipe')(bot.version);
+	Recipe = require('prismarine-recipe')(bot.version).Recipe;
 	inventory=require('./lib/inventory');
 	nearest=require('./lib/nearest');
 	stringTo=require('./lib/stringTo');
@@ -225,7 +229,7 @@ function init(_bot,_achieve,_achieveList,_processMessage,_async)
 			var gs=s in gss ? gss[s] : s;
 			var m=inventory.numberOfOwnedItems(s);
 			var need;
-			function gn(item){
+			function gn(){
 				return neededItemsToCraft(n-m,s)
 					.map(function(item){
 						return "cget "+item.count+" "+item.name;
@@ -235,8 +239,8 @@ function init(_bot,_achieve,_achieveList,_processMessage,_async)
 			done(m>=n ?
 				"nothing" :
 				isCraftable(s) ?
-				"do "+gn(item)+" then "+((need=needWorkbench(s)) ?
-				"if close of workbench then nothing else do cget 1 workbench then "+gn(item)+
+				"do "+gn()+" then "+((need=needWorkbench(s)) ?
+				"if close of workbench then nothing else do cget 1 workbench then "+gn()+
 				" then sdig r0,0,1 then sbuild r0,-1,1 then equip hand workbench then build r0,0,1 done endif then " : "")+
 				"look at r0,0,0 then craft "+(n-m)+" "+s+(need ?
 					" then sdig r0,0,1" : "")+" done" : "repeat sget "+gs+" until have "+n+" "+s+" done");
@@ -357,8 +361,8 @@ function pround(p)
 function findItemType(name)
 {
 	var id;
-	if((id=items[name]) !== undefined) return id;
-	if((id=blocks[name]) !== undefined) return id;
+	if((id=itemsByName[name]) !== undefined) return id;
+	if((id=blocksByName[name]) !== undefined) return id;
 	return null;
 }
 
@@ -391,34 +395,32 @@ function positionToString(p)
 
 function neededItemsToCraft(n,s)
 {
-	var id=findItemType(s).id;
-	var r=Recipe.find(id);
+	const id=findItemType(s).id;
+  const r=Recipe.find(id);
 	n=Math.ceil(n/r[0].result.count);
 	if(r.length===0) return null;
-	var nd=[],d=r[0].delta;
+  const nd=[],d=r[0].delta;
 	console.log(d);
-	for(i in d)
+	d.forEach(element =>
 	{
-		if(d[i].id !== id)
+		if(element.id !== id)
 		{
-			//console.log("d id"+d[i].id);
-			//console.log(items[d[i].id].name);
 			nd.push({
 				"name":
-					items[d[i].id]===undefined ?
-					blocks[d[i].id].name :
-					items[d[i].id].name,
-				"count":-parseInt(n)*d[i].count
+					items[element.id]===undefined ?
+					blocks[element.id].name :
+					items[element.id].name,
+				"count":-parseInt(n)*element.count
 			});
 		}
-	}
+	});
 	return nd;
 }
 
 function needWorkbench(s)
 {
-	var id=findItemType(s).id;
-	var r=Recipe.find(id);
+	const id=findItemType(s).id;
+  const r=Recipe.find(id);
 	if(r.length===0) return null;
 	return r[0].requiresTable;
 }
