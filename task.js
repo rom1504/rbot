@@ -240,8 +240,8 @@ function init(_bot,_achieve,_achieveList,_processMessage,_async)
 				"nothing" :
 				isCraftable(s) ?
 				"do "+gn()+" then "+((need=needWorkbench(s)) ?
-				"if close of workbench then nothing else do cget 1 workbench then "+gn()+
-				" then sdig r0,0,1 then sbuild r0,-1,1 then equip hand workbench then build r0,0,1 done endif then " : "")+
+				"if close of crafting_table then nothing else do cget 1 crafting_table then "+gn()+
+				" then sdig r0,0,1 then sbuild r0,-1,1 then equip hand crafting_table then build r0,0,1 done endif then " : "")+
 				"look at r0,0,0 then craft "+(n-m)+" "+s+(need ?
 					" then sdig r0,0,1" : "")+" done" : "repeat sget "+gs+" until have "+n+" "+s+" done");
 		}, // r0,0,1 : change this , problem with the number : try to craft it all when it only need to craft current - demanded : let's do it here, it seems to make sense since I'm going stringTo.stringToPosition for dig forward : hence the if have could probably be replaced by a js if : I'm going to let the if have be for now, and just do the current - demanded : not using have anymore... : remove it ? actually I'm using it, can't you see ???
