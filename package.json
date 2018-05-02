@@ -29,7 +29,9 @@
     "mineflayer": "^2.0.0",
     "mineflayer-blockfinder": "0.0.7",
     "mineflayer-navigate": "0.0.10",
-    "vec3": "^0.1.3"
+    "vec3": "^0.1.3",
+    "minecraft-data": "^2.25.0",
+    "prismarine-recipe": "^1.0.1"
   },
   "devDependencies": {
     "jison": "~0.4.2"

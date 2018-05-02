@@ -25,7 +25,7 @@ function inject(bot) {
 
   function findPathSync(end, params) {
     params = params || {};
-    end = end.floored()
+    end = end.floored();
 
     const timeout = params.timeout == null ? DEFAULT_TIMEOUT : params.timeout;
     const endRadius = params.endRadius == null ? DEFAULT_END_RADIUS : params.endRadius;

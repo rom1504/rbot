@@ -51,7 +51,7 @@ function build(blockPosition,done)
 	if(bot.heldItem===null) {done(true);return;}
 	let p;
 	const contiguousBlocks=[new Vec3(1,0,0),new Vec3(-1,0,0),new Vec3(0,1,0),new Vec3(0,-1,0),new Vec3(0,0,-1),new Vec3(0,0,1)];
-	for(i in contiguousBlocks)
+	for(let i in contiguousBlocks)
 	{
 		p=blockPosition.plus(contiguousBlocks[i]);
 		if(isNotEmpty(p))
@@ -82,7 +82,7 @@ function watch(ent,done)
 			if(action!=="")
 			{
 				const d=newBlock.position.floored().minus(firstPosition);
-				const c=action+" r"+positionToString(d)
+				const c=action+" r"+positionToString(d);
 				console.log(c);
 				com+=(com !== "" ? " then " : "")+c;
 			}

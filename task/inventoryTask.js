@@ -38,7 +38,7 @@ function toss(number,itemName,done)
 
 function equip(destination,item,done)
 {
-	if (item!=null && item!=true)
+	if (item!=null && item!==true)
 	{
 		bot.equip(item, destination, function(err) 
 		{
@@ -60,7 +60,7 @@ function equip(destination,item,done)
 		console.log("I have no such item");// change this maybe : yes : it should be fixed by : either it's a block you can break by hand, either go get a block... (and if it's to build : careful you might die... : figure a way out)
 		done();
 	}
-	else if(item==true) // already equipped
+	else if(item===true) // already equipped
 	{
 		done();
 	}	
@@ -153,4 +153,4 @@ module.exports={
 	activateItem:activateItem,
 	deactivateItem:deactivateItem,
 	init:init
-}
+};

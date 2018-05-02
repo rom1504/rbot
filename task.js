@@ -327,7 +327,7 @@ function init(_bot,_achieve,_achieveList,_processMessage,_async)
 function isNotBedrock(pos)
 {
 	const b=bot.blockAt(pos);
-	return b!=null && b.type!=7;
+	return b!=null && b.type!==7;
 }
 
 

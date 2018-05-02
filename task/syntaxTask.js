@@ -14,7 +14,7 @@ function repeatAux(taskName,over,username,done)
   setImmediate(function() {
     if (!over()) achieve(taskName, username, (function (taskName, over, username, done) {
       return function (status) {
-        if (status == true) done(true);
+        if (status === true) done(true);
         //else setTimeout(repeatAux,100,taskName,over,username,done);
         else repeatAux(taskName, over, username, done);
 
@@ -78,4 +78,4 @@ module.exports={
 	nothing:nothing,
 	wait:wait,
 	init:init
-}
+};

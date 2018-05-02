@@ -1,6 +1,6 @@
 const Vec3 = require('vec3').Vec3;
 
-let bot,processMessage,isEmpty,stringTo,directions,direction;
+let bot,processMessage,isEmpty,isNotEmpty,stringTo,directions,direction;
 
 function init(_bot,_processMessage,_isEmpty,_stringTo,_isNotEmpty)
 {
