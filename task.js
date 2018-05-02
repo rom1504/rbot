@@ -144,7 +144,7 @@ function init(_bot,_achieve,_achieveList,_processMessage,_async)
 		"sup":"do tcc then sdig r0,2,0 then equip hand item to build then up done",
 	};
 	
-	var gss={"stonebrick":"stone","coal":"oreCoal","ingotIron":"oreIron","diamond":"oreDiamond"};
+	const gss={"stonebrick":"stone","coal":"oreCoal","ingotIron":"oreIron","diamond":"oreDiamond"};
 
 	// should I put these aliases somewhere else ?
 	parameterized_alias=
@@ -159,8 +159,8 @@ function init(_bot,_achieve,_achieveList,_processMessage,_async)
 		},
 		"toss everything":function(u,done)
 		{
-			var l=inventory.myItems().map(function(a){return "toss "+a[1]+" "+a[0]}).join(" then ");
-			done(l=="" ? "nothing" : "do "+l+" done");
+			const l=inventory.myItems().map(function(a){return "toss "+a[1]+" "+a[0]}).join(" then ");
+			done(l === "" ? "nothing" : "do "+l+" done");
 		},
 		"sbuild":function(s,u,done)
 		{
@@ -175,10 +175,10 @@ function init(_bot,_achieve,_achieveList,_processMessage,_async)
 		"ssdig":function(s,u,done)
 		{
 			stringTo.stringToPosition(s,u,null,function(pos){
-				var t,p,a=[],x,y,z;
-				var bb=bot.entity.position.floored();
-				var bb2=bb.offset(0,1,0);
-				var u="";
+				let t,p,a=[],x,y,z;
+				const bb=bot.entity.position.floored();
+				const bb2=bb.offset(0,1,0);
+				let u="";
 				if(pos.floored().equals(bb.offset(0,2,0)) && blockTask.canFall(bb.offset(0,3,0)))
 				{
 					u="repeat do equip hand tool to break "+bot.blockAt(bb.offset(0,3,0)).name+" then dig "+
@@ -194,12 +194,12 @@ function init(_bot,_achieve,_achieveList,_processMessage,_async)
 						{
 							for(z=-1;z<=1;z++)
 							{
-								if((Math.abs(x)+Math.abs(y)+Math.abs(z))==1)
+								if((Math.abs(x)+Math.abs(y)+Math.abs(z))===1)
 								{
 									p=pos.offset(x,y,z);
 									if(!(p.equals(bb)) && !(p.equals(bb2)))
 									{
-										var e=bot.blockAt(p);
+										const e=bot.blockAt(p);
 										if(e!=null)
 										{
 											t=e.type;
@@ -215,8 +215,8 @@ function init(_bot,_achieve,_achieveList,_processMessage,_async)
 				if(blockTask.canFall(pos.offset(0,1,0))) makeSafe(bb,bb2,pos.offset(0,1,0),a);
 				//if(blockTask.canFall(pos.offset(0,2,0))) makeSafe(bb,bb2,pos.offset(0,2,0),a);
 				// cannot make this recursive because he can't build very high but a column of 2 is common
-				var b=a.join(" then ");
-				b=b=="" ? b : b+" then ";
+				let b=a.join(" then ");
+				b=b==="" ? b : b+" then ";
 				done("if is not empty "+s+" then do "+u+" "+b+" equip hand tool to break "+bot.blockAt(pos).name+" then dig "+s+" done endif");
 			});
 		},
@@ -226,9 +226,9 @@ function init(_bot,_achieve,_achieveList,_processMessage,_async)
 		},
 		"cget":function(n,s,u,done)
 		{
-			var gs=s in gss ? gss[s] : s;
-			var m=inventory.numberOfOwnedItems(s);
-			var need;
+			const gs=s in gss ? gss[s] : s;
+			const m=inventory.numberOfOwnedItems(s);
+			let need;
 			function gn(){
 				return neededItemsToCraft(n-m,s)
 					.map(function(item){
@@ -260,7 +260,7 @@ function init(_bot,_achieve,_achieveList,_processMessage,_async)
 		"smove":function(s,u,done)
 		{
  			stringTo.stringToPosition(s,u,null,function(p){ // change ?
- 				var s=positionToString(p);
+ 				const s=positionToString(p);
  				done("repeat ssumove "+s+" until at "+s+" done");
  			});
 		},
@@ -279,11 +279,10 @@ function init(_bot,_achieve,_achieveList,_processMessage,_async)
 		"ssumove":function(s,u,done)
 		{
 			stringTo.stringToPosition(s,u,null,function(p){
-				var s=positionToString(p);
-				var r=bot.navigate2.findPathSync(p);
-				var path=r.path;// cannot fail : should be able to fail... : maybe with a break, failed or stop task ?
+				const r=bot.navigate2.findPathSync(p);
+				const path=r.path;// cannot fail : should be able to fail... : maybe with a break, failed or stop task ?
 				console.log(r);
-				var t=path.map(function(p2){return "sumove "+positionToString(p2);}).join(" then ");
+				const t=path.map(function(p2){return "sumove "+positionToString(p2);}).join(" then ");
 				done("do "+t+" done");
 			});
 		},
@@ -291,11 +290,11 @@ function init(_bot,_achieve,_achieveList,_processMessage,_async)
 		{
 			stringTo.stringToPosition(s,u,null,function(p){
 				p=p.floored();
-				var bb=bot.entity.position.floored();
-				var d=p.minus(bb);
-				if(d.y!=0 && isNotBedrock(bb.offset(0,sgn(d.y),0))) done(d.y<0 ? "down" : "sup");
-				else if(d.x!=0 && isNotBedrock(bb.offset(sgn(d.x),0,0)) && isNotBedrock(bb.offset(sgn(d.x),1,0))) done("dig forward r"+sgn(d.x)+",0,0");
-				else if(d.z!=0 && isNotBedrock(bb.offset(0,0,sgn(d.z))) && isNotBedrock(bb.offset(0,1,sgn(d.z)))) done("dig forward r0,0,"+sgn(d.z));
+				const bb=bot.entity.position.floored();
+				const d=p.minus(bb);
+				if(d.y !== 0 && isNotBedrock(bb.offset(0,sgn(d.y),0))) done(d.y<0 ? "down" : "sup");
+				else if(d.x !== 0 && isNotBedrock(bb.offset(sgn(d.x),0,0)) && isNotBedrock(bb.offset(sgn(d.x),1,0))) done("dig forward r"+sgn(d.x)+",0,0");
+				else if(d.z !== 0 && isNotBedrock(bb.offset(0,0,sgn(d.z))) && isNotBedrock(bb.offset(0,1,sgn(d.z)))) done("dig forward r0,0,"+sgn(d.z));
 // 				if(d.y!=0) done(d.y<0 ? "down" : "sup");
 // 				else if(d.x!=0) done("dig forward r"+sgn(d.x)+",0,0");
 // 				else if(d.z!=0) done("dig forward r0,0,"+sgn(d.z));
@@ -308,7 +307,7 @@ function init(_bot,_achieve,_achieveList,_processMessage,_async)
 		},
 		"achieve":function(c,u,done)
 		{
-			var impliedActions={
+			const impliedActions={
 				"at":function(p){return "smove "+p;},
 				"have":function(n,o){return "cget "+n+" "+o},
 				"close of":function(b){return "smove nearest block "+b},
@@ -327,7 +326,7 @@ function init(_bot,_achieve,_achieveList,_processMessage,_async)
 
 function isNotBedrock(pos)
 {
-	var b=bot.blockAt(pos);
+	const b=bot.blockAt(pos);
 	return b!=null && b.type!=7;
 }
 
@@ -360,7 +359,7 @@ function pround(p)
 
 function findItemType(name)
 {
-	var id;
+	let id;
 	if((id=itemsByName[name]) !== undefined) return id;
 	if((id=blocksByName[name]) !== undefined) return id;
 	return null;

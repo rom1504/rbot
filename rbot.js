@@ -4,12 +4,12 @@ if(process.argv.length<5 || process.argv.length>7)
 	console.log("Usage : rbot <host> <port> <name> [<password>] [<master>]");
 	process.exit(1);
 }
-var mineflayer = require('mineflayer');
-var blockFinderPlugin = require('mineflayer-blockfinder')(mineflayer);
-var navigatePlugin = require('mineflayer-navigate')(mineflayer);
-var navigate2Plugin = require('./avoidBedrock.js')(mineflayer);
-var async=require('async');
-var bot = mineflayer.createBot({
+const mineflayer = require('mineflayer');
+const blockFinderPlugin = require('mineflayer-blockfinder')(mineflayer);
+const navigatePlugin = require('mineflayer-navigate')(mineflayer);
+const navigate2Plugin = require('./avoidBedrock.js')(mineflayer);
+const async=require('async');
+const bot = mineflayer.createBot({
 	username: process.argv[4],
 	verbose: true,
 	port:parseInt(process.argv[3]),
@@ -20,8 +20,8 @@ var bot = mineflayer.createBot({
 navigatePlugin(bot);
 navigate2Plugin(bot);
 bot.loadPlugin(blockFinderPlugin);
-var task=require('./task');
-var achieve=require('./achieve');
+const task=require('./task');
+const achieve=require('./achieve');
 
 bot.loadPlugin(() => {
   task.init(bot,achieve.achieve,achieve.achieveList,achieve.processMessage,async);

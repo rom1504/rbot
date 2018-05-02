@@ -1,4 +1,4 @@
-var repeating,achieve,achieveList,stringTo;
+let repeating,achieve,achieveList,stringTo;
 
 function init(_achieve,_achieveList,_stringTo)
 {

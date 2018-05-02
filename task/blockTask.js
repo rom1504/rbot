@@ -16,7 +16,7 @@ function init(_bot,_stringTo,_isNotEmpty,_isBlockEmpty,_isBlockNotEmpty,_isEmpty
 
 function canFall(pos)
 {
-	var b=bot.blockAt(pos);
+	const b=bot.blockAt(pos);
 	return b!=null && (b.type===13 || b.type===12);
 }
 
@@ -49,8 +49,8 @@ function build(blockPosition,done)
 	blockPosition=blockPosition.floored();
 	if(isNotEmpty(blockPosition)) {done(); return;}
 	if(bot.heldItem===null) {done(true);return;}
-	var x,y,z,p;
-	var contiguousBlocks=[new Vec3(1,0,0),new Vec3(-1,0,0),new Vec3(0,1,0),new Vec3(0,-1,0),new Vec3(0,0,-1),new Vec3(0,0,1)];
+	let p;
+	const contiguousBlocks=[new Vec3(1,0,0),new Vec3(-1,0,0),new Vec3(0,1,0),new Vec3(0,-1,0),new Vec3(0,0,-1),new Vec3(0,0,1)];
 	for(i in contiguousBlocks)
 	{
 		p=blockPosition.plus(contiguousBlocks[i]);
@@ -63,28 +63,28 @@ function build(blockPosition,done)
 }
 
 
-var com;
-var wa;
+let com;
+let wa;
 
 function watch(ent,done)
 {
-	var firstPosition=ent.position.floored();
+	const firstPosition=ent.position.floored();
 	com="";
 	bot.on('blockUpdate',function(firstPosition){wa=[done,function(oldBlock,newBlock)
 	{
 		if(newBlock==null) return;
 		if(ent.position.floored().distanceTo(newBlock.position.floored())<5)
 		{
-			var action;
+			let action;
 			if(isBlockEmpty(newBlock)) action="dig";
 			else if(isBlockNotEmpty(newBlock)) action="build";
 			else action="";
-			if(action!="")
+			if(action!=="")
 			{
-				var d=newBlock.position.floored().minus(firstPosition);
-				var c=action+" r"+positionToString(d)
+				const d=newBlock.position.floored().minus(firstPosition);
+				const c=action+" r"+positionToString(d)
 				console.log(c);
-				com+=(com!="" ? " then " : "")+c;
+				com+=(com !== "" ? " then " : "")+c;
 			}
 		}
 	}];return wa[1];}(firstPosition));

@@ -72,7 +72,7 @@ function move(goalPosition,done)
 	goalPosition=center(goalPosition);
 	bot.lookAt(goalPosition.offset(0,bot.entity.height,0),true);
 	bot.setControlState('forward', true);
-	var arrive=setInterval((function(goalPosition,done){return function()
+	const arrive=setInterval((function(goalPosition,done){return function()
 	{
 		if(/*scalarProduct(goalPosition.minus(bot.entity.position),d)<0 || */goalPosition.distanceTo(bot.entity.position)<0.3 || !isFree(goalPosition)/*(norm(bot.entity.velocity)<0.01)*/)
 		{
@@ -92,7 +92,7 @@ function moveTo(goalPosition,done)
 		if(goalPosition.distanceTo(bot.entity.position)>=0.2)
 		{
 			//bot.navigate.to(goalPosition);//use callback here ?
-			var a=bot.navigate.findPathSync(goalPosition,{timeout:5000});
+			const a=bot.navigate.findPathSync(goalPosition,{timeout:5000});
 			console.log(a.status+" "+a.path.length);
 			if(a.path.length<=1) done();
 			else if(a.status==='success') bot.navigate.walk(a.path,function(){done()});

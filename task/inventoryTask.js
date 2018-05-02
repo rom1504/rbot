@@ -13,7 +13,7 @@ function init(_bot,_stringTo,_findItemType,_inventory)
 
 function listInventory(done)
 {
-	var output=inventory.myItems().map(function(a){return a[0]+":"+a[1];}).join(", ");
+	const output=inventory.myItems().map(function(a){return a[0]+":"+a[1];}).join(", ");
 	if (output) {
 		bot.chat(output);
 	} else {
@@ -26,7 +26,7 @@ function listInventory(done)
 
 function toss(number,itemName,done)
 {
-	var item=findItemType(itemName);
+	const item=findItemType(itemName);
 	if(item) bot.toss(item.id,null,number,function(){done()});
 	else
 	{
@@ -91,9 +91,9 @@ function findCraftingTable()
 
 function craft(amount,name,done)
 {
-	var item=findItemType(name);
-	var craftingTable=findCraftingTable();
-	var wbText = craftingTable ? "with a crafting table, " : "without a crafting table, ";
+	const item=findItemType(name);
+	const craftingTable=findCraftingTable();
+	const wbText = craftingTable ? "with a crafting table, " : "without a crafting table, ";
 	if (item == null)
 	{
 		bot.chat(wbText + "unknown item: " + name);
@@ -101,12 +101,12 @@ function craft(amount,name,done)
 	}
 	else
 	{
-		var recipes = bot.recipesFor(item.id, null, amount, craftingTable);
+		const recipes = bot.recipesFor(item.id, null, amount, craftingTable);
 		if (recipes.length)
 		{
 			bot.chat(wbText + "I can make " + item.name);
-			var numberOfOperation=Math.ceil(amount/recipes[0].result.count);
-			var newAmount=numberOfOperation*recipes[0].result.count;
+			const numberOfOperation=Math.ceil(amount/recipes[0].result.count);
+			const newAmount=numberOfOperation*recipes[0].result.count;
 			bot.craft(recipes[0], numberOfOperation, craftingTable, function(err)
 			{
 				if (err)

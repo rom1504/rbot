@@ -41,9 +41,8 @@ function reportFailOfTask(parsedTask, done) {
 }
 
 function applyAction(task, username, parsedTask, done) {
-  var b;
-  stringTo.stringTo(task.p, parsedTask[0] == "look at" ? 1 : null, username, function (pars) {
-    task.f.apply(this, pars.concat(giveUser.indexOf(parsedTask[0]) != -1 ? [username] : []).concat([function (result) {
+  stringTo.stringTo(task.p, parsedTask[0] === "look at" ? 1 : null, username, function (pars) {
+    task.f.apply(this, pars.concat(giveUser.indexOf(parsedTask[0]) !== -1 ? [username] : []).concat([function (result) {
       if (result != null && !result) {
         applyAction(task, username, parsedTask, done);
       } else {
@@ -55,9 +54,8 @@ function applyAction(task, username, parsedTask, done) {
 
 function nameToTask(parsedTask, username, done) {
   replaceParameterizedAlias(parsedTask, username, function (parsedTask) {
-    var v;
-    var task;
-    var pars;
+    let task;
+    let pars;
     if (parsedTask[0] in tasks) {
       pars = ce.clone(parsedTask[1]);
       task = {f: ce.clone(tasks[parsedTask[0]]), p: pars};
@@ -106,15 +104,14 @@ function achieveList(taskNameList, username, done) {
 
 //reecriture (systeme suppose confluent et fortement terminal)
 function replaceAlias(message) {
-  var changed = 1;
+  let changed = 1;
   while (changed) {
     changed = 0;
-    for (var alia in alias) {
-      var newM = message.replace(alia, alias[alia]);
+    for (let alia in alias) {
+      const newM = message.replace(alia, alias[alia]);
       if (newM !== message) {
         message = newM;
         changed = 1;
-        continue; // sure ?
       }
     }
   }

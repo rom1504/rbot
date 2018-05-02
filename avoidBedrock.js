@@ -27,15 +27,15 @@ function inject(bot) {
     params = params || {};
     end = end.floored()
 
-    var timeout = params.timeout == null ? DEFAULT_TIMEOUT : params.timeout;
-    var endRadius = params.endRadius == null ? DEFAULT_END_RADIUS : params.endRadius;
-    var tooFarThreshold = params.tooFarThreshold == null ? TOO_FAR_THRESHOLD : params.tooFarThreshold;
-    var actualIsEnd = params.isEnd || createIsEndWithRadius(end, endRadius);
-    var heuristic = createHeuristicFn(end);
+    const timeout = params.timeout == null ? DEFAULT_TIMEOUT : params.timeout;
+    const endRadius = params.endRadius == null ? DEFAULT_END_RADIUS : params.endRadius;
+    const tooFarThreshold = params.tooFarThreshold == null ? TOO_FAR_THRESHOLD : params.tooFarThreshold;
+    let actualIsEnd = params.isEnd || createIsEndWithRadius(end, endRadius);
+    const heuristic = createHeuristicFn(end);
 
-    var start = bot.entity.position.floored();
+    const start = bot.entity.position.floored();
 	console.log(start);
-    var tooFar = false;
+    let tooFar = false;
     if (start.distanceTo(end) > tooFarThreshold) {
       // Too far to calculate reliably. Return 'tooFar' and a path to walk
       // in the general direction of end.
@@ -47,7 +47,7 @@ function inject(bot) {
     }
 
     // search
-    var results = aStar({
+    const results = aStar({
       start: new Node(start, 0),
       isEnd: actualIsEnd,
       neighbor: getNeighbors,
@@ -62,15 +62,15 @@ function inject(bot) {
 
   function getNeighbors(node)
   {
-	var p=node.point;
-	var result=[];
-	if(risSafe(p,0,-1,0)) result.push(p.offset(0,-1,0));
-	if(risSafe(p,0,2,0)) result.push(p.offset(0,1,0));
-	if(risSafe(p,1,0,0) && risSafe(p,1,1,0)) result.push(p.offset(1,0,0));
-	if(risSafe(p,-1,0,0) && risSafe(p,-1,1,0)) result.push(p.offset(-1,0,0));
-	if(risSafe(p,0,0,1) && risSafe(p,0,1,1)) result.push(p.offset(0,0,1));
-	if(risSafe(p,0,0,-1) && risSafe(p,0,1,-1)) result.push(p.offset(0,0,-1));
-	return result.map(function(point) {return new Node(point);});
+    const p=node.point;
+    const result=[];
+    if(risSafe(p,0,-1,0)) result.push(p.offset(0,-1,0));
+    if(risSafe(p,0,2,0)) result.push(p.offset(0,1,0));
+    if(risSafe(p,1,0,0) && risSafe(p,1,1,0)) result.push(p.offset(1,0,0));
+    if(risSafe(p,-1,0,0) && risSafe(p,-1,1,0)) result.push(p.offset(-1,0,0));
+    if(risSafe(p,0,0,1) && risSafe(p,0,1,1)) result.push(p.offset(0,0,1));
+    if(risSafe(p,0,0,-1) && risSafe(p,0,1,-1)) result.push(p.offset(0,0,-1));
+    return result.map(function(point) {return new Node(point);});
   }
 	function risSafe(p,x,y,z)
 	{
